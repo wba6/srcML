@@ -89,4 +89,12 @@
 }</block></enum>
 </unit>
 
+<unit language="Java">
+<enum><specifier>public</specifier> enum <name>DarwinSignalEnum</name> <block>{
+    <function_decl><annotation>@<name>CEnumValue</name></annotation>
+    <type><specifier>private</specifier> <specifier>native</specifier> <name>int</name></type> <name>getCValue0</name><parameter_list>()</parameter_list>;</function_decl>
+}</block></enum>
+</unit>
+
+
 </unit>
