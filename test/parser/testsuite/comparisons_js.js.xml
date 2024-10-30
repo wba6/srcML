@@ -29,7 +29,7 @@
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
@@ -54,7 +54,7 @@
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index> <operator>===</operator> <index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index></expr>;</expr_stmt>
+    <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array> <operator>===</operator> <array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
@@ -75,7 +75,7 @@
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>!=</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>!=</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
@@ -100,7 +100,7 @@
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index> <operator>!==</operator> <index>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</index></expr>;</expr_stmt>
+    <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array> <operator>!==</operator> <array>[<expr><literal type="number">1</literal></expr><operator>,</operator><literal type="number">2</literal>]</array></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
@@ -197,44 +197,44 @@
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><literal type="number">0</literal> <range>in <expr><index>[<expr><literal type="number">10</literal></expr><operator>,</operator> <literal type="number">20</literal><operator>,</operator> <literal type="number">30</literal>]</index></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">0</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr><operator>,</operator> <literal type="number">20</literal><operator>,</operator> <literal type="number">30</literal>]</array></expr></range></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><literal type="number">3</literal> <range>in <expr><index>[<expr><literal type="number">10</literal></expr><operator>,</operator> <literal type="number">20</literal><operator>,</operator> <literal type="number">30</literal>]</index></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">3</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr><operator>,</operator> <literal type="number">20</literal><operator>,</operator> <literal type="number">30</literal>]</array></expr></range></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <comment type="line">// 'instanceof' Operator</comment>
-    <expr_stmt><expr><operator>new</operator> <call><name>Date</name><argument_list>()</argument_list></call> <name>instanceof</name> <name>Date</name></expr>;</expr_stmt>
+        <comment type="line">// 'instanceof' Operator</comment>
+        <expr_stmt><expr><operator>new</operator> <call><name>Date</name><argument_list>()</argument_list></call> <operator>instanceof</operator> <name>Date</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>new</operator> <call><name>Date</name><argument_list>()</argument_list></call> <name>instanceof</name> <name>Object</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>new</operator> <call><name>Date</name><argument_list>()</argument_list></call> <operator>instanceof</operator> <name>Object</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>(</operator>function<operator>(</operator><operator>)</operator> <block>{}</block><operator>)</operator> <name>instanceof</name> <name>Function</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda></expr></expr_stmt>) <expr_stmt><expr><operator>instanceof</operator> <name>Function</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>(</operator>function<operator>(</operator><operator>)</operator> <block>{}</block><operator>)</operator> <name>instanceof</name> <name>Object</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda></expr></expr_stmt>) <expr_stmt><expr><operator>instanceof</operator> <name>Object</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>(</operator><operator>/</operator><name>regex</name><operator>/</operator><operator>)</operator> <name>instanceof</name> <name>RegExp</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><operator>/</operator><name>regex</name><operator>/</operator><operator>)</operator> <operator>instanceof</operator> <name>RegExp</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>(</operator><operator>/</operator><name>regex</name><operator>/</operator><operator>)</operator> <name>instanceof</name> <name>Object</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><operator>/</operator><name>regex</name><operator>/</operator><operator>)</operator> <operator>instanceof</operator> <name>Object</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><literal type="number">5</literal> <name>instanceof</name> <name>Number</name></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">5</literal> <operator>instanceof</operator> <name>Number</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
-    <expr_stmt><expr><operator>new</operator> <call><name>Number</name><argument_list>(<argument><expr><literal type="number">5</literal></expr></argument>)</argument_list></call> <name>instanceof</name> <name>Number</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>new</operator> <call><name>Number</name><argument_list>(<argument><expr><literal type="number">5</literal></expr></argument>)</argument_list></call> <operator>instanceof</operator> <name>Number</name></expr>;</expr_stmt>
     </unit>
 
     <unit language="JavaScript">
