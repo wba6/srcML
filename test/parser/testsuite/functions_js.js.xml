@@ -34,14 +34,14 @@
     <!--Unit 5-->
     <unit language="JavaScript">
         <comment type="block">/*Arrow Function*/</comment>
-        <decl_stmt><decl type="const">const <name>functionName3</name> <init>= <expr><operator>(</operator><name>parameters</name><operator>)</operator> <operator>=&gt;</operator> <block>{
+        <decl_stmt><decl type="const">const <name>functionName3</name> <init>= <expr><lambda type="arrow"><parameter_list>(<parameter><decl><name>parameters</name></decl></parameter>)</parameter_list> <operator>=&gt;</operator> <block>{<block_content>
             <comment type="line">// function body</comment>
-            }</block></expr></init></decl>;</decl_stmt>
+        </block_content>}</block></lambda></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 6-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>multiply</name> <init>= <expr><operator>(</operator><name>a</name></expr></init></decl>, <decl type="const"><name>b</name></decl></decl_stmt>) <expr_stmt><expr><operator>=&gt;</operator> <name>a</name> <operator>*</operator> <name>b</name></expr>;</expr_stmt>
+        <decl_stmt><decl type="const">const <name>multiply</name> <init>= <expr><lambda type="arrow"><parameter_list>(<parameter><decl><name>a</name></decl></parameter>, <parameter><decl><name>b</name></decl></parameter>)</parameter_list> <operator>=&gt;</operator> <name>a</name> <operator>*</operator> <name>b</name></lambda></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 7-->
@@ -115,10 +115,10 @@
     <unit language="JavaScript">
         <comment type="block">/*Callback Functions*/</comment>
         <function>function <name>fetchData3</name><parameter_list>(<parameter><decl><name>callback</name></decl></parameter>)</parameter_list> <block>{<block_content>
-            <expr_stmt><expr><call><name>setTimeout</name><argument_list>(<argument><expr><operator>(</operator>) <operator>=&gt;</operator> <block>{
-                <init><decl type="const">const <name>data</name> <init>= <expr><block>{ <expr><name>id</name><operator>:</operator> <literal type="number">1</literal></expr></block></expr></init></decl></init>, <decl type="const"><name>name</name><range>: <expr><literal type="string">'Eve'</literal></expr> }</range></decl>;
-                <expr><call><name>callback</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;
-                }</block></expr></argument>, <argument><expr><literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+            <expr_stmt><expr><call><name>setTimeout</name><argument_list>(<argument><expr><operator>(</operator>) <operator>=&gt;</operator> <block>{<block_content>
+                <decl_stmt><decl type="const">const <name>data</name> <init>= <expr><object>{ <property><name>id</name>: <expr><literal type="number">1</literal></expr></property>, <property><name>name</name>: <expr><literal type="string">'Eve'</literal></expr></property> }</object></expr></init></decl>;</decl_stmt>
+                <expr_stmt><expr><call><name>callback</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+            </block_content>}</block></expr></argument></argument_list></call></expr></expr_stmt><operator>,</operator> <expr_stmt><expr><literal type="number">1000</literal>)</expr>;</expr_stmt>
         </block_content>}</block></function>
     </unit>
 
