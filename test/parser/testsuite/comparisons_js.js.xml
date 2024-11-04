@@ -364,12 +364,12 @@
     <!--Unit 70-->
     <unit language="JavaScript">
         <comment type="line">// Comparing Objects</comment>
-        <decl_stmt><decl type="const">const <name>obj1</name> <init>= <expr><block>{ <expr><name>x</name><operator>:</operator> <literal type="number">1</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+        <decl_stmt><decl type="const">const <name>obj1</name> <init>= <expr><object>{ <property><name>x</name>: <expr><literal type="number">1</literal></expr></property> }</object></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 71-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>obj2</name> <init>= <expr><block>{ <expr><name>x</name><operator>:</operator> <literal type="number">1</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+        <decl_stmt><decl type="const">const <name>obj2</name> <init>= <expr><object>{ <property><name>x</name>: <expr><literal type="number">1</literal></expr></property> }</object></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 72-->
