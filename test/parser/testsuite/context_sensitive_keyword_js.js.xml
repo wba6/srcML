@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="JavaScript" filename="context_sensitive_keyword.js" url="context_sensitive_keyword">
+
+    <!--Unit 1-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj2</name> <init>= <expr><object>{
+            <property><name>const</name>: <expr><expr><lambda type="arrow"><parameter_list>()</parameter_list> <operator>=&gt;</operator> <block>{<block_content>
+                <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is a method named 'yield'."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></lambda></expr></expr></property></object></expr></init></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj2</name><operator>.</operator><name>const</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 2-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj2</name> <init>= <expr><object>{
+            <property><name>yield</name>: <expr><expr><lambda type="arrow"><parameter_list>()</parameter_list> <operator>=&gt;</operator> <block>{<block_content>
+                <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is a method named 'yield'."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></lambda></expr></expr></property></object></expr></init></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj2</name><operator>.</operator><name>yield</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 3-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj3</name> <init>= <expr><object>{
+            <property><name>break</name>: <expr><literal type="string">"This is a property named 'break'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj3</name><operator>.</operator><name>break</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 4-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj3</name> <init>= <expr><object>{
+            <property><name>catch</name>: <expr><literal type="string">"This is a property named 'break'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj3</name><operator>.</operator><name>catch</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 5-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj3</name> <init>= <expr><object>{
+            <property><name>continue</name>: <expr><literal type="string">"This is a property named 'break'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj3</name><operator>.</operator><name>continue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 6-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj3</name> <init>= <expr><object>{
+            <property><name>default</name>: <expr><literal type="string">"This is a property named 'break'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj3</name><operator>.</operator><name>default</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 7-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj3</name> <init>= <expr><object>{
+            <property><name>do</name>: <expr><literal type="string">"This is a property named 'break'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj3</name><operator>.</operator><name>do</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 8-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj4</name> <init>= <expr><object>{
+            <property><name>else</name>: <expr><literal type="string">"This is a property named 'else'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj4</name><operator>.</operator><name>else</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 9-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj5</name> <init>= <expr><object>{
+            <property><name>export</name>: <expr><literal type="string">"This is a property named 'export'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj5</name><operator>.</operator><name>export</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 10-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{
+            <property><name>finally</name>: <expr><literal type="string">"This is a property named 'finally'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj6</name><operator>.</operator><name>finally</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 11-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj7</name> <init>= <expr><object>{
+            <property><name>function</name>: <expr><literal type="string">"This is a property named 'function'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj7</name><operator>.</operator><name>function</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 12-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj8</name> <init>= <expr><object>{
+            <property><name>import</name>: <expr><literal type="string">"This is a property named 'import'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj8</name><operator>.</operator><name>import</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 13-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj9</name> <init>= <expr><object>{
+            <property><name>in</name>: <expr><literal type="string">"This is a property named 'in'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj9</name><operator>.</operator><name>in</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 14-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj10</name> <init>= <expr><object>{
+            <property><name>super</name>: <expr><literal type="string">"This is a property named 'super'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj10</name><operator>.</operator><name>super</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 15-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj11</name> <init>= <expr><object>{
+            <property><name>switch</name>: <expr><literal type="string">"This is a property named 'switch'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj11</name><operator>.</operator><name>switch</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 16-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj12</name> <init>= <expr><object>{
+            <property><name>this</name>: <expr><literal type="string">"This is a property named 'this'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj12</name><operator>.</operator><name>this</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 17-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj13</name> <init>= <expr><object>{
+            <property><name>try</name>: <expr><literal type="string">"This is a property named 'try'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj13</name><operator>.</operator><name>try</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 18-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj14</name> <init>= <expr><object>{
+            <property><name>with</name>: <expr><literal type="string">"This is a property named 'with'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj14</name><operator>.</operator><name>with</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 19-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj15</name> <init>= <expr><object>{
+            <property><name>debugger</name>: <expr><literal type="string">"This is a property named 'debugger'."</literal></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj15</name><operator>.</operator><name>debugger</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+
+
+</unit>
