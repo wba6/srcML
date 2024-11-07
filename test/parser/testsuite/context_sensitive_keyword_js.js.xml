@@ -349,4 +349,193 @@
         <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><name><name>obj39</name><operator>.</operator><name>public</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
     </unit>
 
+    <!--Unit 44-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{
+            <property><class>class: <name>function</name>(</class></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the class method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj6</name><operator>.</operator><name>class</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 45-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj45</name> <init>= <expr><object>{
+            <property><let>let: <name>function</name>(</let></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the let method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj45</name><operator>.</operator><name>let</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 45-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj41</name> <init>= <expr><object>{
+            <property><yield>yield: <name>function</name>(</yield></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the yield method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj41</name><operator>.</operator><name>yield</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 46-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj42</name> <init>= <expr><object>{
+            <property><catch>catch: <name>function</name>(</catch></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the catch method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj42</name><operator>.</operator><name>catch</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 47-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj43</name> <init>= <expr><object>{
+            <property><continue>continue: <name>function</name>(</continue></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the continue method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj43</name><operator>.</operator><name>continue</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 48-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj44</name> <init>= <expr><object>{
+            <property><default>default: <name>function</name>(</default></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the default method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj44</name><operator>.</operator><name>default</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 49-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj45</name> <init>= <expr><object>{
+            <property><do>do: <name>function</name>(</do></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the do method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj45</name><operator>.</operator><name>do</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 50-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj46</name> <init>= <expr><object>{
+            <property><else>else: <name>function</name>(</else></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the else method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj46</name><operator>.</operator><name>else</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 51-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj47</name> <init>= <expr><object>{
+            <property><export>export: <name>function</name>(</export></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the export method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj47</name><operator>.</operator><name>export</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 52-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj48</name> <init>= <expr><object>{
+            <property><finally>finally: <name>function</name>(</finally></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the finally method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj48</name><operator>.</operator><name>finally</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 53-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj49</name> <init>= <expr><object>{
+            <property><function>function: <name>function</name>(</function></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the function method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj49</name><operator>.</operator><name>function</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 54-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj50</name> <init>= <expr><object>{
+            <property><import>import: <name>function</name>(</import></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the import method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj50</name><operator>.</operator><name>import</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 55-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj51</name> <init>= <expr><object>{
+            <property><in>in: <name>function</name>(</in></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the in method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj51</name><operator>.</operator><name>in</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 56-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj52</name> <init>= <expr><object>{
+            <property><super>super: <name>function</name>(</super></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the super method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj52</name><operator>.</operator><name>super</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 57-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj53</name> <init>= <expr><object>{
+            <property><switch>switch: <name>function</name>(</switch></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the switch method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj53</name><operator>.</operator><name>switch</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 58-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj54</name> <init>= <expr><object>{
+            <property><this>this: <name>function</name>(</this></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the this method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj54</name><operator>.</operator><name>this</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 59-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj55</name> <init>= <expr><object>{
+            <property><try>try: <name>function</name>(</try></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the try method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj55</name><operator>.</operator><name>try</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 60-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj56</name> <init>= <expr><object>{
+            <property><with>with: <name>function</name>(</with></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the with method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj56</name><operator>.</operator><name>with</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
+
+    <!--Unit 61-->
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>obj57</name> <init>= <expr><object>{
+            <property><debugger>debugger: <name>function</name>(</debugger></property></object></expr>)</init> <block>{<block_content>
+            <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the debugger method."</literal></expr></argument>)</argument_list></call></expr></expr_stmt></block_content></block></decl>;</decl_stmt>
+        }
+        }<empty_stmt>;</empty_stmt>
+        <expr_stmt><expr><call><name><name>obj57</name><operator>.</operator><name>debugger</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    </unit>
 </unit>
