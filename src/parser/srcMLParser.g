@@ -134,7 +134,7 @@ header "post_include_hpp" {
 using namespace ::std::literals::string_view_literals;
 
 // Commented-out code
-#define DEBUG_PARSER
+// #define DEBUG_PARSER
 
 // Macros to introduce trace statements
 #ifdef DEBUG_PARSER
@@ -3855,7 +3855,7 @@ class_declaration[] { ENTRY_DEBUG } :
         }
 
         class_preamble
-        (CLASS | CXX_CLASS | RECORD {inLanguage(LANGUAGE_CSHARP)}? (STRUCT)* )
+        (CLASS | CXX_CLASS | RECORD {inLanguage(LANGUAGE_CSHARP)}? (options { greedy = true; } : STRUCT | CLASS)* )
         class_post
         class_header
 
@@ -3932,7 +3932,7 @@ class_definition[] { ENTRY_DEBUG } :
         class_preprocessing[SCLASS]
         class_preamble
 
-        (CLASS | CXX_CLASS | RECORD { inLanguage(LANGUAGE_CSHARP) }? (STRUCT)* )
+        (CLASS | CXX_CLASS | RECORD { inLanguage(LANGUAGE_CSHARP) }? (options { greedy = true; } : STRUCT | CLASS)* )
 
 
         class_post
@@ -5914,7 +5914,7 @@ pattern_check_core[
                         CXX_CLASS
                         set_type[type, CLASS_DECL] |
 
-                        RECORD (STRUCT)*
+                        RECORD (options { greedy = true; } : STRUCT | CLASS)*
                         set_type[type, CLASS_DECL] set_bool[is_record, true] set_bool[sawcontextual, true] |
 
                         STRUCT
