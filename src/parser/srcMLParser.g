@@ -3855,7 +3855,8 @@ class_declaration[] { ENTRY_DEBUG } :
         }
 
         class_preamble
-        (CLASS | CXX_CLASS | RECORD {inLanguage(LANGUAGE_CSHARP)}? (options { greedy = true; } : STRUCT | CLASS)* )
+        (CLASS | CXX_CLASS | RECORD)
+        (options { greedy = true; } : STRUCT | CLASS)*
         class_post
         class_header
 
@@ -3932,8 +3933,8 @@ class_definition[] { ENTRY_DEBUG } :
         class_preprocessing[SCLASS]
         class_preamble
 
-        (CLASS | CXX_CLASS | RECORD { inLanguage(LANGUAGE_CSHARP) }? (options { greedy = true; } : STRUCT | CLASS)* )
-
+        (CLASS | CXX_CLASS | RECORD)
+        (options { greedy = true; } : STRUCT | CLASS)*
 
         class_post
         (class_header lcurly[false] | lcurly[false])
