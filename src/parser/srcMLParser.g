@@ -3845,7 +3845,7 @@ check_end[int& token] { token = LA(1); ENTRY_DEBUG } :
 
   Handles a "class" declaration.
 */
-class_declaration[] { ENTRY_DEBUG } :
+class_declaration[] { bool is_record = false; ENTRY_DEBUG } :
         {
             // statement
             startNewMode(MODE_STATEMENT);
@@ -3855,15 +3855,15 @@ class_declaration[] { ENTRY_DEBUG } :
         }
 
         class_preamble
-        (CLASS | CXX_CLASS | RECORD)
+        (CLASS | CXX_CLASS | RECORD {is_record = true;})
         (options { greedy = true; } : STRUCT | CLASS)*
         class_post
-        class_header
+        class_header[is_record]
 
         (options { greedy = true; } :
             COMMA
             class_post
-            class_header
+            class_header[is_record]
         )*
 ;
 
@@ -3929,15 +3929,15 @@ class_preamble[] { ENTRY_DEBUG } :
 
   Handles a "class" definition.
 */
-class_definition[] { ENTRY_DEBUG } :
+class_definition[] { bool is_record = false; ENTRY_DEBUG } :
         class_preprocessing[SCLASS]
         class_preamble
 
-        (CLASS | CXX_CLASS | RECORD)
+        (CLASS | CXX_CLASS | RECORD {is_record = true;})
         (options { greedy = true; } : STRUCT | CLASS)*
 
         class_post
-        (class_header lcurly[false] | lcurly[false])
+        (class_header[is_record] lcurly[false] | lcurly[false])
 
         {
             if (inLanguage(LANGUAGE_CXX))
@@ -4036,7 +4036,7 @@ protocol_definition[] { bool first = true; ENTRY_DEBUG } :
 */
 objective_c_class_header[] { ENTRY_DEBUG } :
         { isoption(parser_options, SRCML_PARSER_OPTION_CPP) }?
-        (macro_call_check class_header_base LCURLY) => macro_call
+        (macro_call_check class_header_base[false] LCURLY) => macro_call
         objective_c_class_header_base |
 
         objective_c_class_header_base
@@ -4099,7 +4099,7 @@ enum_class_definition[] { ENTRY_DEBUG } :
 
         class_preamble
         ENUM
-        (class_header enum_block | enum_block)
+        (class_header[false] enum_block | enum_block)
 ;
 
 /*
@@ -4114,12 +4114,12 @@ enum_class_declaration[] { ENTRY_DEBUG } :
         ENUM
 
         class_post
-        class_header
+        class_header[false]
 
         (options { greedy = true; } :
             COMMA
             class_post
-            class_header
+            class_header[false]
         )*
 ;
 
@@ -4188,7 +4188,7 @@ interface_definition[] { ENTRY_DEBUG } :
         INTERFACE
 
         class_post
-        class_header
+        class_header[false]
         lcurly[false]
 ;
 
@@ -4211,12 +4211,12 @@ interface_declaration[] { ENTRY_DEBUG } :
         INTERFACE
 
         class_post
-        class_header
+        class_header[false]
 
         (options { greedy = true; } :
             COMMA
             class_post
-            class_header
+            class_header[false]
         )*
 ;
 
@@ -4239,12 +4239,12 @@ struct_declaration[] { ENTRY_DEBUG } :
         STRUCT
 
         class_post
-        class_header
+        class_header[false]
 
         (options { greedy = true; } :
             COMMA
             class_post
-            class_header
+            class_header[false]
         )*
 ;
 
@@ -4260,7 +4260,7 @@ struct_union_definition[int element_token] { ENTRY_DEBUG } :
         (STRUCT | UNION)
 
         class_post
-        (class_header lcurly[false] | lcurly[false])
+        (class_header[false] lcurly[false] | lcurly[false])
 
         {
             if (inLanguage(LANGUAGE_CXX))
@@ -4287,12 +4287,12 @@ union_declaration[] { ENTRY_DEBUG } :
         UNION
 
         class_post
-        class_header
+        class_header[false]
 
         (options { greedy = true; } :
             COMMA
             class_post
-            class_header
+            class_header[false]
         )*
 ;
 
@@ -4316,7 +4316,7 @@ annotation_definition[] { ENTRY_DEBUG } :
         ATSIGN
         INTERFACE
 
-        class_header
+        class_header[false]
         lcurly[false]
 ;
 
@@ -4368,12 +4368,12 @@ class_default_access_action[int access_token] { ENTRY_DEBUG } :
 
   Handles a "class" header.
 */
-class_header[] { ENTRY_DEBUG } :
+class_header[bool is_record] { ENTRY_DEBUG } :
         { isoption(parser_options, SRCML_PARSER_OPTION_CPP) && next_token() != DCOLON }?
-        (macro_call_check class_header_base LCURLY) => macro_call
-        class_header_base |
+        (macro_call_check class_header_base[is_record] LCURLY) => macro_call
+        class_header_base[is_record] |
 
-        class_header_base
+        class_header_base[is_record]
 ;
 
 /*
@@ -4381,7 +4381,7 @@ class_header[] { ENTRY_DEBUG } :
 
   Handles a "class" header base.
 */
-class_header_base[] { bool insuper = false; ENTRY_DEBUG } :
+class_header_base[bool is_record] { bool insuper = false; ENTRY_DEBUG } :
         {
             setMode(MODE_CLASS_NAME);
 
@@ -4417,7 +4417,7 @@ class_header_base[] { bool insuper = false; ENTRY_DEBUG } :
         )*
 
         (options { greedy = true; } :
-            { inLanguage(LANGUAGE_JAVA_FAMILY) || inLanguage(LANGUAGE_CSHARP) }?
+            { is_record && (inLanguage(LANGUAGE_JAVA_FAMILY) || inLanguage(LANGUAGE_CSHARP)) }?
             parameter_list
         )*
 
@@ -5946,7 +5946,7 @@ pattern_check_core[
                     )*
 
                     class_post
-                    (class_header | LCURLY)
+                    (class_header[is_record] | LCURLY)
 
                     set_type[
                         type,
@@ -6023,7 +6023,7 @@ pattern_check_core[
 
                     (
                         { inLanguage(LANGUAGE_JAVA) }?
-                        class_header |
+                        class_header[is_record] |
 
                         { inLanguage(LANGUAGE_CSHARP) }?
                         variable_identifier
