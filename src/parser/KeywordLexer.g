@@ -625,6 +625,7 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "null"          , NULLLITERAL   , LANGUAGE_CSHARP },
         { "typeof"        , TYPEOF        , LANGUAGE_CSHARP },
         { "alias"         , ALIAS         , LANGUAGE_CSHARP },
+        { "record"        , RECORD        , LANGUAGE_CSHARP },
 
         // C# linq
         { "from"          , FROM          , LANGUAGE_CSHARP },

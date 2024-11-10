@@ -134,7 +134,7 @@ header "post_include_hpp" {
 using namespace ::std::literals::string_view_literals;
 
 // Commented-out code
-//#define DEBUG_PARSER
+#define DEBUG_PARSER
 
 // Macros to introduce trace statements
 #ifdef DEBUG_PARSER
@@ -3855,7 +3855,7 @@ class_declaration[] { ENTRY_DEBUG } :
         }
 
         class_preamble
-        (CLASS | CXX_CLASS)
+        (CLASS | CXX_CLASS | RECORD {inLanguage(LANGUAGE_CSHARP)}? (STRUCT)* )
         class_post
         class_header
 
@@ -3932,7 +3932,8 @@ class_definition[] { ENTRY_DEBUG } :
         class_preprocessing[SCLASS]
         class_preamble
 
-        (CLASS | CXX_CLASS | RECORD)
+        (CLASS | CXX_CLASS | RECORD { inLanguage(LANGUAGE_CSHARP) }? (STRUCT)* )
+
 
         class_post
         (class_header lcurly[false] | lcurly[false])
@@ -4415,7 +4416,7 @@ class_header_base[] { bool insuper = false; ENTRY_DEBUG } :
         )*
 
         (options { greedy = true; } :
-            { inLanguage(LANGUAGE_JAVA_FAMILY) }?
+            { inLanguage(LANGUAGE_JAVA_FAMILY) || inLanguage(LANGUAGE_CSHARP) }?
             parameter_list
         )*
 
@@ -5913,7 +5914,7 @@ pattern_check_core[
                         CXX_CLASS
                         set_type[type, CLASS_DECL] |
 
-                        RECORD
+                        RECORD (STRUCT)*
                         set_type[type, CLASS_DECL] set_bool[is_record, true] set_bool[sawcontextual, true] |
 
                         STRUCT
@@ -5995,7 +5996,7 @@ pattern_check_core[
                             || LA(1) == LCURLY
                             || lcurly
                         )
-                        || (is_record && type == CLASS_DECL)
+                        || (is_record && type == CLASS_DECL && !inLanguage(LANGUAGE_CSHARP))
                     ]
 
                     throw_exception[type != NONE]
