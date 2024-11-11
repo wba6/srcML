@@ -236,6 +236,36 @@ foreach(GENURL IN ITEMS ${TESTFILES})
 
 endforeach()
 
+# Create a copy of CONTEXT_FILES to avoid modifying the original list
+set(JS_XML_FILES ${CONTEXT_FILES})
+
+# Filter the JS_XML_FILES list to include only files matching *.js.xml
+list(APPEND JS_XML_FILES "${TESTFILES}")
+list(FILTER JS_XML_FILES INCLUDE REGEX ".*\\.js\\.xml$")
+
+# Generate variations: formfeed, comment, block, etc.
+foreach(GENURL IN ITEMS ${JS_XML_FILES})
+
+    # ${URL}.${LANGEXT}.xml
+    get_filename_component(SRCFILENAME "${GENURL}" NAME_WLE)
+    get_filename_component(URL "${SRCFILENAME}" NAME_WLE)
+    get_filename_component(EXTENSION "${SRCFILENAME}" LAST_EXT)
+    # remove '.'
+    string(SUBSTRING "${EXTENSION}" 1 -1 LANGEXT)
+
+    set(GENERATED_FILE "${URL}.eolterminate.js.xml")
+    add_custom_command(
+        COMMAND ${SRCML_EXE} --output-srcml --xslt ${XSLT_DIR}/eolterminate.xsl --url=${URL}.eolterminate ${GENURL}
+                 -o ${GENERATED_FILE}
+        COMMENT "Generating parser testfile ${GENERATED_FILE} from ${GENURL}"
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${GENURL}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        OUTPUT ${GENERATED_FILE}
+    )
+    list(APPEND CONTEXT_FILES ${URL}.eolterminate.js.xml)
+
+endforeach()
+
 # specify the build directory, as the WORKING_DIRECTORY does not always seem to
 # be used in the DEPENDS
 list(TRANSFORM CONTEXT_FILES PREPEND "${CMAKE_CURRENT_BINARY_DIR}/")
