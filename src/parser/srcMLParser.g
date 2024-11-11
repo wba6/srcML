@@ -1261,7 +1261,10 @@ catch[...] {
 
   Statements that begin with a unique keyword.
 */
-keyword_statements[] { ENTRY_DEBUG } :
+keyword_statements[] { ENTRY_DEBUG
+
+
+    } :
         // conditional statements
         if_statement |
 
@@ -5149,11 +5152,25 @@ terminate[] { ENTRY_DEBUG resumeStream(); } :
                 endDownToMode(MODE_INIT);
                 endMode(MODE_DECLARATION_JS);
             }
+
+            if (inLanguage(LANGUAGE_JAVASCRIPT) && LT(1)->getText().empty() && inMode(MODE_NEST)) {
+                terminate_token_plain();
+                return;
+            }
         }
 
         terminate_pre
         terminate_token
         terminate_post
+;
+
+/*
+  terminate_token_plain
+
+  Matches the actual terminate token (';').
+*/
+terminate_token_plain[] { ENTRY_DEBUG } :
+    TERMINATE
 ;
 
 /*
@@ -5164,6 +5181,7 @@ terminate[] { ENTRY_DEBUG resumeStream(); } :
 terminate_token[] { LightweightElement element(this); ENTRY_DEBUG } :
         {
             if (
+                !LT(1)->getText().empty() &&
                 inMode(MODE_STATEMENT | MODE_NEST)
                 && (
                     !inMode(MODE_DECL)

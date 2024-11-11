@@ -30,6 +30,7 @@
 #include <srcml_types.hpp>
 #include <unit_utilities.hpp>
 #include <srcMLOutput.hpp>
+#include <NewlineTerminate.hpp>
 
 using namespace ::std::literals::string_view_literals;
 
@@ -139,8 +140,18 @@ void srcml_translator::translate(UTF8CharBuffer* parser_input) {
         selector.addInputStream(&textlexer, "text");
         selector.select(&lexer);
 
+        // intermediate token stage
+        NewlineTerminate offside(selector);
+
         // base stream parser srcML connected to lexical analyzer
-        StreamMLParser parser(selector, getLanguage(), options);
+        antlr::TokenStream* tokenStream = &selector;
+        if (getLanguage() == LANGUAGE_JAVASCRIPT) {
+
+            tokenStream = &offside;
+        }
+
+        // base stream parser srcML connected to lexical analyzer
+        StreamMLParser parser(*tokenStream, getLanguage(), options);
 
         // connect local parser to attribute for output
         out.setTokenStream(parser);
