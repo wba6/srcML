@@ -3855,8 +3855,9 @@ class_declaration[] { bool is_record = false; ENTRY_DEBUG } :
         }
 
         class_preamble
-        (CLASS | CXX_CLASS | RECORD {is_record = true;})
-        (options { greedy = true; } : STRUCT | CLASS)*
+        (CLASS | CXX_CLASS | 
+            (RECORD {is_record = true;} (options { greedy = true; } : STRUCT | CLASS)*)
+        )
         class_post
         class_header[is_record]
 
@@ -3933,8 +3934,10 @@ class_definition[] { bool is_record = false; ENTRY_DEBUG } :
         class_preprocessing[SCLASS]
         class_preamble
 
-        (CLASS | CXX_CLASS | RECORD {is_record = true;})
-        (options { greedy = true; } : STRUCT | CLASS)*
+        (CLASS | CXX_CLASS | 
+            (RECORD {is_record = true;} (options { greedy = true; } : STRUCT | CLASS)*)
+        )
+        
 
         class_post
         (class_header[is_record] lcurly[false] | lcurly[false])
