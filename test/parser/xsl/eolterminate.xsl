@@ -22,10 +22,11 @@
 
 <xsl:import href="copy.xsl"/>
 
-<!-- Match text nodes that are exactly ';' and not within src:empty -->
+<!-- Match text nodes that are exactly ';' and not within src:empty or src:control -->
 <xsl:template match="text()[. = ';'][not(ancestor::src:empty)][not(ancestor::src:control)]"/>
 
-<!-- Match text nodes that are exactly ';' and not within src:empty -->
+<!-- Special cases where the terminate is part of the keyword text -->
 <xsl:template match="text()[. = 'break;']">break</xsl:template>
+<xsl:template match="text()[. = 'return;']">return</xsl:template>
 
 </xsl:stylesheet>
