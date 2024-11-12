@@ -46,7 +46,7 @@
 
     <!--Unit 7-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>square</name> <init>= <expr><name>x</name> <operator>=&gt;</operator> <name>x</name> <operator>*</operator> <name>x</name></expr></init></decl>;</decl_stmt>
+        <decl_stmt><decl type="const">const <name>square</name> <init>= <expr><lambda type="arrow"><parameter><decl><name>x</name></decl></parameter> <operator>=&gt;</operator> <name>x</name> <operator>*</operator> <name>x</name></lambda></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 8-->
