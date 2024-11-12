@@ -351,41 +351,41 @@
 
     <!--Unit 44-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{<property/></object></expr></init></decl></decl_stmt>
-        <label><name>class</name>:</label> <expr_stmt><expr><lambda>function<parameter_list>()</parameter_list> <block>{<block_content>
-        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the class method."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
-        </block_content>}</block></lambda></expr></expr_stmt>
-        };
+        <decl_stmt><decl type="const">const <name>objectName</name> <init>= <expr><object>{
+            <property><name>class</name>: <expr><lambda>function<parameter_list>(<parameter><decl><name>parameters</name></decl></parameter>)</parameter_list> <block>{<block_content>
+                <comment type="line">// method body</comment>
+            </block_content>}</block></lambda></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
         <expr_stmt><expr><call><name><name>obj6</name><operator>.</operator><name>class</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 45-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{<property/></object></expr></init></decl></decl_stmt>
-        <label><name>let</name>:</label> <expr_stmt><expr><lambda>function<parameter_list>()</parameter_list> <block>{<block_content>
-        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the class method."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
-        </block_content>}</block></lambda></expr></expr_stmt>
-        };
+        <decl_stmt><decl type="const">const <name>objectName</name> <init>= <expr><object>{
+            <property><name>let</name>: <expr><lambda>function<parameter_list>(<parameter><decl><name>parameters</name></decl></parameter>)</parameter_list> <block>{<block_content>
+                <comment type="line">// method body</comment>
+            </block_content>}</block></lambda></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
         <expr_stmt><expr><call><name><name>obj6</name><operator>.</operator><name>let</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 46-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{<property/></object></expr></init></decl></decl_stmt>
-        <label><name>yield</name>:</label> <expr_stmt><expr><lambda>function<parameter_list>()</parameter_list> <block>{<block_content>
-        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the class method."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
-        </block_content>}</block></lambda></expr></expr_stmt>
-        };
+        <decl_stmt><decl type="const">const <name>objectName</name> <init>= <expr><object>{
+            <property><name>yield</name>: <expr><lambda>function<parameter_list>(<parameter><decl><name>parameters</name></decl></parameter>)</parameter_list> <block>{<block_content>
+                <comment type="line">// method body</comment>
+            </block_content>}</block></lambda></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
         <expr_stmt><expr><call><name><name>obj6</name><operator>.</operator><name>yield</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 47-->
     <unit language="JavaScript">
-        <decl_stmt><decl type="const">const <name>obj6</name> <init>= <expr><object>{<property/></object></expr></init></decl></decl_stmt>
-        <label><name>catch</name>:</label> <expr_stmt><expr><lambda>function<parameter_list>()</parameter_list> <block>{<block_content>
-        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument_list>(<argument><expr><literal type="string">"This is the class method."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
-        </block_content>}</block></lambda></expr></expr_stmt>
-        };
+        <decl_stmt><decl type="const">const <name>objectName</name> <init>= <expr><object>{
+            <property><name>catch</name>: <expr><lambda>function<parameter_list>(<parameter><decl><name>parameters</name></decl></parameter>)</parameter_list> <block>{<block_content>
+                <comment type="line">// method body</comment>
+            </block_content>}</block></lambda></expr></property>
+            }</object></expr></init></decl>;</decl_stmt>
         <expr_stmt><expr><call><name><name>obj6</name><operator>.</operator><name>catch</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
     </unit>
 
