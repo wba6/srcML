@@ -207,17 +207,17 @@
     <!--Unit 40-->
     <unit language="JavaScript">
         <comment type="line">// 'in' Operator</comment>
-        <expr_stmt><expr><literal type="string">'a'</literal> <range>in <expr><block>{<expr><name>a</name><operator>:</operator><literal type="number">1</literal></expr>, <expr><name>b</name><operator>:</operator><literal type="number">2</literal></expr>}</block></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'a'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 41-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="string">'c'</literal> <range>in <expr><block>{<expr><name>a</name><operator>:</operator><literal type="number">1</literal></expr>, <expr><name>b</name><operator>:</operator><literal type="number">2</literal></expr>}</block></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'c'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 42-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="string">'toString'</literal> <range>in <expr><block>{<expr><name>a</name><operator>:</operator><literal type="number">1</literal></expr>, <expr><name>b</name><operator>:</operator><literal type="number">2</literal></expr>}</block></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'toString'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 43-->
