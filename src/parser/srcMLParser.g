@@ -5321,7 +5321,7 @@ colon_marked[] {
             }
 
             // only needed for a ranged for and not a declaration
-            if (inTransparentMode(MODE_RANGED_FOR) | inTransparentMode(MODE_CONTROL_CONDITION)) {
+            if (inTransparentMode(MODE_RANGED_FOR) || inTransparentMode(MODE_CONTROL_CONDITION)) {
 
                 endDownToMode(MODE_CONTROL_CONDITION);
 
