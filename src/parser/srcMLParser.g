@@ -2900,9 +2900,7 @@ control_initialization_action[] { ENTRY_DEBUG } :
 
             if (!in_if_mode && is_control_terminate()) {
                 startElement(SCONTROL_INITIALIZATION);
-            } else if(!in_if_mode) {
-                startElement(SDECLARATION);            
-            } else {
+            } else if(in_if_mode) {
                 startElement(SDECLARATION_STATEMENT);
             }
         }
@@ -5110,6 +5108,7 @@ statement_part[] {
         // start of argument for return or throw statement
         {
             inMode(MODE_INIT | MODE_EXPECT)
+            && !inTransparentMode(MODE_CONTROL_CONDITION)
             && (
                 (
                     LA(1) == COLON
@@ -5322,7 +5321,7 @@ colon_marked[] {
             }
 
             // only needed for a ranged for and not a declaration
-            if (inTransparentMode(MODE_RANGED_FOR)) {
+            if (inTransparentMode(MODE_RANGED_FOR) | inTransparentMode(MODE_CONTROL_CONDITION)) {
 
                 endDownToMode(MODE_CONTROL_CONDITION);
 
