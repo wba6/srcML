@@ -134,7 +134,7 @@ header "post_include_hpp" {
 using namespace ::std::literals::string_view_literals;
 
 // Commented-out code
-//#define DEBUG_PARSER
+#define DEBUG_PARSER
 
 // Macros to introduce trace statements
 #ifdef DEBUG_PARSER
@@ -2874,7 +2874,7 @@ control_initialization_pre[] { ENTRY_DEBUG } :
             // inside of control group expecting initialization
             { inMode(MODE_CONTROL_INITIALIZATION | MODE_EXPECT) }?
             control_initialization |
-
+ 
             // inside of control group expecting condition
             { inMode(MODE_CONTROL_CONDITION | MODE_EXPECT) }?
             control_condition
@@ -2898,8 +2898,10 @@ control_initialization_action[] { ENTRY_DEBUG } :
             // setup a mode for initialization that will end with a ";"
             startNewMode(MODE_EXPRESSION | MODE_EXPECT | MODE_STATEMENT | MODE_LIST);
 
-            if (!in_if_mode) {
+            if (!in_if_mode && is_control_terminate()) {
                 startElement(SCONTROL_INITIALIZATION);
+            } else if(!in_if_mode) {
+                startElement(SDECLARATION);            
             } else {
                 startElement(SDECLARATION_STATEMENT);
             }
@@ -2914,7 +2916,7 @@ control_initialization_action[] { ENTRY_DEBUG } :
 control_initialization[] { int type_count = 0; int secondtoken = 0; int after_token = 0; STMT_TYPE stmt_type = NONE; ENTRY_DEBUG } :
         control_initialization_action
 
-        (
+        ( 
             // explicitly check for a variable declaration since it can easily be confused with an expression
             { pattern_check(stmt_type, secondtoken, type_count, after_token) && stmt_type == VARIABLE }?
             control_initialization_variable_declaration[type_count] |
@@ -5321,6 +5323,9 @@ colon_marked[] {
 
             // only needed for a ranged for and not a declaration
             if (inTransparentMode(MODE_RANGED_FOR)) {
+
+                endDownToMode(MODE_CONTROL_CONDITION);
+
                 // start a new mode that will end after the argument list
                 startNewMode(MODE_LIST | MODE_IN_INIT | MODE_EXPRESSION | MODE_EXPECT);
 
