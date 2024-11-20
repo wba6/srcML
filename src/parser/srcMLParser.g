@@ -4973,6 +4973,9 @@ statement_part[] {
         { inLanguage(LANGUAGE_JAVA) && inMode(MODE_FUNCTION_TAIL) }?
         annotation_default |
 
+        { inLanguage(LANGUAGE_C) && inMode(MODE_FUNCTION_TAIL) }?
+        macro_call |
+
         { inTransparentMode(MODE_OBJECTIVE_C_CALL | MODE_ARGUMENT_LIST) }?
         (function_identifier (COLON | RBRACKET)) => objective_c_call_message |
 
