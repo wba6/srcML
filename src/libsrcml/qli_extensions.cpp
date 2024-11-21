@@ -329,6 +329,66 @@ void is_valid_element(xmlXPathParserContext* ctxt, int nargs) {
     xmlXPathReturnBoolean(ctxt, !invalidElement);
 }
 
+void set_followed_by_scope(xmlXPathParserContext* ctxt, int nargs) {
+    if(nargs != 1) {
+        std::cerr << "Arg arity error" << std::endl;
+        return;
+    }
+
+    UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
+
+    xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+
+    if(set == NULL && xmlXPathCheckError(ctxt) == false) {
+        set = xmlXPathNodeSetCreate(NULL);
+    }
+    xmlNode* node = set->nodeTab[0];
+
+    std::uintptr_t address = reinterpret_cast<std::uintptr_t>(node);
+
+    std::cout << "\n---------------------------------" << std::endl;
+    std::cout << "Setting " << address << " -> " << get_node_text(node) << std::endl;
+
+    table->set_followed_by_scope(address);
+
+
+
+    xmlXPathReturnBoolean(ctxt, true);
+}
+
+void check_if_followed_by(xmlXPathParserContext* ctxt, int nargs) {
+    if(nargs != 1) {
+        std::cerr << "Arg arity error" << std::endl;
+        return;
+    }
+
+
+    UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
+
+    xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+
+    if(set == NULL && xmlXPathCheckError(ctxt) == false) {
+        set = xmlXPathNodeSetCreate(NULL);
+    }
+    //const auto node_ptr = reinterpret_cast<std::uintptr_t>(node);
+    std::uintptr_t scope = table->get_followed_by_scope();
+
+
+    for (int i = 0; i < set->nodeNr; ++i) {
+        xmlNode* node = set->nodeTab[i];
+        
+        xmlNode* loop = node;
+        while(loop != NULL) {
+            if(reinterpret_cast<std::uintptr_t>(loop) == scope) {
+                xmlXPathReturnBoolean(ctxt, true);
+                return;
+            }
+            loop = loop->parent;
+        }
+    }
+    xmlXPathReturnBoolean(ctxt,false);
+}
+
 void regex_match(xmlXPathParserContext* ctxt, int nargs) {
     if(nargs != 2) {
         std::cerr << "Arg arity error" << std::endl;
@@ -347,6 +407,29 @@ void regex_match(xmlXPathParserContext* ctxt, int nargs) {
 }
 
 void debug_print(xmlXPathParserContext* ctxt, int nargs) {
+    if(nargs != 2) {
+        std::cerr << "Arg arity error" << std::endl;
+        return;
+    }
+
+    int label = xmlXPathPopNumber(ctxt);
+
+    xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+
+    if(set == NULL && xmlXPathCheckError(ctxt) == false) {
+        set = xmlXPathNodeSetCreate(NULL);
+    }
+
+    for (int i = 0; i < set->nodeNr; ++i) {
+        xmlNode* node = set->nodeTab[i];
+        const std::string token(get_node_text(node));
+        std::cerr << "\t" << label << "|" << i << ": " << token << " | " << node << std::endl;
+    }
+
+    xmlXPathReturnBoolean(ctxt, true);
+}
+
+void two_check(xmlXPathParserContext* ctxt, int nargs) {
     if(nargs != 1) {
         std::cerr << "Arg arity error" << std::endl;
         return;
@@ -359,11 +442,25 @@ void debug_print(xmlXPathParserContext* ctxt, int nargs) {
         set = xmlXPathNodeSetCreate(NULL);
     }
 
-    for (int i = 0; i < set->nodeNr; ++i) {
-        xmlNode* node = set->nodeTab[i];
-        const std::string token(get_node_text(node));
-        std::cerr << "\t" << i << ": " << token << " | " << node << std::endl;
+    int x = std::stoi(get_node_text(set->nodeTab[0]));
+
+    xmlXPathReturnBoolean(ctxt, !(x % 2));
+}
+
+void three_check(xmlXPathParserContext* ctxt, int nargs) {
+    if(nargs != 1) {
+        std::cerr << "Arg arity error" << std::endl;
+        return;
     }
 
-    xmlXPathReturnBoolean(ctxt, true);
+
+    xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+
+    if(set == NULL && xmlXPathCheckError(ctxt) == false) {
+        set = xmlXPathNodeSetCreate(NULL);
+    }
+
+    int x = std::stoi(get_node_text(set->nodeTab[0]));
+
+    xmlXPathReturnBoolean(ctxt, !(x % 3));
 }

@@ -39,6 +39,16 @@ void find_adds(XPathNode* x_node, std::map<std::string, std::vector<XPathNode*>>
     }
 }
 
+void find_followed_by(XPathNode* x_node, bool& found) {
+    if(x_node->is_set_followed_by_scope()) {
+        found = true;
+        return;
+    }
+    for(auto child : x_node->get_children()) {
+        find_followed_by(child, found);
+    }
+}
+
 bool x_node_in_all(XPathNode* x_node, std::vector<std::vector<XPathNode*>> lineages) {
     for(auto lineage : lineages) {
         if(std::find(lineage.begin(),lineage.end(),x_node) == lineage.end()) {
@@ -531,87 +541,25 @@ std::string XPathGenerator::convert() {
      */
 
     for(int i = operations.size()-1; i >= 0; --i) {
-        if(operations[i] == "FOLLOWED") {
-            XPathNode* rhs = source_exprs[i+1]; // y
-            XPathNode* lhs = source_exprs[i]; // z
-            XPathNode* call = new XPathNode("set:intersection",CALL);
-            XPathNode* left_arg = new XPathNode("./following::",NO_CONN);
-            XPathNode* rhs_copy = new XPathNode(*rhs);
-            XPathNode* insert = new XPathNode(*rhs);
 
-            // Left Argument
+        if(operations[i] == "FOLLOWED") {
+            XPathNode* rhs = source_exprs[i+1]; // z
+            XPathNode* lhs = source_exprs[i]; // y
+            XPathNode* pred = new XPathNode("",PREDICATE);
+            XPathNode* call = new XPathNode("qli:check-if-followed-by",CALL);
+            XPathNode* arg = new XPathNode(".//following::",NO_CONN);
             if(rhs->get_type() == PARENTHESES) {
                 auto terms = split(rhs->get_text(),"|");
                 rhs->set_text(std::string("./following::"+split(terms[0],"//")[0]+"|./following::"+split(terms[1],"//")[0]));
-                left_arg->set_text("");
+                arg->set_text("");
             }
             else {
                 rhs->set_type(NO_CONN);
             }
-            left_arg->add_child(rhs);
-
-            // Right Argument Z part
-            XPathNode* right_arg;
-            XPathNode* right_arg_end;
-            if(rhs_copy->get_type() == PARENTHESES) {
-                right_arg_end = new XPathNode("descendant::*",ANY);
-                XPathNode* temp = new XPathNode("",PREDICATE);
-                auto terms = split(rhs_copy->get_text(),"|");
-                rhs_copy->set_text(std::string("self::"+split(terms[0],"//")[0]+"|self::"+split(terms[1],"//")[0]));
-                temp->add_child(rhs_copy);
-                rhs_copy = temp;
-            }
-            else {
-                right_arg_end = new XPathNode("descendant::",ANY);
-                rhs_copy->set_type(NO_CONN);
-            }
-            right_arg_end->add_child(rhs_copy);
-
-            // Right Argument X part
-            //XPathNode* add_top = new XPathNode(*top_copy);
-            XPathNode* add_top;
-            for(int j = i; j >= 0; --j) {
-                if(operations[j] == "FROM" ||
-                   operations[j] == "UNION" ||
-                   operations[j] == "INTERSECT" ||
-                   operations[j] == "DIFFERENCE") {
-                    add_top = new XPathNode(*source_exprs[j+1]);
-                    break;
-                }
-                if(j == 0) {
-                    add_top = new XPathNode(*source_exprs[0]);
-                }
-            }
-
-            if(add_top->get_type() == PARENTHESES) {
-                auto terms = split(add_top->get_text(),"|");
-                add_top->set_text(std::string("./ancestor::"+split(terms[0],"//")[0]+"|./ancestor::"+split(terms[1],"//")[0]));
-                add_top->add_child(right_arg_end);
-                right_arg = new XPathNode("");
-            }
-            else {
-                add_top->set_type(NO_CONN);
-                add_top->add_child(right_arg_end);
-                right_arg = new XPathNode("./ancestor::");
-            }
-
-            right_arg->add_child(add_top);
-
-            change_adds_to_matches(right_arg);
-            call->add_child(left_arg);
-            call->add_child(right_arg);
-
-            XPathNode* pred = new XPathNode("",PREDICATE);
+            arg->add_child(rhs);
+            call->add_child(arg);
             pred->add_child(call);
             lhs->add_child(pred);
-
-            operations[i] = "CONTAINS";
-
-            change_adds_to_matches(insert);
-            source_exprs[i+1] = insert;
-
-            // operations.erase(operations.begin()+i);
-            // source_exprs.erase(source_exprs.begin()+i+1);
         }
     }
     /* CONTAINS check
@@ -660,6 +608,7 @@ std::string XPathGenerator::convert() {
 
     // Number the add calls and add clears before grouping into set operations
     for(size_t i = 0; i < source_exprs.size(); ++i) {
+        add_followed_by_scope_sets(source_exprs[i]);
         add_bucket_clears(source_exprs[i],i);
         number_add_calls(source_exprs[i],i);
     }
@@ -830,6 +779,14 @@ void XPathGenerator::add_bucket_clears(XPathNode* x_node,int group = 0) {
             }
         }
         lineages[0][i+1]->add_child_beginning(new XPathNode("qli:clear(\""+locations.first+"_"+std::to_string(group)+"\")", PREDICATE));
+    }
+}
+
+void XPathGenerator::add_followed_by_scope_sets(XPathNode* x_node) {
+    bool found = false;
+    find_followed_by(x_node,found);
+    if(found) {
+        std::cout << "!!!" << (*x_node) << std::endl;
     }
 }
 

@@ -46,6 +46,9 @@ public:
     bool is_element_in_bucket(std::string_view, int, std::string_view first, uintptr_t second) const;
     bool regex_match_bucket(std::string_view, std::string);
 
+    std::uintptr_t get_followed_by_scope() { return followed_by_scope; }
+    void set_followed_by_scope(std::uintptr_t address) { followed_by_scope = address; }
+
     void empty_buckets();
     void empty_bucket(std::string_view);
 
@@ -58,6 +61,7 @@ public:
 private:
     variable_bucket bucket;
     std::map<std::string,std::set<std::string>> regex_rules;
+    std::uintptr_t followed_by_scope;
 };
 
 #endif

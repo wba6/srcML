@@ -22,6 +22,7 @@ private:
     void convert_traverse(xmlNode*, XPathNode*);
     void organize_add_calls(XPathNode*);
     void add_bucket_clears(XPathNode*,int);
+    void add_followed_by_scope_sets(XPathNode*);
 
     // XML Node Funcs
     std::string get_full_name(xmlNode*);

@@ -20,6 +20,10 @@ void clear_elements(xmlXPathParserContext* context, int nargs);
 
 void is_valid_element(xmlXPathParserContext* context, int nargs);
 
+void set_followed_by_scope(xmlXPathParserContext* context, int nargs);
+
+void check_if_followed_by(xmlXPathParserContext* context, int nargs);
+
 // WHERE clause functions
 
 void regex_match(xmlXPathParserContext* ctxt, int nargs);
@@ -27,5 +31,9 @@ void regex_match(xmlXPathParserContext* ctxt, int nargs);
 // Debugging functions
 
 void debug_print(xmlXPathParserContext* ctxt, int nargs);
+
+void two_check(xmlXPathParserContext* ctxt, int nargs);
+
+void three_check(xmlXPathParserContext* ctxt, int nargs);
 
 #endif

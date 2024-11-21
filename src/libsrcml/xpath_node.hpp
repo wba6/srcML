@@ -36,6 +36,7 @@ public:
    bool is_variable_node()         { return text.find("*") != std::string::npos && text.find("text()") == std::string::npos; }
    bool is_add_call_node()         { return text.find("qli:add-element") != std::string::npos; }
    bool is_match_call_node()       { return text.find("qli:match-element") != std::string::npos; }
+   bool is_set_followed_by_scope() { return text.find("qli:cleck-if-followed-by") != std::string::npos; }
    bool is_regex_match_call_node() { return text.find("qli:regex-match") != std::string::npos; }
 
    void set_parent(XPathNode* p) { parent = p; }
