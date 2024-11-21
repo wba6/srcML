@@ -560,6 +560,8 @@ std::string XPathGenerator::convert() {
             call->add_child(arg);
             pred->add_child(call);
             lhs->add_child(pred);
+            operations.erase(operations.begin()+i);
+            source_exprs.erase(source_exprs.begin()+i+1);
         }
     }
     /* CONTAINS check
@@ -607,8 +609,11 @@ std::string XPathGenerator::convert() {
     }
 
     // Number the add calls and add clears before grouping into set operations
+    std::cout << source_exprs.size() << std::endl;
     for(size_t i = 0; i < source_exprs.size(); ++i) {
+        std::cout << "CALLING" << std::endl;
         add_followed_by_scope_sets(source_exprs[i]);
+        std::cout << "CALLING DONE" << std::endl;
         add_bucket_clears(source_exprs[i],i);
         number_add_calls(source_exprs[i],i);
     }
@@ -785,8 +790,23 @@ void XPathGenerator::add_bucket_clears(XPathNode* x_node,int group = 0) {
 void XPathGenerator::add_followed_by_scope_sets(XPathNode* x_node) {
     bool found = false;
     find_followed_by(x_node,found);
+    std::cout << ":::" << (*x_node) << std::endl;
+    std::cout << "(" << PARENTHESES << ")" << std::endl;
     if(found) {
-        std::cout << "!!!" << (*x_node) << std::endl;
+        //XPathNode* contains = x_node->get_children()[0];
+        for(auto i_node : x_node->get_children()) {
+            std::cout << "\t" << i_node->get_text() << " | " << i_node->get_children()[0]->get_type() << " | " << i_node->get_children()[0]->get_text() << " | " << (*i_node) << std::endl;
+            if(i_node->get_text() == ".") { 
+                i_node->set_text(std::string("qli:set-followed-by-scope(.) and ")+i_node->get_text());
+                break;
+            }
+            else if(i_node->get_type() == PARENTHESES && 
+                    (i_node->get_children()[0]->get_text() == ".//src:expr|.//src:decl" ||
+                     i_node->get_children()[0]->get_text() == ".//src:expr_stmt|.//src:decl_stmt")) {
+                i_node->set_text("qli:set-followed-by-scope(.) and ");
+                break;
+            }
+        }
     }
 }
 
