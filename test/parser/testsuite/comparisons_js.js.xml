@@ -29,7 +29,7 @@
 
     <!--Unit 6-->
     <unit language="JavaScript">
-        <expr_stmt><expr><array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 7-->
@@ -60,7 +60,7 @@
 
     <!--Unit 12-->
     <unit language="JavaScript">
-        <expr_stmt><expr><array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array> <operator>===</operator> <array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array> <operator>===</operator> <array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 13-->
@@ -86,7 +86,7 @@
 
     <!--Unit 17-->
     <unit language="JavaScript">
-        <expr_stmt><expr><array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>!=</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array><operator>.</operator><call><name>toString</name><argument_list>()</argument_list></call> <operator>!=</operator> <literal type="string">'1,2'</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 18-->
@@ -117,7 +117,7 @@
 
     <!--Unit 23-->
     <unit language="JavaScript">
-        <expr_stmt><expr><array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array> <operator>!==</operator> <array>[<literal type="number">1</literal>, <literal type="number">2</literal>]</array></expr>;</expr_stmt>
+        <expr_stmt><expr><array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array> <operator>!==</operator> <array>[<expr><literal type="number">1</literal></expr>, <expr><literal type="number">2</literal></expr>]</array></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 24-->
@@ -222,12 +222,12 @@
 
     <!--Unit 43-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="number">0</literal> <range>in <expr><array>[<literal type="number">10</literal>, <literal type="number">20</literal>, <literal type="number">30</literal>]</array></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">0</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr></range></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 44-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="number">3</literal> <range>in <expr><array>[<literal type="number">10</literal>, <literal type="number">20</literal>, <literal type="number">30</literal>]</array></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">3</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr></range></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 45-->
