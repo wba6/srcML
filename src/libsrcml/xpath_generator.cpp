@@ -39,13 +39,17 @@ void find_adds(XPathNode* x_node, std::map<std::string, std::vector<XPathNode*>>
     }
 }
 
-void find_followed_by(XPathNode* x_node, bool& found) {
-    if(x_node->is_set_followed_by_scope()) {
-        found = true;
+void find_and_add_followed_by_scope_sets(XPathNode* x_node) {
+    if(x_node->is_check_followed_by_call_node()) {
+        XPathNode* loop = x_node;
+        while(loop->get_parent()->get_parent() != nullptr) {
+            loop = loop->get_parent();
+        }
+        loop->set_text(std::string("qli:set-followed-by-scope(.) and ")+loop->get_text());
         return;
     }
     for(auto child : x_node->get_children()) {
-        find_followed_by(child, found);
+        find_and_add_followed_by_scope_sets(child);
     }
 }
 
@@ -609,11 +613,8 @@ std::string XPathGenerator::convert() {
     }
 
     // Number the add calls and add clears before grouping into set operations
-    std::cout << source_exprs.size() << std::endl;
     for(size_t i = 0; i < source_exprs.size(); ++i) {
-        std::cout << "CALLING" << std::endl;
-        add_followed_by_scope_sets(source_exprs[i]);
-        std::cout << "CALLING DONE" << std::endl;
+        find_and_add_followed_by_scope_sets(source_exprs[i]);
         add_bucket_clears(source_exprs[i],i);
         number_add_calls(source_exprs[i],i);
     }
@@ -784,29 +785,6 @@ void XPathGenerator::add_bucket_clears(XPathNode* x_node,int group = 0) {
             }
         }
         lineages[0][i+1]->add_child_beginning(new XPathNode("qli:clear(\""+locations.first+"_"+std::to_string(group)+"\")", PREDICATE));
-    }
-}
-
-void XPathGenerator::add_followed_by_scope_sets(XPathNode* x_node) {
-    bool found = false;
-    find_followed_by(x_node,found);
-    std::cout << ":::" << (*x_node) << std::endl;
-    std::cout << "(" << PARENTHESES << ")" << std::endl;
-    if(found) {
-        //XPathNode* contains = x_node->get_children()[0];
-        for(auto i_node : x_node->get_children()) {
-            std::cout << "\t" << i_node->get_text() << " | " << i_node->get_children()[0]->get_type() << " | " << i_node->get_children()[0]->get_text() << " | " << (*i_node) << std::endl;
-            if(i_node->get_text() == ".") { 
-                i_node->set_text(std::string("qli:set-followed-by-scope(.) and ")+i_node->get_text());
-                break;
-            }
-            else if(i_node->get_type() == PARENTHESES && 
-                    (i_node->get_children()[0]->get_text() == ".//src:expr|.//src:decl" ||
-                     i_node->get_children()[0]->get_text() == ".//src:expr_stmt|.//src:decl_stmt")) {
-                i_node->set_text("qli:set-followed-by-scope(.) and ");
-                break;
-            }
-        }
     }
 }
 

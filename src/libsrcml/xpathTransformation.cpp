@@ -215,7 +215,6 @@ TransformationResult xpathTransformation::apply(xmlDocPtr doc, int position) con
     xmlXPathRegisterNs(context.get(),(xmlChar*)"qli",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation");
     // Unification Operations
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"add-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&add_element);
-    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"match-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&match_element);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"clear",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&clear_elements);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"is-valid-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&is_valid_element);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"set-followed-by-scope",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&set_followed_by_scope);
@@ -224,8 +223,6 @@ TransformationResult xpathTransformation::apply(xmlDocPtr doc, int position) con
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"regex-match",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&regex_match);
     // Debug
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"debug-print",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&debug_print);
-    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"two-check",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&two_check);
-    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"three-check",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&three_check);
 
 
     // Add Unification Table to userData
@@ -238,7 +235,7 @@ TransformationResult xpathTransformation::apply(xmlDocPtr doc, int position) con
         std::string_view srcql_string(xpath);
         srcql_string.remove_prefix("srcql:"sv.size());
         const auto srcqlXPath = srcql_convert_query_to_xpath(srcql_string.data(), Language(position).getLanguageString());
-        std::cout << "-------------------------------\n" << "XPath: " << "-------------------------------\n" << srcqlXPath << std::endl;
+        std::cout << "XPath: " << srcqlXPath << "\n-------------------------------" << std::endl;
         localCompiledXPath = xmlXPathCompile(BAD_CAST srcqlXPath);
     }
 

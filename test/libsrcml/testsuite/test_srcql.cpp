@@ -8957,7 +8957,6 @@ int PascalCase() { call(); }
     //// MATCH
     // FIND $TYPE $NAME() {} WHERE MATCH($NAME,"[a-z]+(?:_[a-z]+)*")
     {
-        std::cout << "-----------------------------------------------------" << std::endl;
         char* s;
         size_t size;
 
@@ -8985,7 +8984,6 @@ int PascalCase() { call(); }
         srcml_unit_apply_transforms(iarchive, unit, &result);
 
         dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
-        std::cout << "EX: " << srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)) << std::endl;
         dassert(srcml_transform_get_unit_size(result), 3);
         dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), name_style_funcs_srcml[0]);
         dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), name_style_funcs_srcml[1]);
@@ -11264,7 +11262,6 @@ int static volatile n;
             
             dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,i)), specifier_decls_srcml[i+2]);
             srcml_write_namespace(srcml_transform_get_unit(result,i),"test","https://test.org");
-            std::cout << ":: " << srcml_unit_get_srcml(srcml_transform_get_unit(result,i)) << std::endl;
         }
 
         srcml_unit_free(unit);
