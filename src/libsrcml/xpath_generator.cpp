@@ -547,46 +547,80 @@ std::string XPathGenerator::convert() {
     for(int i = operations.size()-1; i >= 0; --i) {
 
         if(operations[i] == "FOLLOWED") {
+
+            XPathNode* lhs = new XPathNode(*source_exprs[i]); // y
             XPathNode* rhs = source_exprs[i+1]; // z
             XPathNode* rhs_copy = new XPathNode(*rhs);
-            XPathNode* lhs = source_exprs[i]; // y
-            XPathNode* pred = new XPathNode("",PREDICATE);
-            XPathNode* set = new XPathNode("set:intersection",CALL);
 
-            XPathNode* right_arg = new XPathNode(".//following::",NO_CONN);
 
-            // Left set argument
-            if(rhs_copy->get_type() == PARENTHESES) {
-                auto terms = split(rhs_copy->get_text(),"|");
-                rhs_copy->set_text(std::string("qli:get-followed-by-scope()//"+split(terms[0],"//")[0]+"|qli:get-followed-by-scope()//"+split(terms[1],"//")[0]));
-                set->add_child(rhs_copy);
-            }
-            else {
-                XPathNode* holder = new XPathNode("",NO_CONN);
-                XPathNode* call = new XPathNode("qli:get-followed-by-scope",CALL);
-                XPathNode* descendants = new XPathNode("//",NO_CONN);
-                holder->add_child(call);
-                holder->add_child(descendants);
-                set->add_child(holder);
-                descendants->add_child(rhs_copy);
-            }
+            XPathNode* set_call = new XPathNode("set:intersection",CALL);
 
-            // Right arg
-            if(rhs->get_type() == PARENTHESES) {
-                auto terms = split(rhs->get_text(),"|");
-                rhs->set_text(std::string(".//following::"+split(terms[0],"//")[0]+"|.//following::"+split(terms[1],"//")[0]));
-                right_arg->set_text("");
-            }
-            else {
-                rhs->set_type(NO_CONN);
-            }
+
+            XPathNode* left_arg = new XPathNode(".",NO_CONN);
+            
+            // //following::z
+            XPathNode* following_z = new XPathNode("following::",ANY);
+            rhs_copy->set_type(NO_CONN);
+            following_z->add_child(rhs_copy);
+            lhs->set_type(ANY);
+            lhs->add_child(following_z);
+            left_arg->add_child(lhs);
+
+            XPathNode* right_arg = new XPathNode(".",NO_CONN);
+            rhs->set_type(ANY);
             right_arg->add_child(rhs);
-            set->add_child(right_arg);
 
-            pred->add_child(set);
-            lhs->add_child(pred);
-            operations.erase(operations.begin()+i);
-            source_exprs.erase(source_exprs.begin()+i+1);
+            set_call->add_child(right_arg);
+            set_call->add_child(left_arg);
+            change_adds_to_matches(left_arg);
+            
+            operations[i] = "CONTAINS";
+            source_exprs[i+1] = set_call;
+
+
+
+
+
+            // XPathNode* rhs = source_exprs[i+1]; // z
+            // XPathNode* rhs_copy = new XPathNode(*rhs);
+            // XPathNode* lhs = source_exprs[i]; // y
+            // XPathNode* pred = new XPathNode("",PREDICATE);
+            // XPathNode* set = new XPathNode("set:intersection",CALL);
+
+            // XPathNode* right_arg = new XPathNode(".//following::",NO_CONN);
+
+            // // Left set argument
+            // if(rhs_copy->get_type() == PARENTHESES) {
+            //     auto terms = split(rhs_copy->get_text(),"|");
+            //     rhs_copy->set_text(std::string("qli:get-followed-by-scope()//"+split(terms[0],"//")[0]+"|qli:get-followed-by-scope()//"+split(terms[1],"//")[0]));
+            //     set->add_child(rhs_copy);
+            // }
+            // else {
+            //     XPathNode* holder = new XPathNode("",NO_CONN);
+            //     XPathNode* call = new XPathNode("qli:get-followed-by-scope",CALL);
+            //     XPathNode* descendants = new XPathNode("//",NO_CONN);
+            //     holder->add_child(call);
+            //     holder->add_child(descendants);
+            //     set->add_child(holder);
+            //     descendants->add_child(rhs_copy);
+            // }
+
+            // // Right arg
+            // if(rhs->get_type() == PARENTHESES) {
+            //     auto terms = split(rhs->get_text(),"|");
+            //     rhs->set_text(std::string(".//following::"+split(terms[0],"//")[0]+"|.//following::"+split(terms[1],"//")[0]));
+            //     right_arg->set_text("");
+            // }
+            // else {
+            //     rhs->set_type(NO_CONN);
+            // }
+            // right_arg->add_child(rhs);
+            // set->add_child(right_arg);
+
+            // pred->add_child(set);
+            // lhs->add_child(pred);
+            // operations.erase(operations.begin()+i);
+            // source_exprs.erase(source_exprs.begin()+i+1);
         }
     }
     /* CONTAINS check
@@ -601,6 +635,9 @@ std::string XPathGenerator::convert() {
             if(rhs->get_type() == PARENTHESES) {
                 auto terms = split(rhs->get_text(),"|");
                 rhs->set_text(std::string(".")+terms[0]+"|."+terms[1]);
+                insert->set_text("");
+            }
+            else if(rhs->get_type() == CALL) {
                 insert->set_text("");
             }
             else {
@@ -805,7 +842,12 @@ void XPathGenerator::add_bucket_clears(XPathNode* x_node,int group = 0) {
                 break;
             }
         }
-        lineages[0][i+1]->add_child_beginning(new XPathNode("qli:clear(\""+locations.first+"_"+std::to_string(group)+"\")", PREDICATE));
+        if(lineages[0][i+1]->get_type() != CALL) {
+            lineages[0][i+1]->add_child_beginning(new XPathNode("qli:clear(\""+locations.first+"_"+std::to_string(group)+"\")", PREDICATE));
+        }
+        else if(lineages[0][i+1]->get_parent()->get_type() == PREDICATE) {
+            lineages[0][i+1]->get_parent()->get_parent()->add_child_beginning(new XPathNode("qli:clear(\""+locations.first+"_"+std::to_string(group)+"\")", PREDICATE));
+        }
     }
 }
 

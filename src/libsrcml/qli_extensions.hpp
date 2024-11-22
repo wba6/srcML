@@ -14,6 +14,8 @@
 // Searching Functions
 void add_element(xmlXPathParserContext* context, int nargs);
 
+void match_element(xmlXPathParserContext* context, int nargs);
+
 void clear_elements(xmlXPathParserContext* context, int nargs);
 
 void is_valid_element(xmlXPathParserContext* context, int nargs);

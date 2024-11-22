@@ -112,6 +112,7 @@ void add_element(xmlXPathParserContext* ctxt, int nargs) {
     // order ?
     size_t number = (size_t) xmlXPathPopNumber(ctxt);
 
+
     // bucket name
     std::unique_ptr<xmlChar> ctxtBucket(xmlXPathPopString(ctxt));
     const std::string_view bucket = (char*)(ctxtBucket.get());
@@ -124,9 +125,9 @@ void add_element(xmlXPathParserContext* ctxt, int nargs) {
 
     UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
 
+
     bool isValid = false;
     for (int i = 0; i < node_set.get()->nodeNr; ++i) {
-
         const xmlNode* node = node_set.get()->nodeTab[i];
 
         // check for invalid elements
@@ -185,8 +186,95 @@ void add_element(xmlXPathParserContext* ctxt, int nargs) {
     xmlXPathReturnBoolean(ctxt, isValid);
 }
 
-void clear_elements(xmlXPathParserContext* ctxt, int nargs) {
+void match_element(xmlXPathParserContext* ctxt, int nargs) {
+    if (nargs < 2 || nargs > 4) {
+        std::cerr << "Arg arity error" << std::endl;
+        return;
+    }
 
+    // postfix
+    std::string_view postfix;
+    std::unique_ptr<xmlChar> ctxtPostfix;
+    if (nargs == 4) {
+        ctxtPostfix.reset(xmlXPathPopString(ctxt));
+        postfix = (const char*)(ctxtPostfix.get());
+    }
+
+    // prefix
+    std::string_view prefix;
+    std::unique_ptr<xmlChar> ctxtPrefix;
+    if (nargs >= 3) {
+        ctxtPrefix.reset(xmlXPathPopString(ctxt));
+        prefix = (const char*)(ctxtPrefix.get());
+    }
+
+    // order ?
+    //size_t number = (size_t) xmlXPathPopNumber(ctxt);
+
+    // bucket name
+    std::unique_ptr<xmlChar> ctxtBucket(xmlXPathPopString(ctxt));
+    const std::string_view bucket = (char*)(ctxtBucket.get());
+
+    // token
+    std::unique_ptr<xmlNodeSet> node_set(xmlXPathPopNodeSet(ctxt));
+    if(node_set.get() == NULL && xmlXPathCheckError(ctxt) == false) {
+        node_set = std::unique_ptr<xmlNodeSet>(xmlXPathNodeSetCreate(NULL));
+    }
+
+    UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
+
+    bool isValid = false;
+    for (int i = 0; i < node_set.get()->nodeNr; ++i) {
+
+        const xmlNode* node = node_set.get()->nodeTab[i];
+
+        // check for invalid elements
+        const std::string_view nodeURI((char *) node->ns->href);
+        const std::string_view nodeName((char*) node->name);
+        const bool invalidElement = ("operator"sv == nodeName ||
+                                    "comment"sv == nodeName ||
+                                    "modifier"sv == nodeName ||
+                                    "specifier"sv == nodeName) && "http://www.srcML.org/srcML/src"sv == nodeURI;
+        if (invalidElement) {
+            xmlXPathReturnBoolean(ctxt, false);
+            return;
+        }
+
+        const std::string token(get_node_text(node));
+        const auto node_ptr = reinterpret_cast<std::uintptr_t>(node);
+
+        // @NOTE Add comment
+
+        // handle token via std::string_view for efficent trimming
+        std::string_view tokenView(token);
+        tokenView = trim_whitespace(tokenView);
+
+        // remove prefix
+        if (tokenView.compare(0, prefix.size(), prefix) != 0) {
+            continue;
+        }
+        tokenView.remove_prefix(prefix.length());
+
+        // remove postfix
+        if (tokenView.compare(tokenView.size() - postfix.size(), postfix.size(), postfix) != 0) {
+            continue;
+        }
+        tokenView.remove_suffix(postfix.length());
+
+        thread_local std::unordered_set<std::string> tokens;
+
+        const auto itpair = tokens.insert(token.size() == tokenView.size() ? std::move(token) : std::string(tokenView));
+
+        const bool valid = table->is_element_in_bucket(bucket, table->size_of_variable_bucket(bucket), *(itpair.first), node_ptr);
+
+        isValid = isValid || valid;
+    }
+
+    // return if token matches
+    xmlXPathReturnBoolean(ctxt, isValid);
+}
+
+void clear_elements(xmlXPathParserContext* ctxt, int nargs) {
     if (nargs > 1) {
         std::cerr << "Arg arity error" << std::endl;
         return;
@@ -212,7 +300,6 @@ void clear_elements(xmlXPathParserContext* ctxt, int nargs) {
 }
 
 void is_valid_element(xmlXPathParserContext* ctxt, int nargs) {
-
     if (nargs != 1) {
         std::cerr << "Arg arity error" << std::endl;
         return;

@@ -215,6 +215,7 @@ TransformationResult xpathTransformation::apply(xmlDocPtr doc, int position) con
     xmlXPathRegisterNs(context.get(),(xmlChar*)"qli",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation");
     // Unification Operations
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"add-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&add_element);
+    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"match-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&match_element);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"clear",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&clear_elements);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"is-valid-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&is_valid_element);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"set-followed-by-scope",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&set_followed_by_scope);
