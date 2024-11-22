@@ -40,7 +40,7 @@ void find_adds(XPathNode* x_node, std::map<std::string, std::vector<XPathNode*>>
 }
 
 void find_and_add_followed_by_scope_sets(XPathNode* x_node) {
-    if(x_node->is_check_followed_by_call_node()) {
+    if(x_node->is_get_followed_by_scope_call_node()) {
         XPathNode* loop = x_node;
         while(loop->get_parent()->get_parent() != nullptr) {
             loop = loop->get_parent();
@@ -548,21 +548,42 @@ std::string XPathGenerator::convert() {
 
         if(operations[i] == "FOLLOWED") {
             XPathNode* rhs = source_exprs[i+1]; // z
+            XPathNode* rhs_copy = new XPathNode(*rhs);
             XPathNode* lhs = source_exprs[i]; // y
             XPathNode* pred = new XPathNode("",PREDICATE);
-            XPathNode* call = new XPathNode("qli:check-if-followed-by",CALL);
-            XPathNode* arg = new XPathNode(".//following::",NO_CONN);
+            XPathNode* set = new XPathNode("set:intersection",CALL);
+
+            XPathNode* right_arg = new XPathNode(".//following::",NO_CONN);
+
+            // Left set argument
+            if(rhs_copy->get_type() == PARENTHESES) {
+                auto terms = split(rhs_copy->get_text(),"|");
+                rhs_copy->set_text(std::string("qli:get-followed-by-scope()//"+split(terms[0],"//")[0]+"|qli:get-followed-by-scope()//"+split(terms[1],"//")[0]));
+                set->add_child(rhs_copy);
+            }
+            else {
+                XPathNode* holder = new XPathNode("",NO_CONN);
+                XPathNode* call = new XPathNode("qli:get-followed-by-scope",CALL);
+                XPathNode* descendants = new XPathNode("//",NO_CONN);
+                holder->add_child(call);
+                holder->add_child(descendants);
+                set->add_child(holder);
+                descendants->add_child(rhs_copy);
+            }
+
+            // Right arg
             if(rhs->get_type() == PARENTHESES) {
                 auto terms = split(rhs->get_text(),"|");
-                rhs->set_text(std::string("./following::"+split(terms[0],"//")[0]+"|./following::"+split(terms[1],"//")[0]));
-                arg->set_text("");
+                rhs->set_text(std::string(".//following::"+split(terms[0],"//")[0]+"|.//following::"+split(terms[1],"//")[0]));
+                right_arg->set_text("");
             }
             else {
                 rhs->set_type(NO_CONN);
             }
-            arg->add_child(rhs);
-            call->add_child(arg);
-            pred->add_child(call);
+            right_arg->add_child(rhs);
+            set->add_child(right_arg);
+
+            pred->add_child(set);
             lhs->add_child(pred);
             operations.erase(operations.begin()+i);
             source_exprs.erase(source_exprs.begin()+i+1);

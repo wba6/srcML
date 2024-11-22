@@ -256,47 +256,62 @@ void set_followed_by_scope(xmlXPathParserContext* ctxt, int nargs) {
     }
     xmlNode* node = set->nodeTab[0];
 
-    std::uintptr_t address = reinterpret_cast<std::uintptr_t>(node);
+    //std::uintptr_t address = reinterpret_cast<std::uintptr_t>(node);
 
-    table->set_followed_by_scope(address);
+    table->set_followed_by_scope(node);
 
 
 
     xmlXPathReturnBoolean(ctxt, true);
 }
 
-void check_if_followed_by(xmlXPathParserContext* ctxt, int nargs) {
-    if(nargs != 1) {
+void get_followed_by_scope(xmlXPathParserContext* ctxt, int nargs) {
+    if(nargs != 0) {
         std::cerr << "Arg arity error" << std::endl;
         return;
     }
 
-
     UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
 
-    xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+    xmlNodeSet* set = xmlXPathNodeSetCreate(NULL);
+    xmlXPathNodeSetAdd(set,table->get_followed_by_scope());
 
-    if(set == NULL && xmlXPathCheckError(ctxt) == false) {
-        set = xmlXPathNodeSetCreate(NULL);
-    }
-    //const auto node_ptr = reinterpret_cast<std::uintptr_t>(node);
-    std::uintptr_t scope = table->get_followed_by_scope();
+    xmlXPathReturnNodeSet(ctxt, set);
 
-
-    for (int i = 0; i < set->nodeNr; ++i) {
-        xmlNode* node = set->nodeTab[i];
-        
-        xmlNode* loop = node;
-        while(loop != NULL) {
-            if(reinterpret_cast<std::uintptr_t>(loop) == scope) {
-                xmlXPathReturnBoolean(ctxt, true);
-                return;
-            }
-            loop = loop->parent;
-        }
-    }
-    xmlXPathReturnBoolean(ctxt,false);
 }
+
+// void check_if_followed_by(xmlXPathParserContext* ctxt, int nargs) {
+//     if(nargs != 1) {
+//         std::cerr << "Arg arity error" << std::endl;
+//         return;
+//     }
+
+
+//     UnificationTable* table = (UnificationTable*)(ctxt->context->userData);
+
+//     xmlNodeSet* set = xmlXPathPopNodeSet(ctxt);
+
+//     if(set == NULL && xmlXPathCheckError(ctxt) == false) {
+//         set = xmlXPathNodeSetCreate(NULL);
+//     }
+//     //const auto node_ptr = reinterpret_cast<std::uintptr_t>(node);
+//     std::uintptr_t scope = table->get_followed_by_scope();
+
+
+//     for (int i = 0; i < set->nodeNr; ++i) {
+//         xmlNode* node = set->nodeTab[i];
+        
+//         xmlNode* loop = node;
+//         while(loop != NULL) {
+//             if(reinterpret_cast<std::uintptr_t>(loop) == scope) {
+//                 xmlXPathReturnBoolean(ctxt, true);
+//                 return;
+//             }
+//             loop = loop->parent;
+//         }
+//     }
+//     xmlXPathReturnBoolean(ctxt,false);
+// }
 
 void regex_match(xmlXPathParserContext* ctxt, int nargs) {
     if(nargs != 2) {

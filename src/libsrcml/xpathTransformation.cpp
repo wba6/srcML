@@ -218,7 +218,7 @@ TransformationResult xpathTransformation::apply(xmlDocPtr doc, int position) con
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"clear",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&clear_elements);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"is-valid-element",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&is_valid_element);
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"set-followed-by-scope",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&set_followed_by_scope);
-    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"check-if-followed-by",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&check_if_followed_by);
+    xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"get-followed-by-scope",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&get_followed_by_scope);
     // WHERE Clause Functions
     xmlXPathRegisterFuncNS(context.get(), (const xmlChar*)"regex-match",(xmlChar*)"http://www.srcML.org/srcML/srcQLImplementation",&regex_match);
     // Debug

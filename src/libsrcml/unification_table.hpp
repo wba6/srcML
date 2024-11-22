@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <regex>
 
+#include <libxml/parser.h>
+
 struct unique_element {
     std::string_view token;
     std::uintptr_t address;
@@ -46,22 +48,21 @@ public:
     bool is_element_in_bucket(std::string_view, int, std::string_view first, uintptr_t second) const;
     bool regex_match_bucket(std::string_view, std::string);
 
-    std::uintptr_t get_followed_by_scope() { return followed_by_scope; }
-    void set_followed_by_scope(std::uintptr_t address) { followed_by_scope = address; }
+    xmlNode* get_followed_by_scope() { return followed_by_scope; }
+    void set_followed_by_scope(xmlNode* node) { followed_by_scope = node; }
 
     void empty_buckets();
     void empty_bucket(std::string_view);
 
     void add_regex_rule(std::string_view, std::string_view);
     bool check_regex(std::string_view, std::string_view);
-    // void clear_storage();
 
     friend std::ostream& operator<<(std::ostream&, const UnificationTable&);
 
 private:
     variable_bucket bucket;
     std::map<std::string,std::set<std::string>> regex_rules;
-    std::uintptr_t followed_by_scope;
+    xmlNode* followed_by_scope;
 };
 
 #endif

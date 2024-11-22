@@ -20,7 +20,7 @@ void is_valid_element(xmlXPathParserContext* context, int nargs);
 
 void set_followed_by_scope(xmlXPathParserContext* context, int nargs);
 
-void check_if_followed_by(xmlXPathParserContext* context, int nargs);
+void get_followed_by_scope(xmlXPathParserContext* context, int nargs);
 
 // WHERE clause functions
 
