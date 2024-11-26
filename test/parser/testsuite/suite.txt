@@ -23,7 +23,7 @@ LANGUAGE_ALL_BASE ternary
 LANGUAGE_ALL_GEN while
 LANGUAGE_ALL_GEN ifnestcond
 # LANGUAGE_ALL_GEN return
-LANGUAGE_ALL_GEN function_decl
+LANGUAGE_C_FAMILY_NO_JAVASCRIPT function_decl
 LANGUAGE_ALL_GEN ifblock
 
 #LANGUAGE_CXX_FAMILY constructor_explicit
