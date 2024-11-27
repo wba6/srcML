@@ -137,8 +137,8 @@ token_set(srcMLParser, identifier_list_tokens_set,
     srcMLParser::EMIT,
 
     // JavaScript
-    srcMLParser::BREAK, srcMLParser::CATCH, srcMLParser::CONTINUE, srcMLParser::DO, srcMLParser::ELSE, srcMLParser::FINALLY, srcMLParser::JS_ASYNC, srcMLParser::JS_DEBUGGER, srcMLParser::JS_DEFAULT, srcMLParser::JS_EACH,
-    srcMLParser::JS_EXPORT, srcMLParser::JS_FUNCTION, srcMLParser::JS_IMPORT, srcMLParser::JS_RANGE_IN, srcMLParser::JS_WITH, srcMLParser::JS_YIELD, srcMLParser::SWITCH, srcMLParser::TRY
+    srcMLParser::JS_BREAK, srcMLParser::JS_CATCH, srcMLParser::JS_CONTINUE, srcMLParser::JS_DO, srcMLParser::JS_ELSE, srcMLParser::JS_FINALLY, srcMLParser::JS_ASYNC, srcMLParser::JS_DEBUGGER, srcMLParser::JS_DEFAULT,
+    srcMLParser::JS_EACH, srcMLParser::JS_EXPORT, srcMLParser::JS_FUNCTION, srcMLParser::JS_IMPORT, srcMLParser::JS_RANGE_IN, srcMLParser::JS_WITH, srcMLParser::JS_YIELD, srcMLParser::JS_SWITCH, srcMLParser::JS_TRY
 )
 
 token_set(srcMLParser, whitespace_token_set,
@@ -162,9 +162,10 @@ token_set(srcMLParser, whitespace_token_set,
 )
 
 token_set(srcMLParser, duplex_keyword_set,
-    srcMLParser::CATCH,
+    // JavaScript
+    srcMLParser::JS_CATCH,
     srcMLParser::JS_DEFAULT,
-    srcMLParser::ELSE,
+    srcMLParser::JS_ELSE,
     srcMLParser::JS_EXPORT,
     srcMLParser::JS_FUNCTION,
     srcMLParser::JS_IMPORT,
