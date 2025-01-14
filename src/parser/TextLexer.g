@@ -216,13 +216,24 @@ HASHBANG_COMMENT_START :
 ;
 
 // whitespace (except for newline)
-WS : (
+WS { int lastColumn = 0; } : (
     // single space
-    ' '  |
+    ' ' |
 
     // horizontal tab
-    '\t'
-)+ ;
+    { lastColumn = getColumn(); } '\t' {
+
+        // expand tab if option says to
+        if (isoption(options, SRCML_PARSER_OPTION_EXPAND_TABS)) {
+
+            // remove the tab character
+            text.pop_back();
+
+            // append the spaces
+            static const std::string_view spaces = "        ";
+            text.append(spaces.substr(0, getColumn() - lastColumn));
+        }
+    } )+ ;
 
 // end of line
 EOL : '\n' { 
