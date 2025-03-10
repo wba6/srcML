@@ -11770,7 +11770,7 @@ permits_list[] { CompleteElement element(this); ENTRY_DEBUG } :
   super_list
 */
 super_list[] { ENTRY_DEBUG } :
-        (options { greedy = true; } : derived | COMMA)*
+        (options { greedy = true; } : {(!inLanguage(LANGUAGE_JAVA) || LA(1) != PERMITS)}? derived | COMMA)*
 ;
 
 /*

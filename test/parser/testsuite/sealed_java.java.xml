@@ -19,6 +19,14 @@
 </unit>
 
 <unit language="Java">
+<class><specifier>sealed</specifier> class <name>foo</name> <super_list><implements>implements <super><name>bar</name></super></implements> <permits>permits <super><name>foobar</name></super></permits></super_list> <block>{}</block></class>
+</unit>
+
+<unit language="Java">
+<class><specifier>sealed</specifier> class <name>foo</name> <super_list><extends>extends <super><name>bar</name></super></extends> <permits>permits <super><name>foobar</name></super></permits></super_list> <block>{}</block></class>
+</unit>
+
+<unit language="Java">
 <class><specifier>public</specifier> <specifier>non-sealed</specifier> class <name>Shape</name> <block>{
 }</block></class>
 </unit>
