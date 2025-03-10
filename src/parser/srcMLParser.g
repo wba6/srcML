@@ -134,7 +134,7 @@ header "post_include_hpp" {
 using namespace ::std::literals::string_view_literals;
 
 // Commented-out code
-//#define DEBUG_PARSER
+#define DEBUG_PARSER
 
 // Macros to introduce trace statements
 #ifdef DEBUG_PARSER
@@ -852,6 +852,16 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
             )
         }?
         colon |
+        // switch cases @test switch
+        {
+            !inMode(MODE_INIT)
+            && inLanguage(LANGUAGE_JAVA)
+            && (
+                !inMode(MODE_EXPRESSION)
+                || inTransparentMode(MODE_DETECT_COLON)
+            )
+        }?
+        arrow_case |
 
         // process template operator correctly @test template
         { inTransparentMode(MODE_TEMPLATE_PARAMETER_LIST) }?
@@ -884,7 +894,7 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
             )
             && (
                 LA(1) != DEFAULT
-                || next_token() == COLON
+                || (next_token() == COLON || (inLanguage(LANGUAGE_JAVA) && next_token() == TRETURN))
             )
             && (
                 LA(1) != CHECKED
@@ -3150,6 +3160,22 @@ switch_statement[] { ENTRY_DEBUG } :
         SWITCH
 ;
 
+switch_expression[] { ENTRY_DEBUG } :
+        {
+            // statement with nested block
+            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_SWITCH | MODE_END_AT_BLOCK);
+
+            // start the switch statement
+            startElement(SSWITCH);
+
+            // expect a condition to follow
+            startNewMode(MODE_CONDITION | MODE_EXPECT);
+        }
+
+        SWITCH
+;
+
+
 /*
   section_entry_action
 
@@ -4676,7 +4702,8 @@ rcurly[] { ENTRY_DEBUG } :
 
         {
             // end the current mode for the block; do not end more than one since they may be nested
-            endMode(MODE_TOP);
+            if(!(inLanguage(LANGUAGE_JAVA) && inMode(MODE_SWITCH | MODE_END_AT_BLOCK)))
+                endMode(MODE_TOP);
         }
 ;
 
@@ -5370,6 +5397,21 @@ colon[] { ENTRY_DEBUG } :
         }
 
         COLON
+
+        {
+            if (inMode(MODE_DETECT_COLON))
+                endMode(MODE_DETECT_COLON);
+        }
+;
+
+arrow_case[] { ENTRY_DEBUG } :
+        {
+            // colon ends the current item in a list
+            if (inTransparentMode(MODE_TOP_SECTION))
+                endDownToMode(MODE_TOP_SECTION);
+        }
+
+        TRETURN
 
         {
             if (inMode(MODE_DETECT_COLON))
@@ -8982,7 +9024,10 @@ expression_part_no_ternary[CALL_TYPE type = NOCALL, int call_count = 1] {
         { inLanguage(LANGUAGE_C_FAMILY) && !inLanguage(LANGUAGE_CSHARP) }?
         (block_lambda_expression_full) => block_lambda_expression |
 
-        { inLanguage(LANGUAGE_JAVA) }?
+        { inLanguage(LANGUAGE_JAVA)}?
+        switch_expression |
+
+        { inLanguage(LANGUAGE_JAVA) && !inTransparentMode(MODE_DETECT_COLON)}?
         ((paren_pair | variable_identifier) TRETURN) => lambda_expression_java |
 
         { inLanguage(LANGUAGE_JAVA_FAMILY) }?
@@ -11361,7 +11406,10 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
         { inLanguage(LANGUAGE_C_FAMILY) && !inLanguage(LANGUAGE_CSHARP) }?
         (block_lambda_expression_full) => block_lambda_expression |
 
-        { inLanguage(LANGUAGE_JAVA) }?
+        { inLanguage(LANGUAGE_JAVA)}?
+        switch_expression |
+
+        { inLanguage(LANGUAGE_JAVA) && !inTransparentMode(MODE_DETECT_COLON)}?
         ((paren_pair | variable_identifier) TRETURN) => lambda_expression_java |
 
         { inLanguage(LANGUAGE_JAVA_FAMILY) }?
