@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" language="Java" url="switch">
+
+<unit language="Java">
+<switch>switch <condition>(<expr><name>day</name></expr>)</condition> <block>{<block_content>
+    <case>case <expr><name>WEDNESDAY</name></expr> -&gt;</case> <expr_stmt><expr><literal type="number">9</literal></expr>;</expr_stmt>
+</block_content>}</block></switch>
+</unit>
+
+<unit language="Java">
+<switch>switch <condition>(<expr><name>day</name></expr>)</condition> <block>{<block_content>
+    <case>case <expr><name>MONDAY</name></expr><operator>,</operator> <expr_stmt><expr><name>FRIDAY</name></expr><operator>,</operator> <expr><name>SUNDAY</name></expr></expr_stmt> -&gt;</case> <expr_stmt><expr><literal type="number">6</literal></expr>;</expr_stmt>
+</block_content>}</block></switch>
+</unit>
+
+<unit language="Java">
+<switch>switch <condition>(<expr><name>day</name></expr>)</condition> <block>{<block_content>
+    <default>default -&gt;</default> <throw>throw <expr><operator>new</operator> <call><name>Invalid</name><argument_list>()</argument_list></call></expr>;</throw>
+</block_content>}</block></switch>
+</unit>
+
+<unit language="Java">
+<switch>switch <condition>(<expr><name>day</name></expr>)</condition> <block>{<block_content>
+    <case>case <expr><name>MONDAY</name></expr><operator>,</operator> <expr_stmt><expr><name>FRIDAY</name></expr><operator>,</operator> <expr><name>SUNDAY</name></expr></expr_stmt> -&gt;</case> <expr_stmt><expr><literal type="number">6</literal></expr>;</expr_stmt>
+    <case>case <expr><name>WEDNESDAY</name></expr>              -&gt;</case> <expr_stmt><expr><literal type="number">9</literal></expr>;</expr_stmt>
+    <default>default -&gt;</default> <throw>throw <expr><operator>new</operator> <call><name>IllegalStateException</name><argument_list>(<argument><expr><literal type="string">"Invalid day: "</literal> <operator>+</operator> <name>day</name></expr></argument>)</argument_list></call></expr>;</throw>
+</block_content>}</block></switch>
+</unit>
+
+</unit>

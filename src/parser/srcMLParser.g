@@ -134,7 +134,7 @@ header "post_include_hpp" {
 using namespace ::std::literals::string_view_literals;
 
 // Commented-out code
-#define DEBUG_PARSER
+//#define DEBUG_PARSER
 
 // Macros to introduce trace statements
 #ifdef DEBUG_PARSER
@@ -4619,7 +4619,7 @@ block_end[] { bool in_issue_empty = inTransparentMode(MODE_ISSUE_EMPTY_AT_POP); 
         rcurly
 
         {
-            if (inMode(MODE_ANONYMOUS)) {
+            if (inMode(MODE_ANONYMOUS) || inMode(MODE_SWITCH | MODE_END_AT_BLOCK)) {
                 endMode();
 
                 if (LA(1) == LPAREN) {
@@ -4702,8 +4702,7 @@ rcurly[] { ENTRY_DEBUG } :
 
         {
             // end the current mode for the block; do not end more than one since they may be nested
-            if(!(inLanguage(LANGUAGE_JAVA) && inMode(MODE_SWITCH | MODE_END_AT_BLOCK)))
-                endMode(MODE_TOP);
+            endMode(MODE_TOP);
         }
 ;
 
