@@ -228,6 +228,7 @@ const std::unordered_map<int, Element> srcMLOutput::process = {
     { TOKEN::SINTERFACE_DECLARATION,      { "interface_decl",    SRC,      0,         0,     0,      0 }},
     { TOKEN::SANNOTATION_DEFN,            { "annotation_defn",   SRC,      0,         0,     0,      0 }},
     { TOKEN::SSTATIC_BLOCK,               { "static",            SRC,      0,         0,     0,      0 }},
+    { TOKEN::SYIELD_STATEMENT,            { "yield",             SRC,      0,         0,     0,      0 }},
 
     // special characters
     { TOKEN::SATTRIBUTE,                  { "attribute",         SRC,      0,         0,     0,      0 }},

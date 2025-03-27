@@ -604,6 +604,7 @@ tokens {
     SANNOTATION;
     SANNOTATION_DEFN;
     SSTATIC_BLOCK;
+    SYIELD_STATEMENT;
 
     // C#
     SCHECKED_STATEMENT;
@@ -987,7 +988,7 @@ keyword_statements[] { ENTRY_DEBUG } :
         { inLanguage(LANGUAGE_JAVA) && next_token() == LPAREN }?
         try_statement_with_resource |
 
-        try_statement | catch_statement | finally_statement | throw_statement |
+        try_statement | catch_statement | finally_statement | throw_statement | yield_statements |
 
         // namespace statements
         namespace_definition |
@@ -999,10 +1000,10 @@ keyword_statements[] { ENTRY_DEBUG } :
         static_assert_statement |
 
         // Java - keyword only detected for Java
-        import_statement | package_statement | assert_statement | static_block | 
+        import_statement | package_statement | assert_statement | static_block |
 
         // C# - keyword only detected for C#
-        checked_statement | unchecked_statement | lock_statement | fixed_statement | unsafe_statement | yield_statements |
+        checked_statement | unchecked_statement | lock_statement | fixed_statement | unsafe_statement |
 
         // C/C++ assembly block
         asm_declaration |
@@ -3363,12 +3364,28 @@ return_statement[] { ENTRY_DEBUG } :
         RETURN
 ;
 
+yield_statement[] { ENTRY_DEBUG } :
+        {
+            // statement with a possible expression
+            startNewMode(MODE_STATEMENT | MODE_EXPRESSION | MODE_EXPECT);
+
+            // start the return statement
+            startElement(SYIELD_STATEMENT);
+        }
+
+        YIELD
+;
+
 /*
   yield_statements
 
   Handles "yield" statements.
 */
 yield_statements[] { int t = next_token(); ENTRY_DEBUG } :
+
+        { inLanguage(LANGUAGE_JAVA) }?
+        yield_statement |
+
         { t == RETURN }?
         yield_return_statement |
 

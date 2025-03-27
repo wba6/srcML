@@ -589,6 +589,7 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "sealed"        , SEALED        , LANGUAGE_JAVA },
         { "non"           , NON           , LANGUAGE_JAVA },
         { "permits"       , PERMITS       , LANGUAGE_JAVA },
+        { "yield"         , YIELD         , LANGUAGE_JAVA },
 
 
         // C# specific keywords
