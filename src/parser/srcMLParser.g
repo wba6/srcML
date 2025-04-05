@@ -1779,9 +1779,15 @@ lambda_expression_csharp[] { bool first = true; ENTRY_DEBUG } :
         (parameter_list | lambda_single_parameter)
         lambda_csharp
 
+        {
+            if(LA(1) != LCURLY) {
+                startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+        }
+
         (options { greedy = true; } :
             { LA(1) != LCURLY && first }?
-            complete_expression set_bool[first, false]
+            expression set_bool[first, false]
         )*
 ;
 
