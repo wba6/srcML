@@ -37,4 +37,12 @@
 <expr_stmt><expr><lambda><parameter_list>(<parameter><decl><type><name>int</name></type> <name>a</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>b</name></decl></parameter>)</parameter_list> -&gt; <block>{<block_content> <return>return <expr><literal type="number">0</literal></expr></return> </block_content>}</block></lambda></expr>;</expr_stmt>
 </unit>
 
+<unit language="Java">
+<if_stmt><if>if <condition>(<expr><call><name><name>numbers</name><operator>.</operator><name>stream</name></name><argument_list>()</argument_list></call><operator>.</operator><call><name>anyMatch</name><argument_list>(<argument><expr><lambda><parameter_list type="pseudo"><parameter><decl><name>n</name></decl></parameter></parameter_list> -&gt;<block type="pseudo"><block_content> <expr><name>n</name> <operator>&gt;</operator> <literal type="number">12</literal></expr></block_content></block></lambda></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+    <expr_stmt><expr><call><name>bar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>bar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>bar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</unit>
+
 </unit>
