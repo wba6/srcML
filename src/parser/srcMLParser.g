@@ -713,6 +713,27 @@ tokens {
     SWITH_STATEMENT;
     SYIELD_STATEMENT;
     SYIELD_GENERATOR_STATEMENT;
+
+    // Python
+    SDELETE;
+    SDICTIONARY;
+    SDOCSTRING_PY;
+    SDOCSTRING_DOXYGEN_PY;
+    SDOXYGEN_PY;
+    SELLIPSIS;
+    SEXEC_PYTHON2;
+    SGLOBAL;
+    SHASHTAG_COMMENT;
+    SCOMPREHENSION;
+    SNONLOCAL;
+    SPARAMETER_ARGUMENT;
+    SPARAMETER_KEYWORD_ARGUMENT;
+    SPARAMETER_MODIFIER;
+    SPASS;
+    SPRINT_PYTHON2;
+    SSET;
+    STUPLE;
+    SYIELD_FROM_STATEMENT;
 }
 
 /*
@@ -750,6 +771,7 @@ public:
     bool cppif_duplicate = false;
     size_t number_finishing_elements = 0;
     std::vector<std::pair<srcMLState::MODE_TYPE, std::stack<int>>> finish_elements_add;
+    std::deque<char> lparen_types_py;
     bool in_template_param = false;
     int current_decl_type_js = 0;
     int start_count = 0;
@@ -767,6 +789,12 @@ public:
     static const antlr::BitSet identifier_list_tokens_set;
     static const antlr::BitSet whitespace_token_set;
     static const antlr::BitSet duplex_keyword_set;
+    static const antlr::BitSet keyword_name_token_set_py;
+    static const antlr::BitSet expect_blocks_py_token_set;
+    static const antlr::BitSet left_bracket_py_token_set;
+    static const antlr::BitSet right_bracket_py_token_set;
+    static const antlr::BitSet comment_py_token_set;
+    static const antlr::BitSet multiline_literals_py_token_set;
 
     // constructor
     srcMLParser(antlr::TokenStream& lexer, int lang, const OPTION_TYPE& options);
@@ -801,7 +829,8 @@ public:
     void endAllModes();
 
     virtual void consume() {
-        if (!skip_tokens_set.member((unsigned int) LA(1)))
+        // do not update last_consumed if in Python guessing mode or the token is in the skip_tokens_set
+        if ((!inLanguage(LANGUAGE_PYTHON) || inputState->guessing==0) && !skip_tokens_set.member((unsigned int) LA(1)))
             last_consumed = LA(1);
 
         LLkParser::consume();
@@ -843,12 +872,9 @@ public:
         if (rule.followingMode != 0)
             startNewMode(rule.followingMode);
 
-        if (check_valid_specifier_js()) {
-            // handle multiple pre-keyword specifiers in a row
-            while (check_valid_specifier_js()) {
-                specifier_js();
-            }
-        }
+        handleAttributes();
+
+        handleSpecifiers();
 
         consume();
 
@@ -856,6 +882,38 @@ public:
             (*this.*(rule.post))();
 
         return true;
+    }
+
+    void handleAttributes() {
+        // handle Python decorators
+        if (LA(1) == PY_ATSIGN) {
+            // handle multiple pre-keyword decorators in a row
+            while (LA(1) == PY_ATSIGN) {
+                attribute_py();
+            }
+        }
+    }
+
+    void handleSpecifiers() {
+        // handle JavaScript specifiers
+        if (inLanguage(LANGUAGE_JAVASCRIPT)) {
+            if (check_valid_specifier_js()) {
+                // handle multiple pre-keyword specifiers in a row
+                while (check_valid_specifier_js()) {
+                    specifier_js();
+                }
+            }
+        }
+
+        // handle Python specifiers
+        if (inLanguage(LANGUAGE_PYTHON)) {
+            if (check_valid_specifier_py()) {
+                // handle multiple pre-keyword specifiers in a row
+                while (check_valid_specifier_py()) {
+                    specifier_py();
+                }
+            }
+        }
     }
 }
 
@@ -889,6 +947,8 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
         { !inTransparentMode(MODE_INTERNAL_END_PAREN) || inPrevMode(MODE_CONDITION) }?
         rparen[false] |
 
+        offside_dedent |
+
         // characters with special actions that usually end currently open elements
         { !inTransparentMode(MODE_INTERNAL_END_CURLY) }?
         block_end |
@@ -897,6 +957,9 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
 
         { inMode(MODE_ENUM) }?
         enum_block |
+
+        { next_token() != EQUAL }?
+        offside_indent |
 
         // namespace block does not have block content element
         { inMode(MODE_NAMESPACE) }?
@@ -1045,16 +1108,16 @@ catch[...] {
 start_javascript[] {
         ++start_count;
 
-        const int JS_CATCH_LPAREN = 600;
-        const int JS_ELSE_IF = 601;
-        const int JS_DEFAULT_COLON = 602;
-        const int JS_FUNCTION_MULTOPS = 603;
-        const int JS_YIELD_MULTOPS = 604;
-        const int JS_STATIC_LCURLY = 605;
-        const int JS_EXPORT_LCURLY = 606;
-        const int JS_EXPORT_MULTOPS = 607;
-        const int JS_IMPORT_MULTOPS = 608;
-        const int JS_WITH_LPAREN = 609;
+        const int JS_CATCH_LPAREN = 800;
+        const int JS_ELSE_IF = 801;
+        const int JS_DEFAULT_COLON = 802;
+        const int JS_FUNCTION_MULTOPS = 803;
+        const int JS_YIELD_MULTOPS = 804;
+        const int JS_STATIC_LCURLY = 805;
+        const int JS_EXPORT_LCURLY = 806;
+        const int JS_EXPORT_MULTOPS = 807;
+        const int JS_IMPORT_MULTOPS = 808;
+        const int JS_WITH_LPAREN = 809;
 
         // A duplex keyword is a pair of adjacent keywords
         static const std::array<int, 500 * 500> duplexKeywords = [this](){
@@ -1085,10 +1148,10 @@ start_javascript[] {
             temp_array[CLASS]                 = { SCLASS, 0, MODE_STATEMENT | MODE_NEST, MODE_VARIABLE_NAME, nullptr, nullptr };
             temp_array[JS_CONTINUE]           = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, MODE_VARIABLE_NAME, nullptr, nullptr };
             temp_array[JS_DO]                 = { SDO_STATEMENT, 0, MODE_STATEMENT | MODE_TOP | MODE_DO_STATEMENT, MODE_STATEMENT | MODE_NEST, nullptr, &srcMLParser::pseudoblock };
-            temp_array[JS_ELSE]               = { SELSE, 0, MODE_STATEMENT | MODE_NEST | MODE_ELSE, MODE_STATEMENT | MODE_NEST, &srcMLParser::if_statement_js, &srcMLParser::pseudoblock };
+            temp_array[JS_ELSE]               = { SELSE, 0, MODE_STATEMENT | MODE_NEST | MODE_ELSE, MODE_STATEMENT | MODE_NEST, &srcMLParser::if_statement_start, &srcMLParser::pseudoblock };
             temp_array[JS_FINALLY]            = { SFINALLY_BLOCK, 0, MODE_STATEMENT | MODE_NEST, 0, nullptr, nullptr };
             temp_array[FOR]                   = { SFOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONTROL | MODE_EXPECT | MODE_FOR_LOOP_JS, nullptr, nullptr };
-            temp_array[IF]                    = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_js, nullptr };
+            temp_array[IF]                    = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, nullptr };
             temp_array[RETURN]                = { SRETURN_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
             temp_array[JS_SWITCH]             = { SSWITCH, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
             temp_array[THROW]                 = { STHROW_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
@@ -1105,7 +1168,7 @@ start_javascript[] {
             /* DUPLEX KEYWORDS */
             temp_array[JS_CATCH_LPAREN]       = { SCATCH_BLOCK, 0, MODE_STATEMENT | MODE_NEST | MODE_CATCH_JS, MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `(`
             temp_array[JS_DEFAULT_COLON]      = { SDEFAULT, 0, MODE_TOP_SECTION | MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_DETECT_COLON, MODE_STATEMENT, nullptr, nullptr };  // differentiates a `default` specifier from a `default` clause
-            temp_array[JS_ELSE_IF]            = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_js, &srcMLParser::consume };  // extra consume() for `if`
+            temp_array[JS_ELSE_IF]            = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, &srcMLParser::consume };  // extra consume() for `if`
             temp_array[JS_EXPORT_LCURLY]      = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, MODE_NAME_LIST_JS, nullptr, nullptr };  // treats `export` as a statement
             temp_array[JS_EXPORT_MULTOPS]     = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, &srcMLParser::multops_as_name };  // treats `*` in `export *` as a name
             temp_array[JS_FUNCTION_MULTOPS]   = { SFUNCTION_GENERATOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
@@ -1119,7 +1182,7 @@ start_javascript[] {
 
         // check if the current token is a specifier that occurs before a keyword
         if (check_valid_specifier_js()) {
-            std::array<int, 2> post_specifier_tokens = perform_post_specifier_check();
+            std::array<int, 2> post_specifier_tokens = perform_post_specifier_check_js();
 
             // looking for declarations (e.g., var/let/const/static) separately since they are not in the table
             if (
@@ -1260,6 +1323,222 @@ catch[...] {
 }
 
 /*
+  start_python
+
+  Invokes a table-based approach to detecting and handling tokens.
+
+  Whitespace tokens are handled elsewhere and are automagically included
+  in the output stream.
+
+  Order of evaluation is important.
+*/
+start_python[] {
+        ++start_count;
+
+        /*
+          May need to increase these constants in the future as more tokens are added
+        */
+
+        // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
+        const size_t DUPLEX_RULES_SIZE = 700;
+
+        // The duplex keyword values must start at a value 100 greater than the duplex rule size directly above
+        // Increment each new duplex keyword token by an additional one (except the first)
+        const int PY_EXCEPT_MULTOPS = DUPLEX_RULES_SIZE + 100;
+        const int PY_YIELD_PY_FROM = DUPLEX_RULES_SIZE + 101;
+
+        // The Python rule size must be 200 greater than the duplex rule size
+        // If there are ever more than 100 duplex keywords, this has to change
+        const size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
+
+        // A duplex keyword is a pair of adjacent keywords
+        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = [this](){
+            std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> temp_array;
+
+            temp_array[PY_EXCEPT + (MULTOPS << 8)] = PY_EXCEPT_MULTOPS;
+            temp_array[PY_YIELD + (PY_FROM << 8)] = PY_YIELD_PY_FROM;
+
+            return temp_array;
+        }();
+
+        // Python rules adhere to the following form:
+        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
+        static const std::array<Rule, PYTHON_RULES_SIZE> python_rules = [this](){
+            std::array<Rule, PYTHON_RULES_SIZE> temp_array;
+
+            /* GENERIC STATEMENTS */
+            temp_array[ASSERT]      = { SASSERT_STATEMENT, 0, MODE_STATEMENT | MODE_EXPRESSION | MODE_EXPECT | MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_ASSERT_PY, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[BREAK]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+            temp_array[PY_CASE]     = { SCASE, 0, MODE_STATEMENT | MODE_NEST | MODE_CASE_PY, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[CLASS]       = { SCLASS, 0, MODE_STATEMENT | MODE_NEST, MODE_SUPER_LIST_PY | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
+            temp_array[CONTINUE]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+            temp_array[ELSE]        = { SELSE, 0, MODE_STATEMENT | MODE_NEST, 0, &srcMLParser::if_statement_start, nullptr };
+            temp_array[FINALLY]     = { SFINALLY_BLOCK, 0, MODE_STATEMENT | MODE_NEST, 0, nullptr, nullptr };
+            temp_array[FOR]         = { SFOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_FOR_LOOP_PY, MODE_CONTROL | MODE_EXPECT | MODE_FOR_CONTROL_PY, nullptr, nullptr };
+            temp_array[IF]          = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, nullptr };
+            temp_array[RETURN]      = { SRETURN_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[TRY]         = { STRY_BLOCK, 0, MODE_STATEMENT, MODE_STATEMENT | MODE_NEST | MODE_TRY, nullptr, nullptr };
+            temp_array[WHILE]       = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_WHILE_LOOP_PY, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+
+            /* PYTHON STATEMENTS */
+            temp_array[PY_2_EXEC]   = { SEXEC_PYTHON2, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_2_PRINT]  = { SPRINT_PYTHON2, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_DELETE]   = { SDELETE, 0, MODE_STATEMENT, MODE_VARIABLE_NAME | MODE_LIST, nullptr, nullptr };
+            temp_array[PY_ELIF]     = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, nullptr };
+            temp_array[PY_EXCEPT]   = { SCATCH_BLOCK, 0, MODE_STATEMENT | MODE_NEST | MODE_EXCEPT_PY, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_FUNCTION] = { SFUNCTION_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_PY | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_GLOBAL]   = { SGLOBAL, 0, MODE_STATEMENT, MODE_VARIABLE_NAME | MODE_LIST, nullptr, nullptr };
+            temp_array[PY_IMPORT]   = { SIMPORT_STATEMENT, 0, MODE_STATEMENT | MODE_EXCLUDE_NO_PAREN_TUPLES_PY, MODE_VARIABLE_NAME | MODE_LIST, nullptr, nullptr };
+            temp_array[PY_MATCH]    = { SSWITCH, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_NONLOCAL] = { SNONLOCAL, 0, MODE_STATEMENT, MODE_VARIABLE_NAME | MODE_LIST, nullptr, nullptr };
+            temp_array[PY_PASS]     = { SPASS, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+            temp_array[PY_RAISE]    = { STHROW_STATEMENT, 0, MODE_STATEMENT | MODE_RAISE_PY, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_TYPE]     = { STYPEDEF, 0, MODE_STATEMENT | MODE_TYPEDEF, MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
+            temp_array[PY_WITH]     = { SWITH_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_EXPRESSION | MODE_EXPECT | MODE_LIST | MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_WITH_EXPRESSION_PY, nullptr, nullptr };
+            temp_array[PY_YIELD]    = { SYIELD_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+
+            /* DUPLEX KEYWORDS */
+            temp_array[PY_EXCEPT_MULTOPS] = { SCATCH_BLOCK, 0, MODE_STATEMENT | MODE_NEST | MODE_EXCEPT_PY, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
+            temp_array[PY_YIELD_PY_FROM]  = { SYIELD_FROM_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `from`
+
+            return temp_array;
+        }();
+
+        // ensure the lparen deque never starts empty by adding a dummy entry
+        if (lparen_types_py.empty())
+            lparen_types_py.emplace_back('*');
+
+        // special markup for a comprehension "for" (not a "for" loop)
+        if (LA(1) == FOR && !inMode(MODE_STATEMENT)) {
+            start_comprehension_py();
+            comprehension_py();
+        }
+
+        // special markup for an "if" that appears at the 'top-level' in a "case" statement
+        if (LA(1) == IF && !inMode(MODE_STATEMENT) && inTransparentMode(MODE_CASE_PY)) {
+            endDownToMode(MODE_CASE_PY);
+            consume();  // IF
+            startNewMode(MODE_CONDITION | MODE_EXPECT);
+        }
+
+        // special markup for a "from" that appears before an "import" statement
+        if (LA(1) == PY_FROM && perform_from_import_check())
+            from_import_py();
+
+        // special markup for a Python 2 "except" clause
+        if (LA(1) == PY_EXCEPT && perform_python_2_except_check())
+            python_2_except_py();
+
+        // check if the current token starts a decorator that occurs before a keyword (or specifiers)
+        // "@" is an operator in expressions, not a decorator
+        if (LA(1) == PY_ATSIGN && !inMode(MODE_EXPRESSION)) {
+            int post_attribute_token = perform_post_attribute_check_py();
+
+            // looking for functions or classes
+            if (post_attribute_token != -1) {
+                const auto& rule = python_rules[post_attribute_token];
+                if (rule.elementToken && processRule(rule)) {
+                    return;
+                }
+            }
+        }
+
+        // check if the current non-comment token is a specifier that occurs before a statement keyword
+        if (LA(1) != SNOP && inMode(MODE_STATEMENT) && check_valid_specifier_py()) {
+            int post_specifier_token = perform_post_specifier_check_py();
+
+            // looking for for-loops, functions, or with
+            if (post_specifier_token != -1) {
+                const auto& rule = python_rules[post_specifier_token];
+                if (rule.elementToken && processRule(rule)) {
+                    return;
+                }
+            }
+        }
+
+        // invoke the table to handle keywords and duplex keywords
+        if (inMode(MODE_STATEMENT)) {
+            auto token = LA(1);
+            if (duplex_keyword_set.member((unsigned int) LA(1))) {
+                const auto lookup = duplexKeywords[token + (next_token() << 8)];
+                if (lookup)
+                    token = lookup;
+            }
+
+            const auto& rule = python_rules[token];
+            if (rule.elementToken && processRule(rule)) {
+                return;
+            }
+        }
+
+        ENTRY_DEBUG_START
+        ENTRY_DEBUG
+} :
+        // if an "if" is found in an expression, it must start a ternary (not an if-statement)
+        { inMode(MODE_EXPRESSION) }?
+        ternary_py[false] |
+
+        // looking for lparen while expecting a super list (only used for classes)
+        { inMode(MODE_SUPER_LIST_PY) }?
+        python_super_list |
+
+        // looking for lparen while expecting a parameter list
+        { inMode(MODE_PARAMETER_LIST_PY) }?
+        python_parameter_list |
+
+        // looking for lbracket while expecting a parameter list
+        { inMode(MODE_PARAMETER_LIST_PY) }?
+        python_generic_parameter_list |
+
+        // looking to start the control part of a for-loop
+        { inMode(MODE_FOR_CONTROL_PY) }?
+        {
+            replaceMode(MODE_CONTROL, MODE_TOP | MODE_CONTROL_INITIALIZATION | MODE_LIST);
+            startElement(SCONTROL);
+        }
+        control_initialization_py |
+
+        // range-based "in" only occurs in for-loops and comprehensions
+        { inTransparentMode(MODE_FOR_CONTROL_PY) }?
+        range_in_py |
+
+        // looking for a comma to start the message half of an "assert"
+        { inMode(MODE_ASSERT_PY) }?
+        (comma expression) |
+
+        // looking for an expression to mark as a condition
+        { inMode(MODE_CONDITION | MODE_EXPECT) }?
+        condition_py |
+
+        // looking for "=" in a type statement
+        { inTransparentMode(MODE_TYPEDEF) }?
+        EQUAL
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        } |
+
+        // looking for "from" that was not a part of "from..import"
+        from_py |
+
+        // looking for a keyword or operator that does not belong to a statement
+        alias_py | function_annotation_py |
+
+        // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
+        start
+;
+exception
+catch[...] {
+        CATCH_DEBUG
+
+        // need to consume the token. If we got here because
+        // of an error with EOF token, then call EOF directly
+        if (LA(1) == 1)
+            eof();
+        else
+            consume();
+}
+
+/*
   keyword_statements
 
   Statements that begin with a unique keyword.
@@ -1269,12 +1548,17 @@ keyword_statements[] { ENTRY_DEBUG
 
     } :
         // conditional statements
+        // Python if/elif/else are handled in start_py
+        { !inLanguage(LANGUAGE_PYTHON) }?
         if_statement |
 
-        { next_token() == IF }?
+        { !inLanguage(LANGUAGE_PYTHON) && next_token() == IF }?
         elseif_statement |
 
-        else_statement | switch_statement | switch_case | switch_default |
+        { !inLanguage(LANGUAGE_PYTHON) }?
+        else_statement |
+
+        switch_statement | switch_case | switch_default |
 
         // iterative statements
         while_statement | for_statement | do_statement | foreach_statement |
@@ -1335,8 +1619,9 @@ pattern_statements[] {
         STMT_TYPE stmt_type = NONE;
         CALL_TYPE type = NOCALL;
 
-        // detect the declaration/definition type
-        pattern_check(stmt_type, secondtoken, type_count, after_token);
+        // detect the declaration/definition type for non-Python languages
+        if (!inLanguage(LANGUAGE_PYTHON))
+            pattern_check(stmt_type, secondtoken, type_count, after_token);
 
         ENTRY_DEBUG
 } :
@@ -1473,7 +1758,8 @@ pattern_statements[] {
 
         // call
         {
-            isoption(parser_options, SRCML_PARSER_OPTION_CPP)
+            !inLanguage(LANGUAGE_PYTHON)
+            && isoption(parser_options, SRCML_PARSER_OPTION_CPP)
             && (
                 inMode(MODE_ACCESS_REGION)
                 || (
@@ -2853,7 +3139,7 @@ call_check[int& postnametoken, int& argumenttoken, int& postcalltoken, bool& ise
         ]
 
         (
-            { isoption(parser_options, SRCML_PARSER_OPTION_CPP) }?
+            { isoption(parser_options, SRCML_PARSER_OPTION_CPP) || inLanguage(LANGUAGE_PYTHON) }?
             // check for proper form of argument list
             (call_check_paren_pair[argumenttoken] set_int[call_count, call_count + 1])*
             // record token after argument list to differentiate between call and macro
@@ -2905,6 +3191,7 @@ call_check_paren_pair[int& argumenttoken, int depth = 0] { int call_token = LA(1
             { next_token_check(LCURLY, LPAREN) }?
             lambda_anonymous |
 
+            { !inLanguage(LANGUAGE_PYTHON) }?
             (LBRACKET (~RBRACKET)* RBRACKET (LPAREN | LCURLY)) => lambda_expression_full_cpp |
 
             (block_lambda_expression_full) => block_lambda_expression_full |
@@ -2916,6 +3203,23 @@ call_check_paren_pair[int& argumenttoken, int depth = 0] { int call_token = LA(1
             { depth == 0 }?
             (identifier | generic_selection)
             throw_exception[true] |
+
+            // forbid parentheses (handled recursively) but allow the following in Python:
+            // - "if"/"else" for ternaries
+            // - "lambda" for lambdas
+            // - "async"/"for"/"in"/"if" for comprehensions
+            // - "yield"/"from" for yield expressions
+            {
+                call_token == LPAREN
+                && inLanguage(LANGUAGE_PYTHON)
+                && (
+                    !keyword_token_set.member(LA(1))
+                    || LA(1) == IF || LA(1) == ELSE || LA(1) == FOR || LA(1) == PY_IN || LA(1) == PY_ASYNC
+                    || LA(1) == PY_LAMBDA || LA(1) == PY_YIELD || LA(1) == PY_FROM
+                )
+            }?
+            ~(LPAREN | RPAREN | TERMINATE)
+            set_bool[name, false] |
 
             // forbid parentheses (handled recursively) and cfg tokens
             { call_token == LPAREN && !keyword_token_set.member(LA(1)) }?
@@ -5198,7 +5502,7 @@ terminate_token[] { LightweightElement element(this); ENTRY_DEBUG } :
                         !inLanguage(LANGUAGE_JAVA)
                         || !inMode(MODE_ENUM | MODE_LIST)
                     )
-                )
+                ) && (!inLanguage(LANGUAGE_PYTHON) || !LT(1)->getText().empty())
             )
                 startElement(SEMPTY);
 
@@ -5724,6 +6028,25 @@ comma[] { bool markup_comma = true; ENTRY_DEBUG } :
                 endMode(MODE_PROPERTY_JS);
             }
 
+            // comma ends the current condition in a Python assert
+            if (
+                inLanguage(LANGUAGE_PYTHON)
+                && inTransparentMode(MODE_ASSERT_PY)
+                && inTransparentMode(MODE_CONDITION)
+                && !(
+                    inTransparentMode(MODE_ARGUMENT)
+                    || inTransparentMode(MODE_ARRAY_PY)
+                    || inTransparentMode(MODE_DICTIONARY_PY)
+                    || inTransparentMode(MODE_INDEX_PY)
+                    || inTransparentMode(MODE_PARAMETER)
+                    || inTransparentMode(MODE_SET_PY)
+                    || inTransparentMode(MODE_TUPLE_PY)
+                )
+            ) {
+                endDownToMode(MODE_CONDITION);
+                endMode(MODE_CONDITION);
+            }
+
             // comma ends the current item in a list or ends the current expression
             if (
                 !inTransparentMode(MODE_PARSE_EOL)
@@ -5749,6 +6072,7 @@ comma[] { bool markup_comma = true; ENTRY_DEBUG } :
             if (
                 inMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_LIST)
                 || inTransparentMode(MODE_CONTROL_CONDITION | MODE_END_AT_COMMA)
+                || (inLanguage(LANGUAGE_PYTHON))
                 || (
                     inLanguage(LANGUAGE_JAVASCRIPT)
                     && (
@@ -5883,7 +6207,7 @@ colon[] { ENTRY_DEBUG } :
                 endDownToMode(MODE_TOP_SECTION);
         }
 
-        COLON
+        (COLON | PY_COLON)
 
         {
             if (inMode(MODE_DETECT_COLON))
@@ -7606,6 +7930,8 @@ variable_identifier_array_grammar_sub[bool& iscomplex] { CompleteElement element
                 )
             )
                 startNewMode(MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_END_AT_COMMA);
+            else if (inLanguage(LANGUAGE_PYTHON))
+                startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_INDEX_PY | MODE_LOCAL | MODE_TOP | MODE_LIST);
             else
                 startNewMode(MODE_LOCAL | MODE_TOP | MODE_LIST);
 
@@ -7973,6 +8299,11 @@ complete_expression[] { CompleteElement element(this); ENTRY_DEBUG } :
 
             // expression with right parentheses if a previous match is in one
             { LA(1) != RPAREN || inTransparentMode(MODE_INTERNAL_END_PAREN) }?
+            {
+                // ensure each part of a comma-separated Python index is marked as an expression
+                if (inLanguage(LANGUAGE_PYTHON) && !inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
             expression |
 
             colon_marked
@@ -8305,7 +8636,10 @@ identifier_list[] { ENTRY_DEBUG } :
 
         // JavaScript
         JS_BREAK | JS_CATCH | JS_CONTINUE | JS_DO | JS_ELSE | JS_FINALLY | JS_ASYNC | JS_DEBUGGER | JS_DEFAULT | JS_EACH |
-        JS_EXPORT | JS_FUNCTION | JS_IMPORT | JS_RANGE_IN | JS_WITH | JS_YIELD | JS_SWITCH | JS_TRY
+        JS_EXPORT | JS_FUNCTION | JS_IMPORT | JS_RANGE_IN | JS_WITH | JS_YIELD | JS_SWITCH | JS_TRY |
+
+        // Python
+        PY_2_EXEC | PY_2_PRINT | PY_CASE | PY_MATCH | PY_TYPE
 ;
 
 /*
@@ -8448,7 +8782,14 @@ compound_name[] { CompleteElement element(this); bool iscompound = false; ENTRY_
   (e.g., A::operator String // () {}).  Detecting before here means lookahead on all A::B::... names, causing a slowdown of
   almost 20%.  The solution ("hack") is to start all complex names as operator methods, then replace by NOP if not.
 */
-compound_name_inner[bool index] { CompleteElement element(this); TokenPosition tp; bool iscompound = false; ENTRY_DEBUG } :
+compound_name_inner[bool index] {
+        CompleteElement element(this);
+        TokenPosition tp;
+        bool iscompound = false;
+        bool islist = (inMode(MODE_VARIABLE_NAME | MODE_EXPECT));
+
+        ENTRY_DEBUG
+} :
         {
             // local mode that is automatically ended by leaving this function
             startNewMode(MODE_LOCAL);
@@ -8476,7 +8817,12 @@ compound_name_inner[bool index] { CompleteElement element(this); TokenPosition t
             { inLanguage(LANGUAGE_C) }?
             compound_name_c[iscompound] |
 
-            { inLanguage(LANGUAGE_CXX) || inLanguage(LANGUAGE_JAVASCRIPT) }?
+            // JavaScript and Python use the same C++ logic for names
+            {
+                inLanguage(LANGUAGE_CXX)
+                || inLanguage(LANGUAGE_JAVASCRIPT)
+                || inLanguage(LANGUAGE_PYTHON)
+            }?
             compound_name_cpp[iscompound] |
 
             macro_type_name_call
@@ -8488,6 +8834,13 @@ compound_name_inner[bool index] { CompleteElement element(this); TokenPosition t
         )*
 
         (options { greedy = true; } :
+            // special markup for Python class/function/type statements
+            { inLanguage(LANGUAGE_PYTHON) && index && islist }?
+            python_generic_parameter_list
+            {
+                iscompound = true;
+            } |
+
             {
                 index
                 /* Commented-out code: && !inTransparentMode(MODE_EAT_TYPE) */
@@ -8517,7 +8870,7 @@ multops_star[] { ENTRY_DEBUG } :
 /*
   compound_name_cpp
 
-  Handles a compound name (C++).
+  Handles a compound name (C++, JavaScript, and Python).
 */
 compound_name_cpp[bool& iscompound] { namestack.fill(""); bool iscolon = false; ENTRY_DEBUG } :
         (options { greedy = true; } :
@@ -9265,6 +9618,10 @@ call[int call_count = 1] { ENTRY_DEBUG } :
             { inLanguage(LANGUAGE_OBJECTIVE_C) }?
             objective_c_call |
 
+            { inLanguage(LANGUAGE_PYTHON) }?
+            compound_name
+            call_argument_list |
+
             function_identifier
             call_argument_list
         )
@@ -9277,11 +9634,15 @@ call[int call_count = 1] { ENTRY_DEBUG } :
 */
 call_argument_list[] { ENTRY_DEBUG } :
         {
-            // list of parameters
+            // list of arguments
             replaceMode(MODE_ARGUMENT_LIST, MODE_EXPECT | MODE_LIST | MODE_INTERNAL_END_PAREN | MODE_END_ONLY_AT_RPAREN);
 
             // start the argument list
             startElement(SARGUMENT_LIST);
+
+            // lparen starts a call
+            if (inLanguage(LANGUAGE_PYTHON))
+                lparen_types_py.emplace_back('c');  // call LPAREN
         }
 
         (
@@ -9558,21 +9919,9 @@ expression_part_no_ternary[CALL_TYPE type = NOCALL, int call_count = 1] {
                     startNewMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN);
                 } |
 
-                // right parentheses that only matches the left parentheses of an expression
+                // right parentheses that only match left parentheses in an expression
                 { inTransparentMode(MODE_INTERNAL_END_PAREN) }?
-                {
-                    end_control_incr = inTransparentMode(MODE_CONTROL_INCREMENT);
-
-                    // stop at this matching paren, or a preprocessor statement
-                    endDownToModeSet(MODE_INTERNAL_END_PAREN | MODE_PREPROC);
-
-                    if (inMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN))
-                        endMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN);
-
-                    end_control_incr = end_control_incr && !inTransparentMode(MODE_CONTROL_INCREMENT);
-                }
-                // treat as operator for operator markup
-                rparen[!end_control_incr, end_control_incr] |
+                rparen_expression |
 
                 // left curly brace
                 {
@@ -11426,7 +11775,10 @@ pure_expression_block[] { ENTRY_DEBUG } :
 */
 general_operators[] { LightweightElement element(this); ENTRY_DEBUG } :
         {
-            if ((LA(1) != IN || !inTransparentMode(MODE_CONTROL_CONDITION)))
+            if (
+                (LA(1) != IN || !inTransparentMode(MODE_CONTROL_CONDITION))
+                || (LA(1) == PY_IN && !inTransparentMode(MODE_FOR_CONTROL_PY))
+            )
                 startElement(SOPERATOR);
         }
 
@@ -11463,7 +11815,11 @@ general_operators[] { LightweightElement element(this); ENTRY_DEBUG } :
             BLOCKOP |
 
             // JavaScript
-            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_TYPEOF | JS_VOID
+            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_TYPEOF | JS_VOID |
+
+            // Python
+            { next_token() == PY_NOT }? PY_IS PY_NOT | { next_token() == PY_IN }? PY_NOT PY_IN |
+            EXPONENTIATION | PY_AND | PY_ATSIGN | PY_AWAIT | PY_COLON | PY_IN | PY_IS | PY_NOT | PY_OR
         )
 ;
 
@@ -11512,8 +11868,31 @@ rparen_operator[bool markup = true] { LightweightElement element(this); ENTRY_DE
 
   Handles right parenthesis processing.
 */
-rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getParen() == 0; ENTRY_DEBUG } :
+rparen[bool markup = true, bool end_control_incr = false] {
+        bool isempty = getParen() == 0;
+        bool wascall = false;
+
+        ENTRY_DEBUG
+} :
         {
+            if (inLanguage(LANGUAGE_PYTHON)) {
+                switch (lparen_types_py.back()) {
+                    // found Python rparen that ends a call
+                    case 'c':
+                        lparen_types_py.pop_back();
+                        wascall = true;
+                        break;
+    
+                    // found Python rparen that ends a parameter list
+                    case 'p':
+                        lparen_types_py.pop_back();
+                        break;
+    
+                    default:
+                        break;
+                }
+            }
+
             if (isempty) {
                 // additional right parentheses indicates end of non-list modes
                 endDownToModeSet(MODE_LIST | MODE_PREPROC | MODE_END_ONLY_AT_RPAREN | MODE_ONLY_END_TERMINATE);
@@ -11551,7 +11930,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                     // start the then element
                     // startNoSkipElement(STHEN);
 
-                    if (LA(1) != LCURLY) {
+                    if (LA(1) != LCURLY && LA(1) != INDENT) {
                         startNoSkipElement(SPSEUDO_BLOCK);
                         startNoSkipElement(SCONTENT);
                     }
@@ -11562,7 +11941,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                         // Commented-out code
                         // open_elements.push(STHEN);
 
-                        if (LA(1) != LCURLY)
+                        if (LA(1) != LCURLY && LA(1) != INDENT)
                             open_elements.push(SPSEUDO_BLOCK);
 
                         dupMode(open_elements);
@@ -11575,7 +11954,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                 if (inMode(MODE_LIST | MODE_CONDITION) && inPrevMode(MODE_STATEMENT | MODE_NEST)) {
                     endMode(MODE_LIST);
 
-                    if (LA(1) != LCURLY) {
+                    if (LA(1) != LCURLY && LA(1) != INDENT) {
                         startNoSkipElement(SPSEUDO_BLOCK);
                         startNoSkipElement(SCONTENT);
                     }
@@ -11583,7 +11962,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                     if (cppif_duplicate) {
                         std::stack<int> open_elements;
 
-                        if (LA(1) != LCURLY)
+                        if (LA(1) != LCURLY && LA(1) != INDENT)
                             open_elements.push(SPSEUDO_BLOCK);
 
                         dupMode(open_elements);
@@ -11595,7 +11974,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                     if (inMode(MODE_LIST))
                         endMode(MODE_LIST);
 
-                    if (LA(1) != LCURLY) {
+                    if (LA(1) != LCURLY && LA(1) != INDENT) {
                         startNoSkipElement(SPSEUDO_BLOCK);
                         startNoSkipElement(SCONTENT);
                     }
@@ -11603,7 +11982,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                     if (cppif_duplicate) {
                         std::stack<int> open_elements;
 
-                        if (LA(1) != LCURLY)
+                        if (LA(1) != LCURLY && LA(1) != INDENT)
                             open_elements.push(SPSEUDO_BLOCK);
 
                         dupMode(open_elements);
@@ -11613,7 +11992,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                 } else if (inMode(MODE_LIST | MODE_CONTROL_CONDITION)) {
                     endMode(MODE_CONTROL_CONDITION);
 
-                    if (LA(1) != LCURLY) {
+                    if (LA(1) != LCURLY && LA(1) != INDENT) {
                         startNoSkipElement(SPSEUDO_BLOCK);
                         startNoSkipElement(SCONTENT);
                     }
@@ -11621,7 +12000,7 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                     if (cppif_duplicate) {
                         std::stack<int> open_elements;
 
-                        if (LA(1) != LCURLY)
+                        if (LA(1) != LCURLY && LA(1) != INDENT)
                             open_elements.push(SPSEUDO_BLOCK);
 
                         dupMode(open_elements);
@@ -11633,6 +12012,25 @@ rparen[bool markup = true, bool end_control_incr = false] { bool isempty = getPa
                 if (inMode(MODE_LIST))
                     endMode(MODE_LIST);
                 }
+            }
+
+            // special case for a Python assert message that directly follows a call
+            if (
+                inLanguage(LANGUAGE_PYTHON)
+                && wascall
+                && LA(1) == COMMA
+                && inTransparentMode(MODE_ASSERT_PY)
+                && !inTransparentMode(MODE_ARGUMENT)
+                && !inTransparentMode(MODE_LAMBDA_CONTENT_PY)
+                && (
+                    next_token() != RPAREN
+                    || lparen_types_py.back() != 't'
+                )
+            ) {
+                comma();
+
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
             }
         }
 ;
@@ -11779,7 +12177,7 @@ expression_process[] { ENTRY_DEBUG } :
                 if (inPrevMode(MODE_TERNARY_CONDITION))
                     setMode(MODE_TERNARY_CONDITION);
 
-                // start the expression statement
+                // start the expression
                 startElement(SEXPRESSION);
             }
         }
@@ -11830,10 +12228,94 @@ expression_part_plus_linq[CALL_TYPE type = NOCALL, int call_count = 1] { ENTRY_D
 expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
         bool flag;
         bool isempty = false;
-        bool end_control_incr = false;
+
+        // special case: expression that starts a Python tuple without parentheses
+        if (
+            inLanguage(LANGUAGE_PYTHON)
+            && (LA(1) != EQUAL && !keyword_token_set.member(LA(1)))
+            && !inTransparentMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY)
+            && !inTransparentMode(MODE_ARGUMENT)
+            && inMode(MODE_EXPRESSION)
+            && perform_tuple_check_no_paren_py()
+        ) {
+            tuple_no_paren_py();
+            return;
+        }
 
         ENTRY_DEBUG
 } :
+        // looking for a Python indexable function call (e.g., "a()[]", "b()[][]", etc.)
+        {
+            inLanguage(LANGUAGE_PYTHON)
+            && (last_consumed == RPAREN || last_consumed == RBRACKET)
+            && LA(1) == LBRACKET
+        }?
+        variable_identifier_array_grammar_sub[flag] |
+
+        // looking for name to start a Python subscriptable function call (e.g., "a[]()" or "a.b[]()")
+        {
+            inLanguage(LANGUAGE_PYTHON)
+            && LA(1) == NAME
+            && (next_token() == LBRACKET || (next_token() == PERIOD && perform_member_access_function_call_check_py()))
+            && perform_subscriptable_function_call_check_py()
+        }?
+        call[call_count]
+        argument |
+
+        // looking for a Python operator lparen (which indicates the lparen does not start a call or tuple)
+        { inLanguage(LANGUAGE_PYTHON) && !perform_tuple_check_py() }?
+        operator_parenthesis_complete_py |
+
+        // looking for lparen to start a Python tuple
+        { inLanguage(LANGUAGE_PYTHON) && last_consumed != NAME && perform_tuple_check_py() }?
+        tuple_py |
+
+        // looking for "if" in a non-comprehension expression to start a Python ternary
+        {
+            inLanguage(LANGUAGE_PYTHON)
+            && inMode(MODE_EXPRESSION)
+            && (
+                !inTransparentMode(MODE_COMPREHENSION_PY)
+                || lparen_types_py.size() > 1
+            )
+        }?
+        ternary_py[false] |
+
+        // looking for lbracket to start a Python array
+        { inLanguage(LANGUAGE_PYTHON) && last_consumed != NAME }?
+        array_py |
+
+        // looking for rcurly immediately after lcurly (empty dictionary)
+        { inLanguage(LANGUAGE_PYTHON) && next_token() == PY_RCURLY }?
+        dictionary_py[true] |
+
+        // looking for lcurly to start a Python set
+        { inLanguage(LANGUAGE_PYTHON) }?
+        set_py |
+
+        // looking for "async" + "for" (in an expression) to start a Python comprehension
+        { inLanguage(LANGUAGE_PYTHON) }?
+        start_comprehension_py
+        specifier_py
+        comprehension_py |
+
+        // looking for "for" (in an expression) to start a Python comprehension
+        { inLanguage(LANGUAGE_PYTHON) }?
+        start_comprehension_py
+        comprehension_py |
+
+        // looking for "lambda" to start a Python lambda
+        { inLanguage(LANGUAGE_PYTHON) }?
+        lambda_py |
+
+        // looking for "yield" or "yield from" to start a Python yield expression
+        { inLanguage(LANGUAGE_PYTHON) }?
+        yield_expression_py |
+
+        // looking for a colon to start a Python type annotation
+        { inLanguage(LANGUAGE_PYTHON) && !inTransparentMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY) }?
+        type_alias_annotation_py |
+
         // do not mark JavaScript method blocks as objects (e.g., methodName() {})
         { inLanguage(LANGUAGE_JAVASCRIPT) && last_consumed == RPAREN }?
         lcurly[true] |
@@ -12001,22 +12483,9 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
                 ternary_expression
             )* |
 
-            // right parentheses that only matches a left parentheses of an expression
+            // right parentheses that only match left parentheses in an expression
             { inTransparentMode(MODE_INTERNAL_END_PAREN) }?
-            {
-                end_control_incr = inTransparentMode(MODE_CONTROL_INCREMENT);
-
-                // stop at this matching parenthesis, or a preprocessor statement
-                endDownToModeSet(MODE_INTERNAL_END_PAREN | MODE_PREPROC);
-                
-                if (inMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN))
-                    endMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN);
-
-                end_control_incr = end_control_incr && !inTransparentMode(MODE_CONTROL_INCREMENT);
-            }
-
-            // treat as operator for operator markup
-            rparen[!end_control_incr, end_control_incr] |
+            rparen_expression |
 
             // left curly brace
             {
@@ -12068,12 +12537,124 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
 ;
 
 /*
+  rparen_expression
+
+  Matches right parentheses to one left parentheses in an expression.
+  Contains logic to match consecutive right parentheses.
+*/
+rparen_expression[] { bool end_control_incr = false; ENTRY_DEBUG } :
+        {
+            end_control_incr = inTransparentMode(MODE_CONTROL_INCREMENT);
+
+            // stop at this matching parenthesis, or a preprocessor statement
+            endDownToModeSet(MODE_INTERNAL_END_PAREN | MODE_PREPROC);
+            
+            if (inMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN))
+                endMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN);
+
+            end_control_incr = end_control_incr && !inTransparentMode(MODE_CONTROL_INCREMENT);
+        }
+
+        // treat as an operator for operator markup
+        rparen[!end_control_incr, end_control_incr]
+
+        // handle consecutive right parentheses in a Python lambda
+        // whose single expression contains nested calls
+        (options { greedy = true; } :
+            {
+                inLanguage(LANGUAGE_PYTHON)
+                && lparen_types_py.back() == 'c'
+                && inTransparentMode(MODE_INTERNAL_END_PAREN)
+                && inTransparentMode(MODE_LAMBDA_CONTENT_PY)
+            }?
+            {
+                // stop at this matching parenthesis
+                endDownToMode(MODE_INTERNAL_END_PAREN);
+
+                if (inMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN))
+                    endMode(MODE_EXPRESSION | MODE_LIST | MODE_INTERNAL_END_PAREN);
+            }
+
+            rparen
+        )*
+;
+
+/*
   literals
 
   Handles various rules for literals.
 */
 literals[] { ENTRY_DEBUG } :
-        string_literal | char_literal | backtick_literal | literal | boolean | null_literal | complex_literal | nil_literal
+        { inLanguage(LANGUAGE_PYTHON) }?
+        dquote_literal_py |
+
+        { inLanguage(LANGUAGE_PYTHON) }?
+        squote_literal_py |
+
+        string_literal | char_literal | backtick_literal | literal | boolean | null_literal |
+        complex_literal | nil_literal | none_literal | ellipsis_literal
+;
+
+/*
+  dquote_literal_py
+
+  Handles double-quoted strings, docstrings, and doxygen strings in Python.
+  Only the start and the end of strings are put directly through the parser.  The contents of the string are handled as whitespace.
+*/
+dquote_literal_py[bool markup = true] {
+        LightweightElement element(this);
+        bool is_docstring = (LA(1) == DQUOTE_DOCSTRING_START);
+        bool is_doxygen = (next_token() == DQUOTE_DOXYGEN_END);
+
+        ENTRY_DEBUG
+} :
+        {
+            if (is_docstring && is_doxygen)
+                startElement(SDOCSTRING_DOXYGEN_PY);
+            else if (is_docstring)
+                startElement(SDOCSTRING_PY);
+            else if (is_doxygen)
+                startElement(SDOXYGEN_PY);
+            else
+                startElement(SSTRING);
+        }
+
+        (
+            (STRING_START | DQUOTE_DOCSTRING_START)
+            (STRING_END | RAW_STRING_END | DQUOTE_DOCSTRING_END | DQUOTE_DOXYGEN_END)
+        )
+;
+
+/*
+  squote_literal_py
+
+  Handles single-quoted strings, docstrings, and doxygen strings in Python.
+  Only the start and the end of strings are put directly through the parser.  The contents of the string are handled as whitespace.
+*/
+squote_literal_py[bool markup = true] {
+        LightweightElement element(this);
+        bool is_docstring = (LA(1) == SQUOTE_DOCSTRING_START);
+        bool is_doxygen = (next_token() == SQUOTE_DOXYGEN_END);
+
+        ENTRY_DEBUG
+} :
+        {
+            if (markup) {
+                if (is_docstring && is_doxygen)
+                    startElement(SDOCSTRING_DOXYGEN_PY);
+                else if (is_docstring)
+                    startElement(SDOCSTRING_PY);
+                else if (is_doxygen)
+                    startElement(SDOXYGEN_PY);
+                else
+                    startElement(SSTRING);
+            }
+        }
+
+        (
+            (CHAR_START | SQUOTE_DOCSTRING_START)
+            (CHAR_END | SQUOTE_DOCSTRING_END | SQUOTE_DOXYGEN_END)
+        )
 ;
 
 /*
@@ -12083,8 +12664,9 @@ literals[] { ENTRY_DEBUG } :
 */
 string_literal[bool markup = true] { LightweightElement element(this); ENTRY_DEBUG } :
         {
-            if (markup)
+            if (markup) {
                 startElement(SSTRING);
+            }
         }
 
         (STRING_START (STRING_END | RAW_STRING_END))
@@ -12140,6 +12722,32 @@ nil_literal[] { LightweightElement element(this); ENTRY_DEBUG } :
         }
 
         NIL
+;
+
+/*
+  none_py
+
+  Handles a "None" literal in Python.
+*/
+none_literal[] { LightweightElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SNULL);
+        }
+
+        LITERAL_NONE
+;
+
+/*
+  ellipsis_py
+
+  Handles a "..." (ellipsis) literal in Python.
+*/
+ellipsis_literal[] { LightweightElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SELLIPSIS);
+        }
+
+        LITERAL_ELLIPSIS
 ;
 
 /*
@@ -12537,6 +13145,16 @@ argument[] { ENTRY_DEBUG } :
 
             // start the argument
             startElement(SARGUMENT);
+
+            // Python has named arguments
+            if (inLanguage(LANGUAGE_PYTHON) && LA(1) == NAME && next_token() == EQUAL) {
+                startNewMode(MODE_VARIABLE_NAME | MODE_EXPECT);
+
+                compound_name();
+                match(EQUAL);
+
+                startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
         }
 
         (options { greedy = true; } :
@@ -12549,6 +13167,7 @@ argument[] { ENTRY_DEBUG } :
             argument_modifier_csharp
         )*
 
+        // match the argument expression
         (
             {
                 !(
@@ -12567,6 +13186,12 @@ argument[] { ENTRY_DEBUG } :
             (type_identifier) => expression_process
             type_identifier
         )
+
+        (options { greedy = true; } :
+            // Python arguments have optional syntax (e.g., starting with '*' or '**')
+            { inLanguage(LANGUAGE_PYTHON) && (last_consumed == MULTOPS || last_consumed == EXPONENTIATION) }?
+            expression
+        )*
 ;
 
 /*
@@ -12722,7 +13347,7 @@ parameter_type_count[int& type_count, bool output_type = true] {
         CompleteElement element(this);
         bool is_compound = false;
 
-        if (inLanguage(LANGUAGE_JAVASCRIPT))
+        if (inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON))
             output_type = false;
 
         ENTRY_DEBUG
@@ -15112,15 +15737,21 @@ rparen_with_js[] { ENTRY_DEBUG } :
 ;
 
 /*
-  if_statement_js
+  if_statement_start
 
-  Handles a JavaScript "if" statement.  Wraps the entire "if...else" statement in an if statement tag.
+  Starts a JavaScript "if" statement (if/else if/else) and a Python "if" statement (if/elif/else).
+  Wraps the entire "if...else" statement in an if statement tag.
   Wraps lone "if", "else", or "else if" blocks in an if statement tag to match existing functionality.
 */
-if_statement_js[] { ENTRY_DEBUG } :
+if_statement_start[] { ENTRY_DEBUG } :
         {
-            // catchup for isolated else
-            if (!inMode(MODE_IF_STATEMENT)) {
+            // Several Python statements include "else" that should not be marked as an if-statement
+            if (
+                !inMode(MODE_IF_STATEMENT)
+                && !inMode(MODE_TRY)
+                && !inMode(MODE_FOR_LOOP_PY)
+                && !inMode(MODE_WHILE_LOOP_PY)
+            ) {
                 // statement with nested statement; detection of else
                 startNewMode(MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_IF_STATEMENT);
 
@@ -15298,12 +15929,12 @@ check_valid_specifier_js[] returns [int isspecifier] {
 } :;
 
 /*
-  perform_post_specifier_check
+  perform_post_specifier_check_js
 
   Returns the next two tokens that occur after a JavaScript specifier.
   If there are multiple specifiers in a row, returns the next two tokens after the last specifier.
 */
-perform_post_specifier_check[] returns [std::array<int, 2> keywords] {
+perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
         keywords[0] = -1;
         keywords[1] = -1;
         int start = mark();
@@ -15366,8 +15997,8 @@ export_specifier[] { SingleElement element(this); ENTRY_DEBUG } :
 /*
   multops_as_name
 
-  Handles cases where "*" is a name in a JavaScript "export" or "import" statement.
-  Invokes compound name logic if the next token is an "alias."
+  Handles cases where "*" is a name in JavaScript import/export statements or Python import statements.
+  JavaScript: Invokes compound name logic if the next token is an "alias."
 */
 multops_as_name[] { SingleElement element(this); ENTRY_DEBUG } :
         {
@@ -15729,7 +16360,22 @@ array_js[] { CompleteElement element(this); ENTRY_DEBUG } :
         }
 
         LBRACKET
-        complete_expression
+
+        (
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inMode(MODE_EXPRESSION))
+                endMode(MODE_EXPRESSION);
+        }
+
         RBRACKET
 
         {
@@ -15834,5 +16480,2404 @@ setter_js[] { ENTRY_DEBUG } :
 
         {
             startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
+        }
+;
+
+/*
+  offside_indent
+
+  Handles block starts for languages that do not use curly braces for blocks (e.g., Python).
+  Uses lcurly and lcurly_base logic.
+*/
+offside_indent[bool content = true] { ENTRY_DEBUG } :
+        {
+            if (inMode(MODE_NO_BLOCK_CONTENT))
+                content = false;
+
+            // special end for conditions
+            if (inTransparentMode(MODE_CONDITION) && !inMode(MODE_ANONYMOUS)) {
+                endDownToMode(MODE_CONDITION);
+                endMode(MODE_CONDITION);
+            }
+
+            if (inTransparentMode(MODE_TRAILING_RETURN)) {
+                endDownToMode(MODE_TRAILING_RETURN);
+                endMode(MODE_TRAILING_RETURN);
+            }
+
+            // special end for constructor member initialization list
+            if (inMode(MODE_LIST | MODE_CALL)) {
+                // flush any whitespace tokens since sections should end at the last possible place
+                flushSkip();
+
+                endMode();
+            }
+
+            // ensure Python case and catch expressions end before the block begins
+            if (
+                inLanguage(LANGUAGE_PYTHON)
+                && inMode(MODE_EXPRESSION)
+                && (
+                    inTransparentMode(MODE_CASE_PY)
+                    || inTransparentMode(MODE_EXCEPT_PY)
+                )
+            )
+                endMode(MODE_EXPRESSION);
+
+            // ensure Python for-loop control groups end before the block begins
+            if (inLanguage(LANGUAGE_PYTHON) && inTransparentMode(MODE_FOR_CONTROL_PY)) {
+                endDownToMode(MODE_FOR_CONTROL_PY);
+                endMode(MODE_FOR_CONTROL_PY);
+            }
+
+            // ensure the expression following a Python "with" ends before the block begins
+            if (inLanguage(LANGUAGE_PYTHON) && inTransparentMode(MODE_WITH_EXPRESSION_PY)) {
+                endDownToMode(MODE_WITH_EXPRESSION_PY);
+                endMode(MODE_WITH_EXPRESSION_PY);
+            }
+
+            startNewMode(MODE_BLOCK);
+
+            startElement(SBLOCK);
+        }
+
+        INDENT
+
+        {
+            if (content) {
+                startNewMode(MODE_BLOCK_CONTENT);
+                startNoSkipElement(SCONTENT);
+            }
+        }
+
+        set_bool[skip_ternary, false]
+
+        {
+            setMode(MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_LIST);
+        }
+;
+
+/*
+  offside_dedent
+
+  Handles block ends for languages that do not use curly braces for blocks (e.g., Python).
+  Uses rcurly and block_end logic.
+*/
+offside_dedent[] { ENTRY_DEBUG } :
+        {
+            // end any elements inside of the block; this is basically endDownToMode(MODE_TOP) but checks for class ending
+            if (inTransparentMode(MODE_TOP)) {
+                while (size() > 1 && !inMode(MODE_TOP)) {
+                    if (inMode(MODE_CLASS))
+                        if (!class_namestack.empty()) {
+                            class_namestack.pop();
+                        }
+
+                    endMode();
+                }
+            }
+
+            // flush any whitespace tokens since sections should end at the last possible place
+            flushSkip();
+
+            // end any sections inside the mode
+            endWhileMode(MODE_TOP_SECTION);
+
+            if (inMode(MODE_BLOCK_CONTENT))
+                endMode(MODE_BLOCK_CONTENT);
+        }
+
+        DEDENT
+
+        {
+            // special case for "elif" in Python; end the if and do not end the if statement
+            if (inLanguage(LANGUAGE_PYTHON) && LA(1) == PY_ELIF && inTransparentMode(MODE_IF)) {
+                endDownToMode(MODE_IF);
+                endMode(MODE_IF);
+                return;
+            }
+
+            // Ignore TERMINATE for one-line "if"/"elif"/"else", "for", "try", or "while" statements
+            if (
+                inLanguage(LANGUAGE_PYTHON)
+                && (
+                    inTransparentMode(MODE_IF_STATEMENT)
+                    || inTransparentMode(MODE_FOR_LOOP_PY)
+                    || inTransparentMode(MODE_TRY)
+                    || inTransparentMode(MODE_WHILE_LOOP_PY)
+                ) && LA(1) == TERMINATE
+            )
+                consume();
+
+            // special case to ensure "if" encloses the entire "if..elif..else" block
+            if (inLanguage(LANGUAGE_PYTHON)
+                && inTransparentMode(MODE_IF_STATEMENT)
+                && (LA(1) == PY_ELIF || LA(1) == ELSE)
+            ) {
+                endDownToMode(MODE_IF_STATEMENT);
+                return;
+            }
+
+            // special case to ensure "try" encloses the entire "try..except..else..finally" block
+            if (inLanguage(LANGUAGE_PYTHON)
+                && inTransparentMode(MODE_TRY)
+                && (LA(1) == PY_EXCEPT || LA(1) == ELSE || LA(1) == FINALLY)
+            ) {
+                endDownToMode(MODE_TRY);
+                return;
+            }
+
+            // special case to ensure "for" encloses the entire "for..else" block
+            if (inLanguage(LANGUAGE_PYTHON) && LA(1) == ELSE && inTransparentMode(MODE_FOR_LOOP_PY)) {
+                endDownToMode(MODE_FOR_LOOP_PY);
+                return;
+            }
+
+            // special case to ensure "while" encloses the entire "while..else" block
+            if (inLanguage(LANGUAGE_PYTHON) && LA(1) == ELSE && inTransparentMode(MODE_WHILE_LOOP_PY)) {
+                endDownToMode(MODE_WHILE_LOOP_PY);
+                return;
+            }
+
+            // end the current mode for the block; do not end more than one since they may be nested
+            endMode(MODE_TOP);
+
+            // end all the statements this statement is nested in
+            // special case when ending then of if statement: end down to either a block or top section, or to an if, whichever is reached first
+            endDownToModeSet(MODE_BLOCK | MODE_TOP | MODE_IF | MODE_ELSE | MODE_TRY | MODE_ANONYMOUS);
+
+            bool endstatement = inMode(MODE_END_AT_BLOCK);
+            bool anonymous_class = (inMode(MODE_CLASS) || inMode(MODE_ENUM)) && inMode(MODE_END_AT_BLOCK);
+
+            // some statements end with the block
+            if (inMode(MODE_END_AT_BLOCK)) {
+                endMode();
+
+                if (inTransparentMode(MODE_TEMPLATE))
+                    endMode();
+            }
+
+            // looking for a terminate character (';'); some statements end with the block if there is no terminate
+            if (inMode(MODE_END_AT_BLOCK_NO_TERMINATE) && LA(1) != TERMINATE) {
+                endstatement = true;
+                endMode();
+            }
+
+            if (!(anonymous_class) && (!(inMode(MODE_CLASS) || inMode(MODE_ENUM)) || endstatement))
+                else_handling();
+
+            // if true, we need to markup the (abbreviated) variable declaration
+            if (inMode(MODE_DECL) && LA(1) != TERMINATE)
+                short_variable_declaration();
+
+            // ensure "for" or "while" end correctly after "else"
+            if (inLanguage(LANGUAGE_PYTHON) && (inMode(MODE_FOR_LOOP_PY) || inMode(MODE_WHILE_LOOP_PY)))
+                endMode();
+        }
+;
+
+/*
+  condition_py
+
+  Handles conditions in Python "assert"/"if"/"match"/"while" statements.
+*/
+condition_py[] { ENTRY_DEBUG } :
+        {
+            startElement(SCONDITION);
+
+            setMode(MODE_LIST | MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        expression
+;
+
+/*
+  alias_py
+
+  Handles a Python "as" expression on its own.
+*/
+alias_py[] { CompleteElement element(this); int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            // end the current expression before starting the alias
+            if (inMode(MODE_EXPRESSION)) {
+                endDownToMode(MODE_EXPRESSION);
+                endMode(MODE_EXPRESSION);
+            }
+
+            startNewMode(MODE_ALIAS_PY);
+
+            startElement(SALIAS);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        PY_ALIAS
+
+        (options { greedy = true; } :
+            // end the alias if:
+            // - at the start of a block
+            // - at RPAREN that is not part of the alias
+            // - at IF that is not part of the alias (special case for "case")
+            {
+                LA(1) == INDENT
+                || (LA(1) == RPAREN && lparen_types_size == lparen_types_py.size())
+                || (
+                    LA(1) == IF
+                    && lparen_types_size == lparen_types_py.size()
+                    && inTransparentMode(MODE_CASE_PY)
+                )
+            }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            { lparen_types_size < lparen_types_py.size() }?
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ALIAS_PY)) {
+                endDownToMode(MODE_ALIAS_PY);
+                endMode(MODE_ALIAS_PY);
+            }
+        }
+;
+
+/*
+  from_import_py
+
+  Handles a Python "from" used with an "import" keyword.
+  Use perform_from_import_check to ensure an "import" appears after "from" at some point.
+*/
+from_import_py[] { CompleteElement element(this); int paren_count = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_STATEMENT | MODE_EXCLUDE_NO_PAREN_TUPLES_PY);
+            startElement(SIMPORT_STATEMENT);
+
+            startNewMode(MODE_FROM_PY);
+            startElement(SFROM);
+        }
+
+        PY_FROM
+
+        {
+            // mark anything that follows a "from" as a name, including periods
+            if (LA(1) != PY_IMPORT) {
+                startNewMode(MODE_VARIABLE_NAME);
+
+                startElement(SNAME);
+
+                while (LA(1) != PY_IMPORT) {
+                    consume();
+                }
+
+                endMode(MODE_VARIABLE_NAME);
+            }
+
+            endMode(MODE_FROM_PY);
+
+            startNewMode(MODE_VARIABLE_NAME | MODE_LIST);
+        }
+
+        PY_IMPORT
+
+        (options { greedy = true; } :
+            { paren_count > 0 }?
+            {
+                --paren_count;
+            }
+            RPAREN |
+
+            {
+                ++paren_count;
+            }
+            LPAREN |
+
+            alias_py | multops_as_name | compound_name | comma
+        )*
+;
+
+/*
+  from_py
+
+  Handles all other cases where "from" appears in Python.
+  See from_import_py for the "from..import" case.
+*/
+from_py[] { ENTRY_DEBUG } :
+        // mark whatever follows "from" as a name
+        { !inTransparentMode(MODE_RAISE_PY) }?
+        from_as_name |
+
+        // "raise" statement: enclose whatever follows "from" in an expression
+        {
+            endDownToMode(MODE_RAISE_PY);
+
+            startNewMode(MODE_FROM_PY);
+            startElement(SFROM);
+        }
+
+        PY_FROM
+
+        (options { greedy = true; } :
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+;
+
+/*
+  from_as_name
+
+  Handles cases where "from" is a name in a Python "import" statement.
+*/
+from_as_name[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SNAME);
+        }
+
+        PY_FROM
+;
+
+/*
+  perform_from_import_check
+
+  Checks to see if an "import" occurs at some point after a "from" in Python.
+*/
+perform_from_import_check[] returns [bool isimport] {
+        isimport = false;
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                if (LA(1) == PY_IMPORT || LA(1) == TERMINATE || LA(1) == 1 /* EOF */)
+                    break;
+
+                consume();
+            }
+
+            if (LA(1) == PY_IMPORT)
+                isimport = true;
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  range_in_py
+
+  Handles a Python "in" expression using the range tag.
+*/
+range_in_py[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+
+            startElement(SRANGE_IN);
+        }
+
+        PY_IN
+
+        (options { greedy = true; } :
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+;
+
+/*
+  comprehension_range_py
+
+  Handles a Python "in" expression in a comprehension using the range tag.
+  An "if" expression can appear after the "in" expression (only for comprehensions).
+*/
+comprehension_range_py[] { int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_RANGE_IN_PY);
+
+            startElement(SRANGE_IN);
+        }
+
+        PY_IN
+
+        {
+            lparen_types_size = lparen_types_py.size();  // do not end call RPAREN early
+
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        (options { greedy = true; } :
+            {
+                LA(1) == IF  // found the optional "if" part of a list comp.
+                || (
+                    LA(1) == RPAREN  // do not consume the call RPAREN that is not part of a list comp.
+                    && lparen_types_py.back() == 'c'
+                    && lparen_types_py.size() == lparen_types_size
+                )
+            }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // do not accidentally consume the tuple-ending RPAREN or operator RPAREN;
+            // only applies if the tuple/operator RPAREN is part of the comprehension
+            {
+                (
+                    (
+                        !inTransparentMode(MODE_TUPLE_PY)
+                        || lparen_types_size != lparen_types_py.size()
+                    )
+                    || last_consumed != RPAREN
+                    || LA(1) != RPAREN
+                    || next_token() == RPAREN
+                )
+                && next_token() != TERMINATE
+                && (LA(1) != RPAREN || lparen_types_py.back() != 'o')
+            }?
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (LA(1) != RPAREN || lparen_types_py.back() != 'o')
+                endMode(MODE_EXPRESSION);
+
+            if (inTransparentMode(MODE_RANGE_IN_PY)) {
+                endDownToMode(MODE_RANGE_IN_PY);
+                endMode(MODE_RANGE_IN_PY);
+            }
+        }
+;
+
+/*
+  comprehension_if_py
+
+  Handles an "if" in a Python comprehension differently from other "if" expressions.
+*/
+comprehension_if_py[] { bool multiple_ifs = false; int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            lparen_types_size = lparen_types_py.size();  // do not end call RPAREN early
+        }
+
+        (options { greedy = true; } :
+            // do not accidentally consume the call-ending RPAREN that is not part of a list comp.
+            { LA(1) == RPAREN && lparen_types_py.back() == 'c' && lparen_types_py.size() == lparen_types_size }?
+            {
+                break;
+            } |
+
+            { getParen() == 0 }?
+            start_comprehension_if_py[multiple_ifs]
+            {
+                multiple_ifs = true;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // do not accidentally consume the tuple-ending RPAREN or operator RPAREN
+            {
+                (
+                    !inTransparentMode(MODE_TUPLE_PY)
+                    || last_consumed != RPAREN
+                    || LA(1) != RPAREN
+                    || next_token() == RPAREN
+                )
+                && next_token() != TERMINATE
+                && (LA(1) != RPAREN || lparen_types_py.back() != 'o')
+            }?
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+;
+
+/*
+  start_comprehension_if_py
+
+  Starts an "if" in a Python comprehension.
+  Ends the previous "if" if there are multiple in a row.
+*/
+start_comprehension_if_py[bool multiple_ifs = false] { ENTRY_DEBUG } :
+        {
+            // end previous "if" to start a new "if"
+            if (multiple_ifs) {
+                endDownToMode(MODE_COMPREHENSION_IF_PY);
+                endMode(MODE_COMPREHENSION_IF_PY);
+            }
+
+            startNewMode(MODE_COMPREHENSION_IF_PY);
+
+            startElement(SIF);
+        }
+
+        IF
+
+        {
+            startElement(SCONDITION);
+
+            setMode(MODE_LIST | MODE_EXPRESSION | MODE_EXPECT);
+        }
+;
+
+/*
+  python_parameter_list
+
+  Handles a Python parameter list.
+*/
+python_parameter_list[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            // list of parameters
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_PARAMETER | MODE_LIST | MODE_EXPECT);
+
+            // start the parameter list statement
+            startElement(SPARAMETER_LIST);
+
+            lparen_types_py.emplace_back('p');  // parameter list LPAREN
+        }
+
+        // parameter list must include all possible parts since it is part of a function detection
+        LPAREN
+
+        (
+            {
+                // we are in a parameter list; we must end the current parameter
+                if (!inMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT))
+                    endMode();
+            }
+            comma |
+
+            complete_python_parameter
+        )*
+
+        rparen[false]
+;
+
+/*
+  python_generic_parameter_list
+
+  Handles a Python generic parameter list.
+*/
+python_generic_parameter_list[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            // list of parameters
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_PARAMETER | MODE_LIST | MODE_EXPECT);
+
+            // start the generic parameter list statement
+            startElement(SGENERIC_PARAMETER_LIST);
+        }
+
+        // generic parameter list must include all possible parts since it is part of a function detection
+        LBRACKET
+
+        (
+            {
+                // we are in a generic parameter list; we must end the current parameter
+                if (!inMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT))
+                    endMode();
+            }
+            comma |
+
+            complete_python_parameter
+        )*
+
+        {
+            if (inMode(MODE_PARAMETER) && last_consumed != COMMA)
+                endMode(MODE_PARAMETER);
+        }
+
+        RBRACKET
+;
+
+/*
+  complete_python_parameter
+
+  Handles a Python parameter.  Python parameters have many forms (e.g., modifier, args, kwargs).
+*/
+complete_python_parameter[] {
+        int type_count = 0;
+        int secondtoken = 0;
+        int after_token = 0;
+        STMT_TYPE stmt_type = NONE;
+
+        ENTRY_DEBUG
+} :
+        {
+            startNewMode(MODE_PARAMETER);
+
+            // positional-only ('/') or keyword-only ('*') parameters
+            if (
+                LA(1) == OPERATORS
+                || (
+                    LA(1) == MULTOPS
+                    && (
+                        next_token() == COMMA
+                        || next_token() == RPAREN
+                    )
+                )
+            )
+                startElement(SPARAMETER_MODIFIER);
+
+            // arbitrary positional parameter ('*' NAME)
+            else if (LA(1) == MULTOPS)
+                startElement(SPARAMETER_ARGUMENT);
+
+            // arbitrary keyword parameter ('**' NAME)
+            else if (LA(1) == EXPONENTIATION)
+                startElement(SPARAMETER_KEYWORD_ARGUMENT);
+
+            // general parameter
+            else
+                startElement(SPARAMETER);
+        }
+
+        (
+            // '**' + NAME (with optional annotation)
+            { next_token() == NAME }?
+            EXPONENTIATION
+            compound_name
+            parameter_annotation_py |
+
+            // '*' or '/' only
+            {
+                next_token() == COMMA
+                || next_token() == RPAREN
+                || (
+                    inTransparentMode(MODE_LAMBDA_PY)
+                    && next_token() == PY_COLON
+                )
+            }?
+            (MULTOPS | OPERATORS) |
+
+            // '*' + NAME (with optional annotation)
+            { next_token() == NAME }?
+            MULTOPS
+            compound_name
+            parameter_annotation_py |
+
+            // annotation (with optional initialization)
+            { next_token() == PY_COLON }?
+            compound_name
+            parameter_annotation_py |
+
+            // initialization
+            { next_token() == EQUAL }?
+            compound_name
+            parameter_init_py |
+
+            compound_name
+        )
+;
+
+/*
+  parameter_annotation_py
+
+  Handles a Python parameter annotation.
+*/
+parameter_annotation_py[] { int lparen_types_size = 0; bool found_init = false; ENTRY_DEBUG } :
+        {
+            // This is possible if called after handling an arbitrary positional parameter
+            // or arbitrary keyword parameter in complete_python_parameter.  In a Python
+            // lambda, a colon indicates the start of an expression (not annotation).
+            if (LA(1) != PY_COLON || inTransparentMode(MODE_LAMBDA_PY))
+                return;
+
+            startNewMode(MODE_ANNOTATION_PY);
+
+            startElement(SANNOTATION);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        PY_COLON
+
+        (options { greedy = true; } :
+            // do not consume the ending RPAREN for a parameter list or EQUAL for an init
+            { (LA(1) == RPAREN || LA(1) == EQUAL) && lparen_types_py.back() == 'p' }?
+            {
+                if (LA(1) == EQUAL)
+                    found_init = true;
+
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            { inMode(MODE_EXPRESSION) }?
+            parameter_init_py |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            // do not consume parameter list commas
+            { lparen_types_size < lparen_types_py.size() }?
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ANNOTATION_PY)) {
+                endDownToMode(MODE_ANNOTATION_PY);
+                endMode(MODE_ANNOTATION_PY);
+            }
+
+            if (found_init)
+                parameter_init_py();
+        }
+;
+
+/*
+  parameter_init_py
+
+  Handles a Python parameter initialization.
+*/
+parameter_init_py[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SINIT);
+        }
+
+        EQUAL
+
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        (options { greedy = true; } :
+            // do not consume the lambda's PY_COLON or ending RPAREN for a parameter list
+            {
+                (LA(1) == RPAREN && lparen_types_py.back() == 'p')
+                || (LA(1) == PY_COLON && inTransparentMode(MODE_LAMBDA_PY))
+            }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // consume commas for calls, but not for parameters
+            { lparen_types_py.back() == 'c' }?
+            comma |
+
+            expression
+        )*
+;
+
+/*
+  function_annotation_py
+
+  Handles a Python function annotation, starting with an arrow ('->').
+*/
+function_annotation_py[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_ANNOTATION_PY);
+
+            startElement(SANNOTATION);
+        }
+
+        PY_ARROW
+
+        (options { greedy = true; } :
+            { LA(1) == INDENT }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ANNOTATION_PY)) {
+                endDownToMode(MODE_ANNOTATION_PY);
+                endMode(MODE_ANNOTATION_PY);
+            }
+        }
+;
+
+/*
+  python_super_list
+
+  Handles a Python super list, used primarily with classes.
+  Operates under the assumption MODE_SUPER_LIST_PY is one of the current modes.
+*/
+python_super_list[] { CompleteElement element(this); int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            assertMode(MODE_SUPER_LIST_PY);
+
+            // a class can contain non-parenthesized tuples, but a super list cannot
+            replaceMode(MODE_SUPER_LIST_PY, MODE_SUPER_LIST_PY | MODE_EXCLUDE_NO_PAREN_TUPLES_PY);
+
+            // start the super list
+            startElement(SDERIVATION_LIST);
+
+            lparen_types_py.emplace_back('s');  // super list LPAREN
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        LPAREN
+
+        (options { greedy = true; } :
+            { LA(1) == RPAREN && lparen_types_py.back() == 's' }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inTransparentMode(MODE_SUPER_PY)) {
+                    startNewMode(MODE_SUPER_PY | MODE_LIST | MODE_EXPECT);
+
+                    // start the super, which contains an expression
+                    startElement(SDERIVATION);
+
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+                }
+            }
+            expression |
+
+            {
+                // ensure arguments end correctly at a comma
+                if (lparen_types_size < lparen_types_py.size() && inTransparentMode(MODE_ARGUMENT)) {
+                    endDownToMode(MODE_ARGUMENT);
+                    endMode(MODE_ARGUMENT);
+                }
+
+                // ensure the super ends correctly at a comma
+                if (lparen_types_py.back() == 's' && inTransparentMode(MODE_SUPER_LIST_PY))
+                    endDownToMode(MODE_SUPER_LIST_PY);
+            }
+            COMMA
+        )*
+
+        {
+            if (inTransparentMode(MODE_SUPER_LIST_PY))
+                endDownToMode(MODE_SUPER_LIST_PY);
+
+            if (lparen_types_py.back() == 's')
+                lparen_types_py.pop_back();
+        }
+
+        RPAREN
+
+        {
+            if (inMode(MODE_SUPER_LIST_PY))
+                endMode(MODE_SUPER_LIST_PY);
+        }
+;
+
+/*
+  check_valid_specifier_py
+
+  Checks to see if the current token is a Python specifier.
+  Currently, the only Python specifier is "async" (this could change).
+*/
+check_valid_specifier_py[] returns [int isspecifier] {
+        isspecifier = false;
+
+        if (LA(1) == PY_ASYNC)
+            isspecifier = true;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  perform_post_specifier_check_py
+
+  Returns the next token that occur after a Python specifier.
+  If there are multiple specifiers in a row, returns the next token after the last specifier.
+*/
+perform_post_specifier_check_py[] returns [int keyword] {
+        keyword = -1;
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                consume();
+
+                if (!check_valid_specifier_py())
+                    break;
+            }
+
+            if (
+                LA(1) == FOR
+                || LA(1) == PY_FUNCTION
+                || LA(1) == PY_WITH
+            )
+                keyword = LA(1);
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  specifier_py
+
+  Used to mark "async" as a specifier in Python for-loops and comprehensions.
+*/
+specifier_py[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_SPECIFIER_PY);
+
+            startElement(SFUNCTION_SPECIFIER);
+        }
+
+        PY_ASYNC
+
+        {
+            endMode(MODE_SPECIFIER_PY);
+        }
+;
+
+/*
+  perform_post_attribute_check_py
+
+  Returns the next token that occur after a Python decorator.
+  If there are multiple decorators in a row, returns the next token after the last decorator.
+*/
+perform_post_attribute_check_py[] returns [int keyword] {
+        keyword = -1;
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                consume();
+
+                if (LA(1) == CLASS || LA(1) == PY_FUNCTION || LA(1) == INDENT || LA(1) == 1 /* EOF */)
+                    break;
+            }
+
+            if (
+                LA(1) == CLASS
+                || LA(1) == PY_FUNCTION
+            )
+                keyword = LA(1);
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  attribute_py
+
+  Used to mark decorators (e.g., "@decorator") as attributes (Python).
+*/
+attribute_py[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_DECORATOR_PY);
+
+            startElement(SATTRIBUTE);
+        }
+
+        PY_ATSIGN
+
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        (
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            // decorators can have arguments
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            { LA(1) != CLASS && LA(1) != PY_FUNCTION }?
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_DECORATOR_PY)) {
+                endDownToMode(MODE_DECORATOR_PY);
+                endMode(MODE_DECORATOR_PY);
+            }
+
+            // TERMINATE after a decorator does not indicate the end of a statement
+            // decorators occur before a function/class, so ignore the TERMINATE
+            if (LA(1) == TERMINATE)
+                consume();
+        }
+;
+
+/*
+  array_py
+
+  Handles Python arrays.  Not used directly, but can be called by expression_part.
+*/
+array_py[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_ARRAY_PY);
+
+            startElement(SARRAY);
+        }
+
+        LBRACKET
+
+        (
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ARRAY_PY))
+                endDownToMode(MODE_ARRAY_PY);
+        }
+
+        RBRACKET
+
+        {
+            if (inMode(MODE_ARRAY_PY))
+                endMode(MODE_ARRAY_PY);
+        }
+;
+
+/*
+  comprehension_py
+
+  Handles Python comprehensions.
+*/
+comprehension_py[] { ENTRY_DEBUG } :
+        FOR
+
+        {
+            replaceMode(MODE_CONTROL, MODE_TOP | MODE_CONTROL_INITIALIZATION | MODE_LIST);
+
+            startElement(SCONTROL);
+        }
+
+        control_initialization_py
+
+        {
+            // handle "in" portion of a comprehension
+            if (LA(1) == PY_IN) {
+                comprehension_range_py();
+
+                if (inTransparentMode(MODE_COMPREHENSION_PY))
+                    endDownToMode(MODE_COMPREHENSION_PY);
+            }
+
+            // handle optional "if" portion of a comprehension
+            if (LA(1) == IF) {
+                comprehension_if_py();
+
+                if (inTransparentMode(MODE_COMPREHENSION_PY))
+                    endDownToMode(MODE_COMPREHENSION_PY);
+            }
+
+            if (inMode(MODE_COMPREHENSION_PY))
+                endMode(MODE_COMPREHENSION_PY);
+
+            // ensure the comprehension ends the current argument in a call
+            if (inMode(MODE_ARGUMENT) && LA(1) == RPAREN && lparen_types_py.back() == 'c')
+                endMode(MODE_ARGUMENT);
+        }
+;
+
+/*
+  start_comprehension_py
+
+  Starts a Python comprehension.  Used in multiple places.
+*/
+start_comprehension_py[] { ENTRY_DEBUG } :
+        {
+            // end the current expression before starting a comprehension
+            // unless the comprehension starts an argument in a call
+            if (inMode(MODE_EXPRESSION) && (last_consumed != LPAREN || lparen_types_py.back() != 'c'))
+                endMode(MODE_EXPRESSION);
+
+            startNewMode(MODE_COMPREHENSION_PY);
+            startElement(SCOMPREHENSION);
+
+            startNewMode(MODE_CONTROL | MODE_EXPECT | MODE_FOR_CONTROL_PY);
+            startElement(SFOR_STATEMENT);
+        }
+;
+
+/*
+  lambda_py
+
+  Handles a Python lambda.  Not used directly, but can be called by expression_part.
+*/
+lambda_py[] { CompleteElement element(this); int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LAMBDA_PY);
+
+            startElement(SFUNCTION_LAMBDA);
+        }
+
+        PY_LAMBDA
+
+        {
+            startNewMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT);
+        }
+
+        (options { greedy = true; } :
+            { LA(1) == PY_COLON && inTransparentMode(MODE_LAMBDA_PY) }?
+            {
+                break;
+            } |
+
+            complete_python_parameter |
+
+            {
+                if (!inMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT))
+                    endMode();
+            }
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_PARAMETER)) {
+                endDownToMode(MODE_PARAMETER);
+                endMode(MODE_PARAMETER);
+            }
+        }
+
+        // Python lambdas do not contain blocks, so consume the colon (':')
+        PY_COLON
+
+        // only one expression is allowed, so enter a special mode
+        {
+            startNewMode(MODE_LAMBDA_CONTENT_PY);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        (options { greedy = true; } :
+            // ensure lambdas end correctly if used as an argument in a call or parameter in a parameter list
+            {
+                (
+                    LA(1) == COMMA
+                    && lparen_types_size == lparen_types_py.size()
+                )
+                || (
+                    LA(1) == RPAREN
+                    && (lparen_types_py.back() == 'c' || lparen_types_py.back() == 'p')
+                    && (
+                        lparen_types_size == lparen_types_py.size()
+                        || (
+                            !inTransparentMode(MODE_TUPLE_PY)
+                            && lparen_types_size == (lparen_types_py.size() - 1)
+                            && !keyword_name_token_set_py.member(next_token())
+                        )
+                    )
+                )
+            }?
+            {
+                // end the current expression(s)
+                while (inMode(MODE_EXPRESSION)) {
+                    endDownToMode(MODE_EXPRESSION);
+                    endMode(MODE_EXPRESSION);
+                }
+
+                // manually end call RPAREN if it is the last token included in the lambda
+                if (
+                    LA(1) == RPAREN
+                    && (lparen_types_size == (lparen_types_py.size() - 1))
+                    && !inTransparentMode(MODE_TUPLE_PY)
+                )
+                    rparen();
+
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // do not accidentally consume the tuple-ending RPAREN or operator RPAREN
+            {
+                (
+                    (!inTransparentMode(MODE_TUPLE_PY) || lparen_types_size != lparen_types_py.size())
+                    || last_consumed != RPAREN
+                    || LA(1) != RPAREN
+                    || next_token() == RPAREN
+                )
+                && (LA(1) != RPAREN || lparen_types_py.back() != 'o')
+                && (LA(1) != RPAREN || lparen_types_py.back() != 't')
+            }?
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_LAMBDA_PY)) {
+                endDownToMode(MODE_LAMBDA_PY);
+                endMode(MODE_LAMBDA_PY);
+            }
+        }
+;
+
+/*
+  set_py
+
+  Handles Python sets.  Not used directly, but can be called by expression_part.
+  An empty set is a dictionary, and is marked as such.
+*/
+set_py[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            // Empty sets or sets containing colons are marked as dictionaries
+            if (perform_dictionary_check_py()) {
+                dictionary_py(false);
+                return;
+            }
+
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_SET_PY);
+
+            startElement(SSET);
+        }
+
+        PY_LCURLY
+
+        (
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_SET_PY))
+                endDownToMode(MODE_SET_PY);
+        }
+
+        PY_RCURLY
+
+        {
+            if (inMode(MODE_SET_PY))
+                endMode(MODE_SET_PY);
+        }
+;
+
+/*
+  dictionary_py
+
+  Handles Python dictionaries.  Not used directly, but can be called by expression_part or set_py.
+  An empty set is a dictionary, and is marked as such.
+*/
+dictionary_py[bool isempty = false] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_DICTIONARY_PY);
+
+            startElement(SDICTIONARY);
+        }
+
+        PY_LCURLY
+
+        {
+            // handle empty dictionaries
+            if (isempty) {
+                consume();
+
+                if (inTransparentMode(MODE_DICTIONARY_PY)) {
+                    endDownToMode(MODE_DICTIONARY_PY);
+                    endMode(MODE_DICTIONARY_PY);
+                }
+
+                return;
+            }
+        }
+
+        (options { greedy = true; } :
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // ensure colon is not marked as an operator
+            { inTransparentMode(MODE_DICTIONARY_PY) }?
+            {
+                endDownToMode(MODE_DICTIONARY_PY);
+            }
+            colon |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_DICTIONARY_PY))
+                endDownToMode(MODE_DICTIONARY_PY);
+        }
+
+        PY_RCURLY
+
+        {
+            if (inMode(MODE_DICTIONARY_PY))
+                endMode(MODE_DICTIONARY_PY);
+        }
+;
+
+/*
+  perform_dictionary_check_py
+
+  Differentiates a Python set and dictionary; the latter has entries with a colon.
+*/
+perform_dictionary_check_py[] returns [int is_dictionary] {
+        is_dictionary = false;
+        bool is_lambda = false;
+        int num_brackets = 0;  // counts all "()", "{}", and "[]"
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                if (LA(1) == LPAREN || LA(1) == PY_LCURLY || LA(1) == LBRACKET)
+                    ++num_brackets;
+
+                if (LA(1) == RPAREN || LA(1) == PY_RCURLY || LA(1) == RBRACKET)
+                    --num_brackets;
+
+                // do not confuse {lambda a, b: a**b} for a dictionary
+                if (LA(1) == PY_LAMBDA)
+                    is_lambda = true;
+
+                // consumed PY_RCURLY (for initial PY_LCURLY) without finding a dictionary
+                if (num_brackets < 1)
+                    break;
+
+                if (
+                    num_brackets == 1
+                    && (
+                        (LA(1) == PY_COLON && !is_lambda)
+                        || LA(1) == PY_RCURLY
+                        || LA(1) == COMMA
+                        || LA(1) == 1 /* EOF */
+                    )
+                )
+                    break;
+
+                // end of lambda parameter(s)
+                if (is_lambda && LA(1) == PY_COLON)
+                    is_lambda = false;
+
+                consume();
+            }
+
+            if (LA(1) == PY_COLON)
+                is_dictionary = true;
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  tuple_py
+
+  Handles Python tuples.  Not used directly, but can be called by expression_part.
+*/
+tuple_py[] {
+        CompleteElement element(this);
+        int num_starting_operator_lparen = 0;
+        bool use_operator_lparen = false;
+
+        ENTRY_DEBUG
+} :
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_TUPLE_PY);
+
+            startElement(STUPLE);
+
+            lparen_types_py.emplace_back('t');  // tuple LPAREN
+        }
+
+        LPAREN
+
+        (options { greedy = true; } :
+            // found closing RPAREN for a tuple if:
+            // - LPAREN deque does not have a call parenthesis at the back
+            // - last token consumed was LPAREN (e.g., an empty tuple)
+            // - next token is COMMA, EQUAL, INDENT, RPAREN, SNOP, or TERMINATE
+            // - LPAREN deque has a tuple parenthesis at the back
+            // - next token is a comment or non-alias keyword (e.g., "in" for comprehensions)
+            {
+                LA(1) == RPAREN
+                && lparen_types_py.back() != 'c'
+                && (
+                    last_consumed == LPAREN  // empty tuple "()"
+                    || next_token() == COMMA
+                    || next_token() == EQUAL
+                    || next_token() == INDENT
+                    || next_token() == RPAREN
+                    || next_token() == SNOP
+                    || next_token() == TERMINATE
+                    || lparen_types_py.back() == 't'
+                    || whitespace_token_set.member((unsigned int) next_token())
+                    || (keyword_token_set.member((unsigned int) next_token()) && next_token() != PY_ALIAS)
+                )
+            }?
+            {
+                break;
+            } |
+
+            alias_py |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_TUPLE_PY))
+                endDownToMode(MODE_TUPLE_PY);
+
+            if (lparen_types_py.back() == 't')
+                lparen_types_py.pop_back();
+        }
+
+        RPAREN
+
+        {
+            if (inMode(MODE_TUPLE_PY))
+                endMode(MODE_TUPLE_PY);
+        }
+;
+
+/*
+  perform_tuple_check_py
+
+  Determines if an LPAREN starts a tuple or is an operator.
+*/
+perform_tuple_check_py[] returns [bool is_tuple] {
+        is_tuple = false;
+        bool is_lambda = false;
+        bool is_comprehension = false;
+        int num_brackets = 0;  // counts all "()", "{}", and "[]"
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            // found an empty tuple, "()"
+            if (LA(1) == LPAREN && next_token() == RPAREN)
+                is_tuple = true;
+            else {
+                while (true) {
+                    if (LA(1) == LPAREN || LA(1) == PY_LCURLY || LA(1) == LBRACKET)
+                        ++num_brackets;
+
+                    if (LA(1) == RPAREN || LA(1) == PY_RCURLY || LA(1) == RBRACKET)
+                        --num_brackets;
+
+                    // do not confuse (lambda a, b: a**b) for a tuple
+                    if (LA(1) == PY_LAMBDA)
+                        is_lambda = true;
+
+                    // do not confuse comprehension name list (for a, b in c) for a tuple
+                    if (LA(1) == FOR)
+                        is_comprehension = true;
+
+                    // cannot be a parenthesized tuple if the number of parentheses is 0 or less
+                    if (num_brackets <= 0)
+                        break;
+
+                    // the expression contains a comma not in any brackets
+                    if (LA(1) == COMMA && num_brackets == 1 && !is_lambda && !is_comprehension) {
+                        is_tuple = true;
+                        break;
+                    }
+
+                    if (LA(1) == TERMINATE || LA(1) == INDENT || LA(1) == 1 /* EOF */)
+                        break;
+
+                    // end of lambda parameter(s)
+                    if (is_lambda && LA(1) == PY_COLON)
+                        is_lambda = false;
+
+                    // end of comprehension name(s)
+                    if (is_comprehension && LA(1) == PY_IN)
+                        is_comprehension = false;
+
+                    consume();
+                }
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  tuple_no_paren_py
+
+  Handles Python tuples that do not use parentheses.
+  Not used directly, but can be called by expression_part.
+*/
+tuple_no_paren_py[] { CompleteElement element(this); int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_TUPLE_NO_PAREN_PY);
+
+            startElement(STUPLE);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        (options { greedy = true; } :
+            // end the no-parenthesis tuple if:
+            // - current token is INDENT or TERMINATE
+            // - at the top level of the tuple and find EQUAL
+            {
+                LA(1) == INDENT
+                || LA(1) == TERMINATE
+                || (
+                    LA(1) == EQUAL
+                    && lparen_types_size == lparen_types_py.size()
+                    && inTransparentMode(MODE_TUPLE_NO_PAREN_PY)
+                )
+            }?
+            {
+                break;
+            } |
+
+            alias_py |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_TUPLE_NO_PAREN_PY)) {
+                endDownToMode(MODE_TUPLE_NO_PAREN_PY);
+                endMode(MODE_TUPLE_NO_PAREN_PY);
+            }
+        }
+;
+
+/*
+  perform_tuple_check_no_paren_py
+
+  Determines if an expression with a COMMA should start a tuple (e.g., "1,").
+*/
+perform_tuple_check_no_paren_py[] returns [bool is_tuple] {
+        is_tuple = false;
+        int num_brackets = 0;  // counts all "()", "{}", and "[]"
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                if (LA(1) == LPAREN || LA(1) == PY_LCURLY || LA(1) == LBRACKET)
+                    ++num_brackets;
+
+                if (LA(1) == RPAREN || LA(1) == PY_RCURLY || LA(1) == RBRACKET)
+                    --num_brackets;
+
+                // something went wrong if the number of brackets is negative
+                if (num_brackets < 0)
+                    break;
+
+                // the expression contains a comma not in any brackets
+                if (LA(1) == COMMA && num_brackets == 0) {
+                    is_tuple = true;
+                    break;
+                }
+
+                if (
+                    (LA(1) == EQUAL && num_brackets == 0)
+                    || LA(1) == TERMINATE
+                    || LA(1) == INDENT
+                    || LA(1) == 1 /* EOF */
+                )
+                    break;
+
+                consume();
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  ternary_py
+
+  Handles Python ternaries.  Used in multiple places.
+*/
+ternary_py[bool is_nested = false] { CompleteElement element(this); int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_TERNARY);
+            startElement(STERNARY);
+        }
+
+        IF
+
+        {
+            startNewMode(MODE_CONDITION);
+            startElement(SCONDITION);
+            startNewMode(MODE_TERNARY_CONDITION | MODE_LIST | MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        (options { greedy = true; } :
+            // condition ends if ELSE is found
+            { LA(1) == ELSE }?
+            {
+                break;
+            } |
+
+            // found a nested ternary
+            { LA(1) == IF && inTransparentMode(MODE_TERNARY) }?
+            ternary_py[true] |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_CONDITION)) {
+                endDownToMode(MODE_CONDITION);
+                endMode(MODE_CONDITION);
+            }
+
+            startNewMode(MODE_ELSE);
+            startElement(SELSE);
+
+            if (is_nested)
+                startNewMode(MODE_INTERNAL_END_PAREN);
+        }
+
+        ELSE
+
+        // only one expression is allowed, so enter a special mode
+        {
+            startNewMode(MODE_TERNARY_CONTENT_PY);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        (options { greedy = true; } :
+            // else clause ends if the current mode has no new parentheses and any one of these four:
+            // 1. at RPAREN and...
+            //     - the next token is not PERIOD or...
+            //     - latest LPAREN is an operator parentheses or...
+            //     - latest LPAREN is for a call
+            // 2. last consumed token is COMMA and...
+            //     - anywhere in a tuple
+            // 3. at COMMA and...
+            //     - latest LPAREN is for a call
+            // 4. at FOR
+            {
+                lparen_types_size == lparen_types_py.size()
+                && (
+                    (
+                        LA(1) == RPAREN
+                        && (
+                            next_token() != PERIOD
+                            || lparen_types_py.back() == 'o'
+                            || lparen_types_py.back() == 'c'
+                        )
+                    )
+                    || (last_consumed == COMMA && inTransparentMode(MODE_TUPLE_PY))
+                    || (LA(1) == COMMA && lparen_types_py.back() == 'c')
+                    || LA(1) == FOR
+                )
+            }?
+            {
+                break;
+            } |
+
+            // found a nested ternary
+            { LA(1) == IF && inTransparentMode(MODE_TERNARY) }?
+            ternary_py[true] |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression
+            {
+                // ensure ternaries end correctly if used as an argument in a call
+                if (LA(1) == COMMA) {
+                    while (inMode(MODE_EXPRESSION)) {
+                        endDownToMode(MODE_EXPRESSION);
+                        endMode(MODE_EXPRESSION);
+                    }
+
+                    // end the ternary before processing the comma
+                    if (inMode(MODE_TERNARY_CONTENT_PY))
+                        break;
+                }
+            } |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ELSE)) {
+                endDownToMode(MODE_ELSE);
+                endMode(MODE_ELSE);
+            }
+
+            if (inTransparentMode(MODE_TERNARY)) {
+                endDownToMode(MODE_TERNARY);
+                endMode(MODE_TERNARY);
+            }
+        }
+;
+
+/*
+  yield_expression_py
+
+  Handles a "yield" or "yield from" expression in Python.
+  The statement versions are included in start_py's table.
+*/
+yield_expression_py[] { bool is_yield_from = (next_token() == PY_FROM); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_YIELD_PY);
+
+            if (is_yield_from)
+                startElement(SYIELD_FROM_STATEMENT);
+            else
+                startElement(SYIELD_STATEMENT);
+        }
+
+        (
+            { is_yield_from }?
+            PY_YIELD PY_FROM |
+
+            PY_YIELD
+        )
+
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        }
+;
+
+/*
+  operator_parenthesis_complete_py
+
+  Handles an opening/closing pair of operator parentheses in Python.
+*/
+operator_parenthesis_complete_py[] {
+        CompleteElement element(this);
+        TokenPosition tp;
+        int lparen_types_size = 0;
+
+        ENTRY_DEBUG
+} :
+        {
+            lparen_types_py.emplace_back('o');  // operator LPAREN
+            lparen_types_size = lparen_types_py.size();  // do not end nested operator parentheses early
+        }
+
+        lparen_marked
+
+        {
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_OPERATOR_PAREN_PY);
+
+            // start the "fake" expression
+            startElement(SEXPRESSION);
+
+            // record the "fake" expression start location so we can replace it later
+            setTokenPosition(tp);
+
+            startNewMode(MODE_EXPRESSION);
+        }
+
+        (options { greedy = true; } :
+            // found an operator rparen to close the starting operator lparen
+            { LA(1) == RPAREN && lparen_types_py.back() == 'o' && lparen_types_py.size() == lparen_types_size }?
+            {
+                break;
+            } |
+
+            // found an operator rparen to close a nested operator lparen
+            { lparen_types_py.back() == 'o' }?
+            {
+                decParen();
+                lparen_types_py.pop_back();
+            }
+            rparen_operator |
+
+            alias_py |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            expression |
+
+            comma
+        )*
+
+        {
+            // set the token to NOP to remove the "fake" expression
+            tp.setType(SNOP);
+
+            if (inTransparentMode(MODE_OPERATOR_PAREN_PY))
+                endDownToMode(MODE_OPERATOR_PAREN_PY);
+
+            // found an operator rparen to close the starting operator lparen
+            if (LA(1) == RPAREN && lparen_types_py.back() == 'o' && lparen_types_py.size() == lparen_types_size) {
+                decParen();
+                lparen_types_py.pop_back();
+                rparen_operator();
+            }
+
+            if (inMode(MODE_OPERATOR_PAREN_PY))
+                endMode(MODE_OPERATOR_PAREN_PY);
+        }
+;
+
+/*
+  python_2_except_py
+
+  Handles a Python 2 "except" clause (e.g., uses "Error, e" instead of "Error as e").
+*/
+python_2_except_py[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_EXCEPT_PY);
+
+            startElement(SCATCH_BLOCK);
+        }
+
+        PY_EXCEPT
+
+        {
+            startNewMode(MODE_EXCEPT_ALIAS_PY);
+
+            startElement(SALIAS);
+        }
+
+        (options { greedy = true; } :
+            { LA(1) == COMMA && inMode(MODE_EXPRESSION) }?
+            {
+                if (inTransparentMode(MODE_EXPRESSION)) {
+                    endDownToMode(MODE_EXPRESSION);
+                    endMode(MODE_EXPRESSION);
+                }
+
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        comma_marked[false]
+        (compound_name | operator_parenthesis_complete_py)
+
+        {
+            if (inTransparentMode(MODE_EXCEPT_ALIAS_PY)) {
+                endDownToMode(MODE_EXCEPT_ALIAS_PY);
+                endMode(MODE_EXCEPT_ALIAS_PY);
+            }
+        }
+;
+
+/*
+  perform_python_2_except_check
+
+  Determines if an "except" clause follows Python 2 syntax (e.g., "Error, e").
+*/
+perform_python_2_except_check returns [bool is_python_2] {
+        is_python_2 = false;
+        int num_brackets = 0;  // counts all "()", "{}", and "[]"
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                if (LA(1) == LPAREN || LA(1) == PY_LCURLY || LA(1) == LBRACKET)
+                    ++num_brackets;
+
+                if (LA(1) == RPAREN || LA(1) == PY_RCURLY || LA(1) == RBRACKET)
+                    --num_brackets;
+
+                // something went wrong if the number of brackets is negative
+                if (num_brackets < 0)
+                    break;
+
+                // the except clause contains a comma not in any brackets
+                if (LA(1) == COMMA && num_brackets == 0) {
+                    is_python_2 = true;
+                    break;
+                }
+
+                if (LA(1) == INDENT || LA(1) == TERMINATE || LA(1) == 1 /* EOF */)
+                    break;
+
+                consume();
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  perform_member_access_function_call_check_py
+
+  Determines if a NAME + PERIOD begins a Python function call (e.g., "a.b()").
+*/
+perform_member_access_function_call_check_py returns [bool is_call] {
+        is_call = false;
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                // consume all content inside the index
+                if (LA(1) == LBRACKET) {
+                    while (LA(1) != RBRACKET && LA(1) != INDENT && LA(1) != TERMINATE && LA(1) != 1 /* EOF */)
+                        consume();
+
+                    if (LA(1) == RBRACKET)
+                        consume();
+                }
+
+                // found the start of the call
+                else if (LA(1) == LPAREN) {
+                    is_call = true;
+                    break;
+                }
+
+                // consume names and periods (for compound names)
+                else if (identifier_list_tokens_set.member(LA(1)) || LA(1) == PERIOD)
+                    consume();
+
+                // encountering any other token indicates no call
+                else
+                    break;
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  perform_subscriptable_function_call_check_py
+
+  Determines if a subscript is a compound name that is part of a function call (e.g., a[]()).
+*/
+perform_subscriptable_function_call_check_py returns [bool is_call] {
+        is_call = false;
+        int num_square_brackets = 0;
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                if (LA(1) == LBRACKET)
+                    ++num_square_brackets;
+
+                if (LA(1) == RBRACKET)
+                    --num_square_brackets;
+
+                // something went wrong if the number of square brackets is negative
+                if (num_square_brackets < 0)
+                    break;
+
+                // check if RBRACKET follows the end of a subscript
+                if (num_square_brackets == 0 && LA(1) == RBRACKET) {
+                    consume();
+
+                    if (LA(1) == LPAREN)
+                        is_call = true;
+
+                    // allow accessing nested elements (e.g., a[][]())
+                    if (LA(1) != LBRACKET)
+                        break;
+                    else
+                        ++num_square_brackets;
+                }
+
+                if ((num_square_brackets == 0 && LA(1) == TERMINATE) || LA(1) == 1 /* EOF */)
+                    break;
+
+                consume();
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  type_alias_annotation_py
+
+  Handles a Python type alias annotation.
+*/
+type_alias_annotation_py[] { int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_ANNOTATION_PY);
+
+            startElement(SANNOTATION);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        PY_COLON
+
+        (options { greedy = true; } :
+            // the annotation ends before a top-level equal sign ("=")
+            { LA(1) == EQUAL && lparen_types_size == lparen_types_py.size() }?
+            {
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_ANNOTATION_PY)) {
+                endDownToMode(MODE_ANNOTATION_PY);
+                endMode(MODE_ANNOTATION_PY);
+            }
+        }
+;
+
+/*
+  control_initialization_py
+
+  Handles Python expressions in the control portion of a for-loop or comprehension.
+*/
+control_initialization_py[] { ENTRY_DEBUG } :
+        {
+            assertMode(MODE_CONTROL_INITIALIZATION | MODE_EXPECT);
+
+            // setup next stage for condition in the control group mode
+            replaceMode(MODE_CONTROL_INITIALIZATION, MODE_CONTROL_CONDITION);
+
+            // Python control groups contain one or more name tags (not an expression)
+            startNewMode(MODE_VARIABLE_NAME | MODE_STATEMENT | MODE_LIST);
+        }
+
+        (options { greedy = true; } :
+            { LA(1) == PY_IN }?
+            {
+                if (inTransparentMode(MODE_EXPRESSION)) {
+                    endDownToMode(MODE_EXPRESSION);
+                    endMode(MODE_EXPRESSION);
+                }
+
+                break;
+            } |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            // special non-parenthesized tuple logic outside of 'expression'
+            { perform_tuple_check_no_paren_py() }?
+            control_tuple_no_paren_py |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+;
+
+/*
+  control_tuple_no_paren_py
+
+  Handles Python tuples that do not use parentheses that occur in the control portion of a for-loop
+  or comprehension. Not used directly, but can be called by control_initialization_py.
+*/
+control_tuple_no_paren_py[] { int lparen_types_size = 0; ENTRY_DEBUG } :
+        {
+            if (!inMode(MODE_EXPRESSION)) {
+                startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+                startElement(SEXPRESSION);
+            }
+
+            startNewMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY | MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_TUPLE_NO_PAREN_PY);
+
+            startElement(STUPLE);
+
+            lparen_types_size = lparen_types_py.size();
+        }
+
+        (options { greedy = true; } :
+            // the non-parenthesized tuple ends before a top-level 'in' keyword
+            { LA(1) == PY_IN && lparen_types_size == lparen_types_py.size() }?
+            {
+                break;
+            } |
+
+            alias_py |
+
+            // ensure compound calls are marked correctly (e.g., "a(b)(c)")
+            { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
+            call_argument_list |
+
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inTransparentMode(MODE_TUPLE_NO_PAREN_PY)) {
+                endDownToMode(MODE_TUPLE_NO_PAREN_PY);
+                endMode(MODE_TUPLE_NO_PAREN_PY);
+            }
         }
 ;

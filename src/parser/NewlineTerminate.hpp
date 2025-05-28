@@ -9,8 +9,8 @@
  * Injects INDENT and DEDENT tokens to the token stream
  */
 
-#ifndef INCLUDED_OFFSIDERULE_HPP
-#define INCLUDED_OFFSIDERULE_HPP
+#ifndef INCLUDED_NEWLINETERMINATE_HPP
+#define INCLUDED_NEWLINETERMINATE_HPP
 
 #include <antlr/TokenStream.hpp>
 #include <srcMLToken.hpp>

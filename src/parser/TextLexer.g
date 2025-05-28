@@ -43,11 +43,15 @@ tokens {
     JAVADOC_COMMENT_START;
     DOXYGEN_COMMENT_START;
     LINE_DOXYGEN_COMMENT_START;
+    DQUOTE_DOCSTRING_START;
     CHAR_START;
+    SQUOTE_DOCSTRING_START;
     BACKTICK_START;
     MACRO_NAME;
     COMPLEX_NUMBER;
     HASHBANG_COMMENT_START;
+    HASHTAG_COMMENT_START;
+    WS_EOL;
 }
 
 {
@@ -66,7 +70,14 @@ STRING_START :
     // note that the "abc does not end at the end of this line,
     // but the #define must end, so EOL is not a valid string character
     '"' {
-        changetotextlexer(STRING_END); 
+        // handle a potential triple-quoted string in Python
+        if (inLanguage(LANGUAGE_PYTHON) && LA(1) == '"')
+            changetotextlexer(PY_DQUOTE_STRING_START);
+        // handle a string that starts/ends with one double-quote in Python
+        else if (inLanguage(LANGUAGE_PYTHON))
+            changetotextlexer(PY_SIMPLE_DQUOTE_STRING_END);
+        else
+            changetotextlexer(STRING_END);
 
         atstring = false;
     }
@@ -100,7 +111,17 @@ CHAR_START :
     { startline = false; }
 
     // character literal or single quoted string
-    '\'' { $setType(CHAR_START); changetotextlexer(CHAR_END); }
+    '\'' {
+        // handle a potential triple-quoted string in Python
+        if (inLanguage(LANGUAGE_PYTHON) && LA(1) == '\'')
+            changetotextlexer(PY_SQUOTE_STRING_START);
+        // handle a string that starts/ends with one single-quote in Python
+        else if (inLanguage(LANGUAGE_PYTHON))
+            changetotextlexer(PY_SIMPLE_SQUOTE_STRING_END);
+        else {
+            $setType(CHAR_START); changetotextlexer(CHAR_END);
+        }
+    }
 ;
 
 BACKTICK_START :
@@ -121,8 +142,13 @@ CONSTANTS :
     { startline = false; }
     ('0'..'9') (options { greedy = true; } : '0'..'9' | '_')*
     (options { greedy = true; } : '.' | '0'..'9')*
-    (options { greedy = true; } : 'e' ('+' | '-')* ('0'..'9')*)?
-    (options { greedy = true; } : 'i' { $setType(COMPLEX_NUMBER); })*
+    (options { greedy = true; } : ('e' | 'E') ('+' | '-')* ('0'..'9')*)?
+    (options { greedy = true; } :
+        'i' { $setType(COMPLEX_NUMBER); } |
+
+        { inLanguage(LANGUAGE_PYTHON) }?
+        'j' { $setType(COMPLEX_NUMBER); }
+    )*
     (options { greedy = true; } : NAME)*
     {
         //firstpreprocline = false;
@@ -141,18 +167,43 @@ NAME options { testLiterals = true; } :
         { $setType(STRING_START); } STRING_START |
 
         { inLanguage(LANGUAGE_CXX) && (text == "R"sv || text == "u8R"sv || text == "LR"sv || text == "UR"sv || text == "uR"sv) }?
-        { $setType(STRING_START); } RAW_STRING_START
+        { $setType(STRING_START); } RAW_STRING_START |
+
+        {
+            inLanguage(LANGUAGE_PYTHON)
+            && (text == "b"sv || text == "f"sv || text == "r"sv || text == "u"sv
+            || text == "B"sv || text == "F"sv || text == "R"sv || text == "U"sv
+            || text == "rf"sv || text == "rb"sv || text == "Rf"sv || text == "Rb"sv
+            || text == "rF"sv || text == "rB"sv || text == "RF"sv || text == "RB"sv
+            || text == "ur"sv || text == "Ur"sv || text == "uR"sv || text == "UR"sv)
+        }?
+        (
+            { LA(1) == '"' }?
+            { $setType(STRING_START); } STRING_START |
+
+            { LA(1) == '\'' }?
+            { $setType(CHAR_START); } CHAR_START
+        )
     )?
 ;
 
 // Single-line comments (no EOL)
 LINE_COMMENT_START options { testLiterals = true; } { int mode = 0; } : '/' 
     ('/' 
-        { mode = LINE_COMMENT_END; }
-        (('/' | '!') {
-            $setType(LINE_DOXYGEN_COMMENT_START);
-            mode = LINE_DOXYGEN_COMMENT_END; 
-        })? |
+        {
+            // '//' is an operator in Python
+            if (inLanguage(LANGUAGE_PYTHON)) {
+                $setType(OPERATORS);
+                mode = 0;
+            }
+            else
+                mode = LINE_COMMENT_END;
+        }
+        (
+            ('/' | '!') { $setType(LINE_DOXYGEN_COMMENT_START); mode = LINE_DOXYGEN_COMMENT_END; } |
+            // '//=' is an operator in Python
+            { inLanguage(LANGUAGE_PYTHON) }? ('=')
+        )? |
     '*'
         { 
             $setType(BLOCK_COMMENT_START);
@@ -187,34 +238,6 @@ LINE_COMMENT_START options { testLiterals = true; } { int mode = 0; } : '/'
     }
 ;
 
-// Hashbang comments (JavaScript)
-HASHBANG_COMMENT_START :
-    {
-        if (!inLanguage(LANGUAGE_JAVASCRIPT) && startline) {
-            $setType(PREPROC);
-
-            // record that we are on a preprocessor line,
-            // primarily so that unterminated strings in
-            // a preprocessor line will end at the right spot
-            onpreprocline = true;
-            //firstpreprocline = true;
-        }
-    }
-
-    '#' (
-        { inLanguage(LANGUAGE_JAVASCRIPT) && LA(1) != '!' }?
-            NAME { $setType(NAME); }
-    )?
-
-    ('!'
-        {
-            if (inLanguage(LANGUAGE_JAVASCRIPT)) {
-                $setType(HASHBANG_COMMENT_START); changetotextlexer(HASHBANG_COMMENT_END);
-            }
-        }
-    )?
-;
-
 // whitespace (except for newline)
 WS { int lastColumn = 0; } : (
     // single space
@@ -233,7 +256,27 @@ WS { int lastColumn = 0; } : (
             static const std::string_view spaces = "        ";
             text.append(spaces.substr(0, getColumn() - lastColumn));
         }
-    } )+ ;
+    }
+)+
+
+(
+    { inLanguage(LANGUAGE_PYTHON) && LA(1) == '\n' }?
+    '\n'
+    {
+        $setType(WS_EOL);
+        onpreprocline = false;
+        startline = true;
+        newline();
+
+        if (isoption(options, SRCML_OPTION_LINE))
+            setLine(getLine() + (1 << 16));
+        if (isline && line_number > -1)
+            setLine((int)(line_number << 16 | (getLine() & 0xFFFF)));
+
+        isline = false;
+        line_number = -1;
+    }
+)? ;
 
 // end of line
 EOL : '\n' { 

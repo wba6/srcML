@@ -98,11 +98,34 @@ tokens {
 OPERATORS options { testLiterals = true; } {
     int start = LA(1);
 } : (
+    // # (C++ or Python), #! (JavaScript or Python)
+    '#' (
+        { (inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON)) && LA(1) == '!' }?
+            { $setType(HASHBANG_COMMENT_START); changetotextlexer(HASHBANG_COMMENT_END); } |
+
+        { inLanguage(LANGUAGE_JAVASCRIPT) && LA(1) != '!' }?
+            NAME { $setType(NAME); } |
+
+        { inLanguage(LANGUAGE_PYTHON) && LA(1) != '!' }?
+            { $setType(HASHTAG_COMMENT_START); changetotextlexer(HASHTAG_COMMENT_END); } |
+
+        { startline }?
+            {
+                $setType(PREPROC);
+
+                // record that we are on a preprocessor line,
+                // primarily so that unterminated strings in
+                // a preprocessor line will end at the right spot
+                onpreprocline = true;
+                //firstpreprocline = true;
+            }
+    )? |
+
     '+' ('+' | '=')? |
     '-' ('-' | '=' | '>' ('*')? )? |
 
-    // *, *=, ** (JavaScript), **= (JavaScript)
-    '*' ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '*')? ('=')? |
+    // *, *=, ** (JavaScript & Python), **= (JavaScript & Python)
+    '*' ({ inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON) }? '*')? ('=')? |
 
     '%' ('=')? |
     '^' ('=')? |
@@ -111,7 +134,8 @@ OPERATORS options { testLiterals = true; } {
     // !, !=, !== (JavaScript)
     '!' ('=' ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '=')?)? |
 
-    ':' (':')? |
+    // :, := (Python), ::
+    ':' ({ inLanguage(LANGUAGE_PYTHON) }? '=')? (':')? |
 
     // =, ==, =>, === (JavaScript)
     '=' ('=' ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '=')? | { (inLanguage(LANGUAGE_CSHARP) && (lastpos != (getColumn() - 1) || prev == ')' || prev == '#')) || inLanguage(LANGUAGE_JAVASCRIPT) }? '>')? |
@@ -131,6 +155,9 @@ OPERATORS options { testLiterals = true; } {
     // names can start with a @ in C#
     '@' (
 
+        { inLanguage(LANGUAGE_PYTHON) }?
+          '='
+        |
         { inLanguage(LANGUAGE_OBJECTIVE_C) }?
           '(' 
         |
@@ -164,7 +191,7 @@ OPERATORS options { testLiterals = true; } {
 
     '.' ({ inLanguage(LANGUAGE_C_FAMILY) }? '*' | '.' ('.')? | { $setType(CONSTANTS); } CONSTANTS )? |
 
-    '\\' ( EOL { $setType(EOL_BACKSLASH); } )*
+    '\\' ({ inLanguage(LANGUAGE_PYTHON) }? EOL { $setType(EOL_BACKSLASH); } | (EOL { $setType(EOL_BACKSLASH); })*)
     )
     { startline = false; lastpos = getColumn(); prev = start; }
 ;

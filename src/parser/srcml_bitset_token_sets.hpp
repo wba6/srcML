@@ -39,7 +39,10 @@ token_set(srcMLParser, keyword_token_set,
     srcMLParser::THROW, srcMLParser::ASSERT, srcMLParser::MACRO_CASE, srcMLParser::FOREVER, srcMLParser::STATIC_ASSERT,
     srcMLParser::CXX_CATCH, srcMLParser::CXX_TRY, srcMLParser::JS_CONSTRUCTOR, srcMLParser::JS_DEBUGGER, srcMLParser::JS_EXPORT,
     srcMLParser::JS_FROM, srcMLParser::JS_FUNCTION, srcMLParser::JS_GET, srcMLParser::JS_IMPORT, srcMLParser::JS_SET, srcMLParser::JS_WITH,
-    srcMLParser::JS_YIELD
+    srcMLParser::JS_YIELD, srcMLParser::PY_2_EXEC, srcMLParser::PY_2_PRINT, srcMLParser::PY_ALIAS, srcMLParser::PY_ASYNC, srcMLParser::PY_CASE,
+    srcMLParser::PY_FUNCTION, srcMLParser::PY_DELETE, srcMLParser::PY_ELIF, srcMLParser::PY_EXCEPT, srcMLParser::PY_FROM, srcMLParser::PY_GLOBAL,
+    srcMLParser::PY_IMPORT, srcMLParser::PY_IN, srcMLParser::PY_LAMBDA, srcMLParser::PY_MATCH, srcMLParser::PY_NONLOCAL, srcMLParser::PY_PASS,
+    srcMLParser::PY_RAISE, srcMLParser::PY_TYPE, srcMLParser::PY_WITH, srcMLParser::PY_YIELD
 )
 
 token_set(srcMLParser, macro_call_token_set,
@@ -88,7 +91,7 @@ token_set(srcMLParser, enum_preprocessing_token_set,
 
 token_set(srcMLParser, literal_tokens_set,
     srcMLParser::CHAR_START, srcMLParser::COMPLEX_NUMBER, srcMLParser::STRING_START, srcMLParser::CONSTANTS, srcMLParser::LITERAL_FALSE, srcMLParser::LITERAL_TRUE, srcMLParser::NULLPTR,
-    srcMLParser::NULLLITERAL, srcMLParser::NIL
+    srcMLParser::NULLLITERAL, srcMLParser::NIL, srcMLParser::LITERAL_NONE, srcMLParser::LITERAL_ELLIPSIS, srcMLParser::DQUOTE_DOCSTRING_START, srcMLParser::SQUOTE_DOCSTRING_START
 )
 
 token_set(srcMLParser, modifier_tokens_set,
@@ -97,7 +100,7 @@ token_set(srcMLParser, modifier_tokens_set,
 
 token_set(srcMLParser, skip_tokens_set,
     srcMLParser::WS, srcMLParser::CONTROL_CHAR, srcMLParser::EOL_BACKSLASH, srcMLParser::BLOCK_COMMENT_START, srcMLParser::BLOCK_COMMENT_END, srcMLParser::LINE_COMMENT_END, srcMLParser::COMMENT_TEXT,
-    srcMLParser::LINE_COMMENT_START, srcMLParser::JAVADOC_COMMENT_START, srcMLParser::DOXYGEN_COMMENT_START, srcMLParser::LINE_DOXYGEN_COMMENT_START, srcMLParser::EOL, srcMLParser::WHOLE_COMMENT
+    srcMLParser::LINE_COMMENT_START, srcMLParser::JAVADOC_COMMENT_START, srcMLParser::DOXYGEN_COMMENT_START, srcMLParser::LINE_DOXYGEN_COMMENT_START, srcMLParser::EOL, srcMLParser::WHOLE_COMMENT, srcMLParser::WS_EOL
 )
 
 token_set(srcMLParser, class_tokens_set,
@@ -119,13 +122,13 @@ token_set(srcMLParser, decl_specifier_tokens_set,
 
 token_set(srcMLParser, identifier_list_tokens_set,
 
-    srcMLParser::NAME, srcMLParser::INCLUDE, srcMLParser::DEFINE, srcMLParser::ELIF, srcMLParser::ENDIF, srcMLParser::ERRORPREC, srcMLParser::IFDEF, srcMLParser::IFNDEF, srcMLParser::LINE, srcMLParser::PRAGMA, srcMLParser::UNDEF |
-    srcMLParser::WARNING, srcMLParser::SUPER, srcMLParser::REGION, srcMLParser::ENDREGION, srcMLParser::GET, srcMLParser::SET, srcMLParser::ADD, srcMLParser::REMOVE, srcMLParser::ASYNC, srcMLParser::YIELD |
-    srcMLParser::SIGNAL, srcMLParser::FINAL, srcMLParser::OVERRIDE, srcMLParser::VOID, srcMLParser::ASM,
+    srcMLParser::NAME, srcMLParser::INCLUDE, srcMLParser::DEFINE, srcMLParser::ELIF, srcMLParser::ENDIF, srcMLParser::ERRORPREC, srcMLParser::IFDEF, srcMLParser::IFNDEF, srcMLParser::LINE,
+    srcMLParser::PRAGMA, srcMLParser::UNDEF, srcMLParser::WARNING, srcMLParser::SUPER, srcMLParser::REGION, srcMLParser::ENDREGION, srcMLParser::GET, srcMLParser::SET, srcMLParser::ADD,
+    srcMLParser::REMOVE, srcMLParser::ASYNC, srcMLParser::YIELD, srcMLParser::FINAL, srcMLParser::OVERRIDE, srcMLParser::VOID, srcMLParser::ASM,
 
     // C# linq
-    srcMLParser::FROM, srcMLParser::WHERE, srcMLParser::SELECT, srcMLParser::LET, srcMLParser::ORDERBY, srcMLParser::ASCENDING, srcMLParser::DESCENDING, srcMLParser::GROUP, srcMLParser::BY, srcMLParser::JOIN, srcMLParser::ON, srcMLParser::EQUALS,
-        srcMLParser::INTO, srcMLParser::THIS, srcMLParser::ALIAS,
+    srcMLParser::FROM, srcMLParser::WHERE, srcMLParser::SELECT, srcMLParser::LET, srcMLParser::ORDERBY, srcMLParser::ASCENDING, srcMLParser::DESCENDING, srcMLParser::GROUP, srcMLParser::BY,
+    srcMLParser::JOIN, srcMLParser::ON, srcMLParser::EQUALS, srcMLParser::INTO, srcMLParser::THIS, srcMLParser::ALIAS,
 
     // Objective-C
     srcMLParser::IMPORT, srcMLParser::ATPROTOCOL,
@@ -133,16 +136,23 @@ token_set(srcMLParser, identifier_list_tokens_set,
     // C
     srcMLParser::CRESTRICT, srcMLParser::MUTABLE, srcMLParser::CXX_TRY, srcMLParser::CXX_CATCH,
 
+    // Java
+    srcMLParser::RECORD,
+
     // Qt
-    srcMLParser::EMIT,
+    srcMLParser::EMIT, srcMLParser::FOREACH, srcMLParser::SIGNAL, srcMLParser::FOREVER,
 
     // JavaScript
     srcMLParser::JS_BREAK, srcMLParser::JS_CATCH, srcMLParser::JS_CONTINUE, srcMLParser::JS_DO, srcMLParser::JS_ELSE, srcMLParser::JS_FINALLY, srcMLParser::JS_ASYNC, srcMLParser::JS_DEBUGGER, srcMLParser::JS_DEFAULT,
-    srcMLParser::JS_EACH, srcMLParser::JS_EXPORT, srcMLParser::JS_FUNCTION, srcMLParser::JS_IMPORT, srcMLParser::JS_RANGE_IN, srcMLParser::JS_WITH, srcMLParser::JS_YIELD, srcMLParser::JS_SWITCH, srcMLParser::JS_TRY
+    srcMLParser::JS_EACH, srcMLParser::JS_EXPORT, srcMLParser::JS_FUNCTION, srcMLParser::JS_IMPORT, srcMLParser::JS_RANGE_IN, srcMLParser::JS_WITH, srcMLParser::JS_YIELD, srcMLParser::JS_SWITCH, srcMLParser::JS_TRY,
+
+    // Python
+    srcMLParser::PY_2_EXEC, srcMLParser::PY_2_PRINT, srcMLParser::PY_CASE, srcMLParser::PY_MATCH, srcMLParser::PY_TYPE
 )
 
 token_set(srcMLParser, whitespace_token_set,
     srcMLParser::WS,
+    srcMLParser::WS_EOL,
     srcMLParser::CONTROL_CHAR,
     srcMLParser::EOL_BACKSLASH,
     srcMLParser::WHOLE_COMMENT,
@@ -158,7 +168,9 @@ token_set(srcMLParser, whitespace_token_set,
     srcMLParser::JAVADOC_COMMENT_START,
     srcMLParser::DOXYGEN_COMMENT_START,
     srcMLParser::HASHBANG_COMMENT_START,
-    srcMLParser::HASHBANG_COMMENT_END
+    srcMLParser::HASHBANG_COMMENT_END,
+    srcMLParser::HASHTAG_COMMENT_START,
+    srcMLParser::HASHTAG_COMMENT_END
 )
 
 token_set(srcMLParser, duplex_keyword_set,
@@ -171,7 +183,53 @@ token_set(srcMLParser, duplex_keyword_set,
     srcMLParser::JS_IMPORT,
     srcMLParser::JS_STATIC,
     srcMLParser::JS_WITH,
-    srcMLParser::JS_YIELD
+    srcMLParser::JS_YIELD,
+
+    // Python
+    srcMLParser::PY_EXCEPT,
+    srcMLParser::PY_YIELD
+)
+
+token_set(srcMLParser, keyword_name_token_set_py,
+    srcMLParser::BAR, srcMLParser::DESTOP, srcMLParser::DOTDEREF, srcMLParser::ELSE, srcMLParser::EQUAL,
+    srcMLParser::EXPONENTIATION, srcMLParser::IF, srcMLParser::LBRACKET, srcMLParser::LITERAL_ELLIPSIS,
+    srcMLParser::LPAREN, srcMLParser::MULTOPS, srcMLParser::OPERATORS, srcMLParser::PERIOD, srcMLParser::PY_AND,
+    srcMLParser::PY_ARROW, srcMLParser::PY_ATSIGN, srcMLParser::PY_AWAIT, srcMLParser::PY_COLON, srcMLParser::PY_IN,
+    srcMLParser::PY_IS, srcMLParser::PY_LCURLY, srcMLParser::PY_NOT, srcMLParser::PY_OR, srcMLParser::PY_RCURLY,
+    srcMLParser::QMARK, srcMLParser::RBRACKET, srcMLParser::REFOPS, srcMLParser::RVALUEREF, srcMLParser::TEMPOPE,
+    srcMLParser::TEMPOPS
+)
+
+token_set(srcMLParser, expect_blocks_py_token_set,
+    // Python keywords
+    srcMLParser::CLASS, srcMLParser::ELSE, srcMLParser::FINALLY, srcMLParser::FOR, srcMLParser::IF,
+    srcMLParser::PY_CASE, srcMLParser::PY_ELIF, srcMLParser::PY_EXCEPT, srcMLParser::PY_FUNCTION,
+    srcMLParser::PY_MATCH, srcMLParser::PY_WITH, srcMLParser::TRY, srcMLParser::WHILE,
+
+    // Python attributes/specifiers
+    srcMLParser::PY_ASYNC, srcMLParser::PY_ATSIGN
+)
+
+token_set(srcMLParser, left_bracket_py_token_set,
+    srcMLParser::LPAREN, srcMLParser::LBRACKET, srcMLParser::PY_LCURLY
+)
+
+token_set(srcMLParser, right_bracket_py_token_set,
+    srcMLParser::RPAREN, srcMLParser::RBRACKET, srcMLParser::PY_RCURLY
+)
+
+token_set(srcMLParser, comment_py_token_set,
+    // Python comments
+    srcMLParser::HASHTAG_COMMENT_START, srcMLParser::HASHTAG_COMMENT_END,
+    srcMLParser::HASHBANG_COMMENT_START, srcMLParser::HASHBANG_COMMENT_END
+)
+
+token_set(srcMLParser, multiline_literals_py_token_set,
+    // Python string literals that can span multiple lines
+    srcMLParser::STRING_START, srcMLParser::STRING_END,
+    srcMLParser::CHAR_START, srcMLParser::CHAR_END,
+    srcMLParser::DQUOTE_DOCSTRING_END, srcMLParser::DQUOTE_DOXYGEN_END,
+    srcMLParser::SQUOTE_DOCSTRING_END, srcMLParser::SQUOTE_DOXYGEN_END
 )
 
 #endif

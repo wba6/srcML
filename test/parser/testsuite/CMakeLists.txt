@@ -24,7 +24,7 @@ endforeach()
 set(TESTFILES)
 
 # convert from input language to input extension
-set(LANGLIST "C++" "cpp" "C" "c" "Java" "java" "C#" "cs" "Objective-C" "m" "JavaScript" "js")
+set(LANGLIST "C++" "cpp" "C" "c" "Java" "java" "C#" "cs" "Objective-C" "m" "Python" "py" "JavaScript" "js")
 function(lang2ext LANG EXT)
     list(FIND LANGLIST "${LANG}" LANG_POS)
     math(EXPR EXT_POS "${LANG_POS} + 1")
@@ -112,13 +112,26 @@ foreach(GEN IN ITEMS ${SUITE})
 
         # base is C++, so these just get added
         list(APPEND TESTFILES "${URL}.cpp.xml")
-        setlanguage("C++" "${URL}" "Java" "C#" "Objective-C" "C" "JavaScript")
+        setlanguage("C++" "${URL}" "Java" "C#" "Objective-C" "C" "Python" "JavaScript")
 
     elseif(CATEGORY STREQUAL "LANGUAGE_ALL_GEN")
 
         # explicitly generated
         list(APPEND TESTFILES "${URL}.cpp.xml")
         setlanguage("C++" "${URL}" "Java" "C#" "Objective-C" "C" "JavaScript")
+
+    elseif(CATEGORY STREQUAL "LANGUAGE_ALL_NO_JAVASCRIPT_NO_PYTHON")
+
+        # explicitly generated
+        list(APPEND TESTFILES "${URL}.cpp.xml")
+        setlanguage("C++" "${URL}" "Java" "C#" "Objective-C" "C")
+
+    elseif(CATEGORY STREQUAL "LANGUAGE_ALL_NO_PYTHON")
+
+        # explicitly generated
+        list(APPEND TESTFILES "${URL}.cpp.xml")
+        setlanguage("C++" "${URL}" "Java" "JavaScript" "C#" "Objective-C" "C")
+
 
     elseif(CATEGORY STREQUAL "LANGUAGE_CSHARP")
 
@@ -151,12 +164,6 @@ foreach(GEN IN ITEMS ${SUITE})
 
         list(APPEND TESTFILES "${URL}.cpp.xml")
         setlanguage("C++" "${URL}" "C" "Objective-C")
- 
-    elseif(CATEGORY STREQUAL "LANGUAGE_C_FAMILY_NO_JAVASCRIPT")
-
-        # explicitly generated
-        list(APPEND TESTFILES "${URL}.cpp.xml")
-        setlanguage("C++" "${URL}" "Java" "C#" "Objective-C" "C")
 
     elseif(CATEGORY STREQUAL "LANGUAGE_C_ONLY")
 
@@ -166,6 +173,10 @@ foreach(GEN IN ITEMS ${SUITE})
     elseif(CATEGORY STREQUAL "LANGUAGE_JAVA")
 
         list(APPEND TESTFILES "${URL}.java.xml")
+
+    elseif(CATEGORY STREQUAL "LANGUAGE_PYTHON")
+
+        list(APPEND TESTFILES "${URL}.py.xml")
 
     elseif(CATEGORY STREQUAL "LANGUAGE_JAVA_GEN")
 
@@ -213,9 +224,11 @@ foreach(GENURL IN ITEMS ${TESTFILES})
     # Generate "formfeed" "comment" "block" "struct" "ifthenelse"
     foreach(VARIATION IN ITEMS "formfeed" "comment" "block" "struct" "preproc" "ifthenelse")
         # preproc and struct do not work with Java or JavaScript
+        # skip generating any of these tests for Python
         if((LANGEXT STREQUAL "java" AND (VARIATION STREQUAL "struct" OR VARIATION STREQUAL "preproc")) OR
            (LANGEXT STREQUAL "cs" AND VARIATION STREQUAL "struct") OR
-           (LANGEXT STREQUAL "js" AND (VARIATION STREQUAL "struct" OR VARIATION STREQUAL "preproc")))
+           (LANGEXT STREQUAL "js" AND (VARIATION STREQUAL "struct" OR VARIATION STREQUAL "preproc")) OR
+           (LANGEXT STREQUAL "py"))
             continue()
         endif()
 
@@ -258,17 +271,6 @@ foreach(GENURL IN ITEMS ${JS_XML_FILES})
     get_filename_component(EXTENSION "${SRCFILENAME}" LAST_EXT)
     # remove '.'
     string(SUBSTRING "${EXTENSION}" 1 -1 LANGEXT)
-
-    set(GENERATED_FILE "${URL}.eolterminate.js.xml")
-    add_custom_command(
-        COMMAND ${SRCML_EXE} --output-srcml --xslt ${XSLT_DIR}/eolterminate.xsl --url=${URL}.eolterminate ${GENURL}
-                 -o ${GENERATED_FILE}
-        COMMENT "Generating parser testfile ${GENERATED_FILE} from ${GENURL}"
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${GENURL}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        OUTPUT ${GENERATED_FILE}
-    )
-    list(APPEND CONTEXT_FILES ${URL}.eolterminate.js.xml)
 
 endforeach()
 
