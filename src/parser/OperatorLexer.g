@@ -98,16 +98,16 @@ tokens {
 OPERATORS options { testLiterals = true; } {
     int start = LA(1);
 } : (
-    // # (C++ or Python), #! (JavaScript or Python)
+    // # (C++ or Python), #! (Python or JavaScript)
     '#' (
-        { (inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON)) && LA(1) == '!' }?
+        { (inLanguage(LANGUAGE_PYTHON) || inLanguage(LANGUAGE_JAVASCRIPT)) && LA(1) == '!' }?
             { $setType(HASHBANG_COMMENT_START); changetotextlexer(HASHBANG_COMMENT_END); } |
-
-        { inLanguage(LANGUAGE_JAVASCRIPT) && LA(1) != '!' }?
-            NAME { $setType(NAME); } |
 
         { inLanguage(LANGUAGE_PYTHON) && LA(1) != '!' }?
             { $setType(HASHTAG_COMMENT_START); changetotextlexer(HASHTAG_COMMENT_END); } |
+
+        { inLanguage(LANGUAGE_JAVASCRIPT) && LA(1) != '!' }?
+            NAME { $setType(NAME); } |
 
         { startline }?
             {
@@ -124,8 +124,8 @@ OPERATORS options { testLiterals = true; } {
     '+' ('+' | '=')? |
     '-' ('-' | '=' | '>' ('*')? )? |
 
-    // *, *=, ** (JavaScript & Python), **= (JavaScript & Python)
-    '*' ({ inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON) }? '*')? ('=')? |
+    // *, *=, ** (Python and JavaScript), **= (Python and JavaScript)
+    '*' ({ inLanguage(LANGUAGE_PYTHON) || inLanguage(LANGUAGE_JAVASCRIPT) }? '*')? ('=')? |
 
     '%' ('=')? |
     '^' ('=')? |
@@ -187,7 +187,7 @@ OPERATORS options { testLiterals = true; } {
     // ?, ??, etc. (part of ternary); ?. (JavaScript), ??= (JavaScript)
     '?' ('?')* ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '.')? ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '=')? |
 
-    '~'  | // has to be separate if part of name
+    '~' | // has to be separate if part of name
 
     '.' ({ inLanguage(LANGUAGE_C_FAMILY) }? '*' | '.' ('.')? | { $setType(CONSTANTS); } CONSTANTS )? |
 

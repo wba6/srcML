@@ -90,14 +90,14 @@ public:
         /** Objective-C language */
         LANGUAGE_OBJECTIVE_C = 16,
 
-        /** JavaScript language */
-        LANGUAGE_JAVASCRIPT = 32,
-
         /** Python language */
-        LANGUAGE_PYTHON = 64,
+        LANGUAGE_PYTHON = 32,
+
+        /** JavaScript language */
+        LANGUAGE_JAVASCRIPT = 64,
 
         /** C++ family i.e. C++/C#  */
-        LANGUAGE_CXX_FAMILY = LANGUAGE_CXX | LANGUAGE_CSHARP | LANGUAGE_JAVASCRIPT | LANGUAGE_PYTHON,
+        LANGUAGE_CXX_FAMILY = LANGUAGE_CXX | LANGUAGE_CSHARP | LANGUAGE_PYTHON | LANGUAGE_JAVASCRIPT,
 
         /** C family i.e. C/C++/C# */
         LANGUAGE_C_FAMILY = LANGUAGE_C | LANGUAGE_CXX_FAMILY | LANGUAGE_OBJECTIVE_C,

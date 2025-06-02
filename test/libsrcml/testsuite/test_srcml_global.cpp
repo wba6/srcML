@@ -48,11 +48,11 @@ int main(int, char* argv[]) {
     }
 
     {
-        dassert(srcml_check_language("JavaScript"), 32);
+        dassert(srcml_check_language("Python"), 32);
     }
 
     {
-        dassert(srcml_check_language("Python"), 64);
+        dassert(srcml_check_language("JavaScript"), 64);
     }
 
     /*
@@ -84,7 +84,7 @@ int main(int, char* argv[]) {
     }
 
     {
-        dassert(srcml_get_language_list(4), std::string("JavaScript"));
+        dassert(srcml_get_language_list(4), std::string("Objective-C"));
     }
 
     {
@@ -92,7 +92,7 @@ int main(int, char* argv[]) {
     }
 
     {
-        dassert(srcml_get_language_list(6), std::string("Objective-C"));
+        dassert(srcml_get_language_list(6), std::string("JavaScript"));
     }
 
     {

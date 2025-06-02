@@ -685,36 +685,10 @@ tokens {
     SJAVADOC_COMMENT;
     SDOXYGEN_COMMENT;
 
-    // JavaScript
-    SALIAS;
-    SALIAS_COMPOUND_NAME;
-    SARRAY;
-    SCONSTRUCTOR_STATEMENT;
-    SDEBUGGER_STATEMENT;
-    SDECLARATION_CONST;
-    SDECLARATION_LET;
-    SDECLARATION_STATIC;
-    SDECLARATION_VAR;
-    SEXPORT_STATEMENT;
-    SFUNCTION_STATEMENT;
-    SFUNCTION_GENERATOR_STATEMENT;
-    SFUNCTION_GET_STATEMENT;
-    SFUNCTION_SET_STATEMENT;
-    SHASHBANG_COMMENT;
-    SIMPORT_STATEMENT;
-    SINIT;
-    SLAMBDA_JS;
-    SLAMBDA_ARROW_JS;
-    SLAMBDA_GENERATOR_JS;
-    SNAME_LIST;
-    SOBJECT_JS;
-    SRANGE_IN;
-    SRANGE_OF;
-    SWITH_STATEMENT;
-    SYIELD_STATEMENT;
-    SYIELD_GENERATOR_STATEMENT;
-
     // Python
+    SALIAS;
+    SARRAY;
+    SCOMPREHENSION;
     SDELETE;
     SDICTIONARY;
     SDOCSTRING_PY;
@@ -722,18 +696,44 @@ tokens {
     SDOXYGEN_PY;
     SELLIPSIS;
     SEXEC_PYTHON2;
+    SFUNCTION_STATEMENT;
     SGLOBAL;
+    SHASHBANG_COMMENT;
     SHASHTAG_COMMENT;
-    SCOMPREHENSION;
+    SIMPORT_STATEMENT;
+    SINIT;
     SNONLOCAL;
     SPARAMETER_ARGUMENT;
     SPARAMETER_KEYWORD_ARGUMENT;
     SPARAMETER_MODIFIER;
     SPASS;
     SPRINT_PYTHON2;
+    SRANGE_IN;
     SSET;
     STUPLE;
+    SWITH_STATEMENT;
+    SYIELD_STATEMENT;
     SYIELD_FROM_STATEMENT;
+
+    // JavaScript
+    SALIAS_COMPOUND_NAME;
+    SCONSTRUCTOR_STATEMENT;
+    SDEBUGGER_STATEMENT;
+    SDECLARATION_CONST;
+    SDECLARATION_LET;
+    SDECLARATION_STATIC;
+    SDECLARATION_VAR;
+    SEXPORT_STATEMENT;
+    SFUNCTION_GENERATOR_STATEMENT;
+    SFUNCTION_GET_STATEMENT;
+    SFUNCTION_SET_STATEMENT;
+    SLAMBDA_JS;
+    SLAMBDA_ARROW_JS;
+    SLAMBDA_GENERATOR_JS;
+    SNAME_LIST;
+    SOBJECT_JS;
+    SRANGE_OF;
+    SYIELD_GENERATOR_STATEMENT;
 }
 
 /*
@@ -895,24 +895,18 @@ public:
     }
 
     void handleSpecifiers() {
-        // handle JavaScript specifiers
-        if (inLanguage(LANGUAGE_JAVASCRIPT)) {
-            if (check_valid_specifier_js()) {
-                // handle multiple pre-keyword specifiers in a row
-                while (check_valid_specifier_js()) {
-                    specifier_js();
-                }
-            }
+        // handle Python specifiers
+        if (inLanguage(LANGUAGE_PYTHON) && check_valid_specifier_py()) {
+            // handle multiple pre-keyword specifiers in a row
+            while (check_valid_specifier_py())
+                specifier_py();
         }
 
-        // handle Python specifiers
-        if (inLanguage(LANGUAGE_PYTHON)) {
-            if (check_valid_specifier_py()) {
-                // handle multiple pre-keyword specifiers in a row
-                while (check_valid_specifier_py()) {
-                    specifier_py();
-                }
-            }
+        // handle JavaScript specifiers
+        if (inLanguage(LANGUAGE_JAVASCRIPT) && check_valid_specifier_js()) {
+            // handle multiple pre-keyword specifiers in a row
+            while (check_valid_specifier_js())
+                specifier_js();
         }
     }
 }
@@ -1082,233 +1076,6 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
 
         // in the middle of a statement
         statement_part
-;
-exception
-catch[...] {
-        CATCH_DEBUG
-
-        // need to consume the token. If we got here because
-        // of an error with EOF token, then call EOF directly
-        if (LA(1) == 1)
-            eof();
-        else
-            consume();
-}
-
-/*
-  start_javascript
-
-  Invokes a table-based approach to detecting and handling tokens.
-
-  Whitespace tokens are handled elsewhere and are automagically included
-  in the output stream.
-
-  Order of evaluation is important.
-*/
-start_javascript[] {
-        ++start_count;
-
-        const int JS_CATCH_LPAREN = 800;
-        const int JS_ELSE_IF = 801;
-        const int JS_DEFAULT_COLON = 802;
-        const int JS_FUNCTION_MULTOPS = 803;
-        const int JS_YIELD_MULTOPS = 804;
-        const int JS_STATIC_LCURLY = 805;
-        const int JS_EXPORT_LCURLY = 806;
-        const int JS_EXPORT_MULTOPS = 807;
-        const int JS_IMPORT_MULTOPS = 808;
-        const int JS_WITH_LPAREN = 809;
-
-        // A duplex keyword is a pair of adjacent keywords
-        static const std::array<int, 500 * 500> duplexKeywords = [this](){
-            std::array<int, 500 * 500> temp_array;
-
-            temp_array[JS_CATCH + (LPAREN << 8)] = JS_CATCH_LPAREN;
-            temp_array[JS_ELSE + (IF << 8)] = JS_ELSE_IF;
-            temp_array[JS_DEFAULT + (COLON << 8)] = JS_DEFAULT_COLON;
-            temp_array[JS_FUNCTION + (MULTOPS << 8)] = JS_FUNCTION_MULTOPS;
-            temp_array[JS_YIELD + (MULTOPS << 8)] = JS_YIELD_MULTOPS;
-            temp_array[JS_STATIC + (LCURLY << 8)] = JS_STATIC_LCURLY;
-            temp_array[JS_EXPORT + (LCURLY << 8)] = JS_EXPORT_LCURLY;
-            temp_array[JS_EXPORT + (MULTOPS << 8)] = JS_EXPORT_MULTOPS;
-            temp_array[JS_IMPORT + (MULTOPS << 8)] = JS_IMPORT_MULTOPS;
-            temp_array[JS_WITH + (LPAREN << 8)] = JS_WITH_LPAREN;
-
-            return temp_array;
-        }();
-
-        // JavaScript rules adhere to the following form:
-        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
-        static const std::array<Rule, 700> javascript_rules = [this](){
-            std::array<Rule, 700> temp_array;
-
-            /* GENERIC STATEMENTS */
-            temp_array[JS_BREAK]              = { SBREAK_STATEMENT, 0, MODE_STATEMENT, MODE_VARIABLE_NAME, nullptr, nullptr };
-            temp_array[CASE]                  = { SCASE, 0, MODE_TOP_SECTION | MODE_TOP | MODE_STATEMENT | MODE_DETECT_COLON, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
-            temp_array[CLASS]                 = { SCLASS, 0, MODE_STATEMENT | MODE_NEST, MODE_VARIABLE_NAME, nullptr, nullptr };
-            temp_array[JS_CONTINUE]           = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, MODE_VARIABLE_NAME, nullptr, nullptr };
-            temp_array[JS_DO]                 = { SDO_STATEMENT, 0, MODE_STATEMENT | MODE_TOP | MODE_DO_STATEMENT, MODE_STATEMENT | MODE_NEST, nullptr, &srcMLParser::pseudoblock };
-            temp_array[JS_ELSE]               = { SELSE, 0, MODE_STATEMENT | MODE_NEST | MODE_ELSE, MODE_STATEMENT | MODE_NEST, &srcMLParser::if_statement_start, &srcMLParser::pseudoblock };
-            temp_array[JS_FINALLY]            = { SFINALLY_BLOCK, 0, MODE_STATEMENT | MODE_NEST, 0, nullptr, nullptr };
-            temp_array[FOR]                   = { SFOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONTROL | MODE_EXPECT | MODE_FOR_LOOP_JS, nullptr, nullptr };
-            temp_array[IF]                    = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, nullptr };
-            temp_array[RETURN]                = { SRETURN_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
-            temp_array[JS_SWITCH]             = { SSWITCH, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
-            temp_array[THROW]                 = { STHROW_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
-            temp_array[JS_TRY]                = { STRY_BLOCK, 0, MODE_STATEMENT, MODE_STATEMENT | MODE_NEST | MODE_TRY, nullptr, &srcMLParser::pseudoblock };
-            temp_array[WHILE]                 = { SWHILE_STATEMENT, MODE_DO_STATEMENT, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
-
-            /* JAVASCRIPT STATEMENTS */
-            temp_array[JS_CONSTRUCTOR]        = { SCONSTRUCTOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_CONSTRUCTOR_JS, MODE_PARAMETER | MODE_LIST | MODE_PARAMETER_LIST_JS, nullptr, nullptr };
-            temp_array[JS_DEBUGGER]           = { SDEBUGGER_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
-            temp_array[JS_FUNCTION]           = { SFUNCTION_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
-            temp_array[JS_IMPORT]             = { SIMPORT_STATEMENT, 0, MODE_STATEMENT | MODE_IMPORT_JS, MODE_VARIABLE_NAME | MODE_NAME_LIST_JS, nullptr, nullptr };
-            temp_array[JS_YIELD]              = { SYIELD_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
-
-            /* DUPLEX KEYWORDS */
-            temp_array[JS_CATCH_LPAREN]       = { SCATCH_BLOCK, 0, MODE_STATEMENT | MODE_NEST | MODE_CATCH_JS, MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `(`
-            temp_array[JS_DEFAULT_COLON]      = { SDEFAULT, 0, MODE_TOP_SECTION | MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_DETECT_COLON, MODE_STATEMENT, nullptr, nullptr };  // differentiates a `default` specifier from a `default` clause
-            temp_array[JS_ELSE_IF]            = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, &srcMLParser::consume };  // extra consume() for `if`
-            temp_array[JS_EXPORT_LCURLY]      = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, MODE_NAME_LIST_JS, nullptr, nullptr };  // treats `export` as a statement
-            temp_array[JS_EXPORT_MULTOPS]     = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, &srcMLParser::multops_as_name };  // treats `*` in `export *` as a name
-            temp_array[JS_FUNCTION_MULTOPS]   = { SFUNCTION_GENERATOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
-            temp_array[JS_IMPORT_MULTOPS]     = { SIMPORT_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, &srcMLParser::multops_as_name };  // treats `*` in `import *` as a name
-            temp_array[JS_STATIC_LCURLY]      = { SSTATIC_BLOCK, 0, MODE_STATEMENT | MODE_NEST, MODE_BLOCK | MODE_EXPECT, nullptr, nullptr };  // differentiates a `static` specifier from a `static` block
-            temp_array[JS_WITH_LPAREN]        = { SWITH_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_WITH_JS, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `(`
-            temp_array[JS_YIELD_MULTOPS]      = { SYIELD_GENERATOR_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
-
-            return temp_array;
-        }();
-
-        // check if the current token is a specifier that occurs before a keyword
-        if (check_valid_specifier_js()) {
-            std::array<int, 2> post_specifier_tokens = perform_post_specifier_check_js();
-
-            // looking for declarations (e.g., var/let/const/static) separately since they are not in the table
-            if (
-                post_specifier_tokens[0] == JS_LET
-                || post_specifier_tokens[0] == JS_VAR
-                || post_specifier_tokens[0] == JS_CONST
-                || post_specifier_tokens[0] == JS_STATIC
-            ) {
-                declaration_js(true);
-            }
-            // looking for functions or classes
-            else if (post_specifier_tokens[0] != -1) {
-                if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
-                    const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
-                    if (lookup)
-                        post_specifier_tokens[0] = lookup;
-                }
-                const auto& rule = javascript_rules[post_specifier_tokens[0]];
-                if (rule.elementToken && processRule(rule)) {
-                    return;
-                }
-            }
-        }
-
-        // in JavaScript, a lambda is a function keyword followed by a parameter list (no function name)
-        bool is_lambda = false;
-        if (LA(1) == JS_FUNCTION && next_token() == LPAREN)
-            is_lambda = true;
-
-        // invoke the table to handle keywords and duplex keywords
-        if ((inMode(MODE_STATEMENT)) && !is_lambda) {
-            auto token = LA(1);
-            if (duplex_keyword_set.member((unsigned int) LA(1))) {
-                const auto lookup = duplexKeywords[token + (next_token() << 8)];
-                if (lookup)
-                    token = lookup;
-            }
-            const auto& rule = javascript_rules[token];
-            if (rule.elementToken && processRule(rule)) {
-                return;
-            }
-        }
-
-        // special case for a name (no paren) to start an arrow lambda tag
-        if (LA(1) == NAME && next_token() == JS_ARROW)
-            arrow_js(true);
-
-        // special case for a parameter list to start an arrow lambda tag
-        if (LA(1) == LPAREN)
-            parameter_list_arrow_js();
-
-        ENTRY_DEBUG_START
-        ENTRY_DEBUG
-} :
-        // looking for lcurly (preceded by rparen) to start a block inside the current property
-        { inMode(MODE_PROPERTY_JS) && last_consumed == RPAREN }?
-        {
-            startNewMode(MODE_EXPRESSION_BLOCK | MODE_EXPECT);
-        }
-        pure_expression_block |
-
-        // jump to expression part when in a property
-        { inMode(MODE_PROPERTY_JS) }?
-        expression_part |
-
-        // looking for rparen to end the current control expression ("for...in" or "for...of" only)
-        { inTransparentMode(MODE_FOR_LOOP_JS) && inTransparentMode(MODE_INIT) }?
-        rparen_control_js |
-
-        // looking for rparen to end the current argument list
-        { inTransparentMode(MODE_ARGUMENT | MODE_LIST) }?
-        rparen_argument_list_js |
-
-        // looking for lparen while expecting a parameter list
-        { inMode(MODE_PARAMETER_LIST_JS) }?
-        parameter_list_js |
-
-        // looking for rparen to end the current parameter list
-        { inTransparentMode(MODE_PARAMETER_LIST_JS) }?
-        rparen_parameter_list |
-
-        // looking for lcurly while expecting a name list
-        { inMode(MODE_NAME_LIST_JS) || inTransparentMode(MODE_IMPORT_JS) }?
-        name_list_js |
-
-        // looking for rcurly to end the current name list
-        { inTransparentMode(MODE_NAME_LIST_JS) }?
-        rcurly_name_list |
-
-        // looking for the start of a string to ensure it is marked up in the current name list
-        { inTransparentMode(MODE_NAME_LIST_JS) }?
-        string_as_name_js |
-
-        // looking for "*" inside the current import statement
-        { inTransparentMode(MODE_IMPORT_JS) }?
-        multops_as_name |
-
-        // looking to consume a rparen to continue the current catch statement
-        { inTransparentMode(MODE_CATCH_JS) }?
-        rparen_catch_js |
-
-        // looking to consume a rparen to continue the current with statement
-        { inTransparentMode(MODE_WITH_JS) }?
-        rparen_with_js |
-
-        // looking for "=" inside a parameter to start an init tag
-        { inMode(MODE_PARAMETER) }?
-        init_js |
-
-        // looking for "," to handle comma-separated declarations (or declarations in parameters)
-        { inTransparentMode(MODE_DECLARATION_JS) && !inTransparentMode(MODE_OBJECT_JS) }?
-        comma_declaration_js |
-
-        // looking for "each" after "for" (handles the obselete "for each...in")
-        { last_consumed == FOR }?
-        for_each_specifier_js |
-
-        // looking for a keyword or operator that does not belong to a statement
-        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | getter_js | setter_js |
-
-        // redundancy required to suppress warning with start[] overlap
-        { inLanguage(LANGUAGE_JAVASCRIPT) }?
-        (declaration_js[false] | range_in_js ) |
-
-        // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
-        start
 ;
 exception
 catch[...] {
@@ -1522,6 +1289,246 @@ start_python[] {
 
         // looking for a keyword or operator that does not belong to a statement
         alias_py | function_annotation_py |
+
+        // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
+        start
+;
+exception
+catch[...] {
+        CATCH_DEBUG
+
+        // need to consume the token. If we got here because
+        // of an error with EOF token, then call EOF directly
+        if (LA(1) == 1)
+            eof();
+        else
+            consume();
+}
+
+/*
+  start_javascript
+
+  Invokes a table-based approach to detecting and handling tokens.
+
+  Whitespace tokens are handled elsewhere and are automagically included
+  in the output stream.
+
+  Order of evaluation is important.
+*/
+start_javascript[] {
+        ++start_count;
+
+        /*
+          May need to increase these constants in the future as more tokens are added
+        */
+
+        // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
+        const size_t DUPLEX_RULES_SIZE = 700;
+
+        // The duplex keyword values must start at a value 100 greater than the duplex rule size directly above
+        // Increment each new duplex keyword token by an additional one (except the first)
+        const int JS_CATCH_LPAREN = DUPLEX_RULES_SIZE + 100;
+        const int JS_ELSE_IF = DUPLEX_RULES_SIZE + 101;
+        const int JS_DEFAULT_COLON = DUPLEX_RULES_SIZE + 102;
+        const int JS_FUNCTION_MULTOPS = DUPLEX_RULES_SIZE + 103;
+        const int JS_YIELD_MULTOPS = DUPLEX_RULES_SIZE + 104;
+        const int JS_STATIC_LCURLY = DUPLEX_RULES_SIZE + 105;
+        const int JS_EXPORT_LCURLY = DUPLEX_RULES_SIZE + 106;
+        const int JS_EXPORT_MULTOPS = DUPLEX_RULES_SIZE + 107;
+        const int JS_IMPORT_MULTOPS = DUPLEX_RULES_SIZE + 108;
+        const int JS_WITH_LPAREN = DUPLEX_RULES_SIZE + 109;
+
+        // The JavaScript rule size must be 200 greater than the duplex rule size
+        // If there are ever more than 100 duplex keywords, this has to change
+        const size_t JAVASCRIPT_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
+
+        // A duplex keyword is a pair of adjacent keywords
+        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = [this](){
+            std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> temp_array;
+
+            temp_array[JS_CATCH + (LPAREN << 8)] = JS_CATCH_LPAREN;
+            temp_array[JS_ELSE + (IF << 8)] = JS_ELSE_IF;
+            temp_array[JS_DEFAULT + (COLON << 8)] = JS_DEFAULT_COLON;
+            temp_array[JS_FUNCTION + (MULTOPS << 8)] = JS_FUNCTION_MULTOPS;
+            temp_array[JS_YIELD + (MULTOPS << 8)] = JS_YIELD_MULTOPS;
+            temp_array[JS_STATIC + (LCURLY << 8)] = JS_STATIC_LCURLY;
+            temp_array[JS_EXPORT + (LCURLY << 8)] = JS_EXPORT_LCURLY;
+            temp_array[JS_EXPORT + (MULTOPS << 8)] = JS_EXPORT_MULTOPS;
+            temp_array[JS_IMPORT + (MULTOPS << 8)] = JS_IMPORT_MULTOPS;
+            temp_array[JS_WITH + (LPAREN << 8)] = JS_WITH_LPAREN;
+
+            return temp_array;
+        }();
+
+        // JavaScript rules adhere to the following form:
+        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
+        static const std::array<Rule, JAVASCRIPT_RULES_SIZE> javascript_rules = [this](){
+            std::array<Rule, JAVASCRIPT_RULES_SIZE> temp_array;
+
+            /* GENERIC STATEMENTS */
+            temp_array[JS_BREAK]              = { SBREAK_STATEMENT, 0, MODE_STATEMENT, MODE_VARIABLE_NAME, nullptr, nullptr };
+            temp_array[CASE]                  = { SCASE, 0, MODE_TOP_SECTION | MODE_TOP | MODE_STATEMENT | MODE_DETECT_COLON, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[CLASS]                 = { SCLASS, 0, MODE_STATEMENT | MODE_NEST, MODE_VARIABLE_NAME, nullptr, nullptr };
+            temp_array[JS_CONTINUE]           = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, MODE_VARIABLE_NAME, nullptr, nullptr };
+            temp_array[JS_DO]                 = { SDO_STATEMENT, 0, MODE_STATEMENT | MODE_TOP | MODE_DO_STATEMENT, MODE_STATEMENT | MODE_NEST, nullptr, &srcMLParser::pseudoblock };
+            temp_array[JS_ELSE]               = { SELSE, 0, MODE_STATEMENT | MODE_NEST | MODE_ELSE, MODE_STATEMENT | MODE_NEST, &srcMLParser::if_statement_start, &srcMLParser::pseudoblock };
+            temp_array[JS_FINALLY]            = { SFINALLY_BLOCK, 0, MODE_STATEMENT | MODE_NEST, 0, nullptr, nullptr };
+            temp_array[FOR]                   = { SFOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONTROL | MODE_EXPECT | MODE_FOR_LOOP_JS, nullptr, nullptr };
+            temp_array[IF]                    = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, nullptr };
+            temp_array[RETURN]                = { SRETURN_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[JS_SWITCH]             = { SSWITCH, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[THROW]                 = { STHROW_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+            temp_array[JS_TRY]                = { STRY_BLOCK, 0, MODE_STATEMENT, MODE_STATEMENT | MODE_NEST | MODE_TRY, nullptr, &srcMLParser::pseudoblock };
+            temp_array[WHILE]                 = { SWHILE_STATEMENT, MODE_DO_STATEMENT, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+
+            /* JAVASCRIPT STATEMENTS */
+            temp_array[JS_CONSTRUCTOR]        = { SCONSTRUCTOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_CONSTRUCTOR_JS, MODE_PARAMETER | MODE_LIST | MODE_PARAMETER_LIST_JS, nullptr, nullptr };
+            temp_array[JS_DEBUGGER]           = { SDEBUGGER_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+            temp_array[JS_FUNCTION]           = { SFUNCTION_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
+            temp_array[JS_IMPORT]             = { SIMPORT_STATEMENT, 0, MODE_STATEMENT | MODE_IMPORT_JS, MODE_VARIABLE_NAME | MODE_NAME_LIST_JS, nullptr, nullptr };
+            temp_array[JS_YIELD]              = { SYIELD_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+
+            /* DUPLEX KEYWORDS */
+            temp_array[JS_CATCH_LPAREN]       = { SCATCH_BLOCK, 0, MODE_STATEMENT | MODE_NEST | MODE_CATCH_JS, MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `(`
+            temp_array[JS_DEFAULT_COLON]      = { SDEFAULT, 0, MODE_TOP_SECTION | MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_DETECT_COLON, MODE_STATEMENT, nullptr, nullptr };  // differentiates a `default` specifier from a `default` clause
+            temp_array[JS_ELSE_IF]            = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start, &srcMLParser::consume };  // extra consume() for `if`
+            temp_array[JS_EXPORT_LCURLY]      = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, MODE_NAME_LIST_JS, nullptr, nullptr };  // treats `export` as a statement
+            temp_array[JS_EXPORT_MULTOPS]     = { SEXPORT_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, &srcMLParser::multops_as_name };  // treats `*` in `export *` as a name
+            temp_array[JS_FUNCTION_MULTOPS]   = { SFUNCTION_GENERATOR_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
+            temp_array[JS_IMPORT_MULTOPS]     = { SIMPORT_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, &srcMLParser::multops_as_name };  // treats `*` in `import *` as a name
+            temp_array[JS_STATIC_LCURLY]      = { SSTATIC_BLOCK, 0, MODE_STATEMENT | MODE_NEST, MODE_BLOCK | MODE_EXPECT, nullptr, nullptr };  // differentiates a `static` specifier from a `static` block
+            temp_array[JS_WITH_LPAREN]        = { SWITH_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_WITH_JS, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `(`
+            temp_array[JS_YIELD_MULTOPS]      = { SYIELD_GENERATOR_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `*`
+
+            return temp_array;
+        }();
+
+        // check if the current token is a specifier that occurs before a keyword
+        if (check_valid_specifier_js()) {
+            std::array<int, 2> post_specifier_tokens = perform_post_specifier_check_js();
+
+            // looking for declarations (e.g., var/let/const/static) separately since they are not in the table
+            if (
+                post_specifier_tokens[0] == JS_LET
+                || post_specifier_tokens[0] == JS_VAR
+                || post_specifier_tokens[0] == JS_CONST
+                || post_specifier_tokens[0] == JS_STATIC
+            ) {
+                declaration_js(true);
+            }
+            // looking for functions or classes
+            else if (post_specifier_tokens[0] != -1) {
+                if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
+                    const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
+                    if (lookup)
+                        post_specifier_tokens[0] = lookup;
+                }
+                const auto& rule = javascript_rules[post_specifier_tokens[0]];
+                if (rule.elementToken && processRule(rule)) {
+                    return;
+                }
+            }
+        }
+
+        // in JavaScript, a lambda is a function keyword followed by a parameter list (no function name)
+        bool is_lambda = false;
+        if (LA(1) == JS_FUNCTION && next_token() == LPAREN)
+            is_lambda = true;
+
+        // invoke the table to handle keywords and duplex keywords
+        if ((inMode(MODE_STATEMENT)) && !is_lambda) {
+            auto token = LA(1);
+            if (duplex_keyword_set.member((unsigned int) LA(1))) {
+                const auto lookup = duplexKeywords[token + (next_token() << 8)];
+                if (lookup)
+                    token = lookup;
+            }
+            const auto& rule = javascript_rules[token];
+            if (rule.elementToken && processRule(rule)) {
+                return;
+            }
+        }
+
+        // special case for a name (no paren) to start an arrow lambda tag
+        if (LA(1) == NAME && next_token() == JS_ARROW)
+            arrow_js(true);
+
+        // special case for a parameter list to start an arrow lambda tag
+        if (LA(1) == LPAREN)
+            parameter_list_arrow_js();
+
+        ENTRY_DEBUG_START
+        ENTRY_DEBUG
+} :
+        // looking for lcurly (preceded by rparen) to start a block inside the current property
+        { inMode(MODE_PROPERTY_JS) && last_consumed == RPAREN }?
+        {
+            startNewMode(MODE_EXPRESSION_BLOCK | MODE_EXPECT);
+        }
+        pure_expression_block |
+
+        // jump to expression part when in a property
+        { inMode(MODE_PROPERTY_JS) }?
+        expression_part |
+
+        // looking for rparen to end the current control expression ("for...in" or "for...of" only)
+        { inTransparentMode(MODE_FOR_LOOP_JS) && inTransparentMode(MODE_INIT) }?
+        rparen_control_js |
+
+        // looking for rparen to end the current argument list
+        { inTransparentMode(MODE_ARGUMENT | MODE_LIST) }?
+        rparen_argument_list_js |
+
+        // looking for lparen while expecting a parameter list
+        { inMode(MODE_PARAMETER_LIST_JS) }?
+        parameter_list_js |
+
+        // looking for rparen to end the current parameter list
+        { inTransparentMode(MODE_PARAMETER_LIST_JS) }?
+        rparen_parameter_list |
+
+        // looking for lcurly while expecting a name list
+        { inMode(MODE_NAME_LIST_JS) || inTransparentMode(MODE_IMPORT_JS) }?
+        name_list_js |
+
+        // looking for rcurly to end the current name list
+        { inTransparentMode(MODE_NAME_LIST_JS) }?
+        rcurly_name_list |
+
+        // looking for the start of a string to ensure it is marked up in the current name list
+        { inTransparentMode(MODE_NAME_LIST_JS) }?
+        string_as_name_js |
+
+        // looking for "*" inside the current import statement
+        { inTransparentMode(MODE_IMPORT_JS) }?
+        multops_as_name |
+
+        // looking to consume a rparen to continue the current catch statement
+        { inTransparentMode(MODE_CATCH_JS) }?
+        rparen_catch_js |
+
+        // looking to consume a rparen to continue the current with statement
+        { inTransparentMode(MODE_WITH_JS) }?
+        rparen_with_js |
+
+        // looking for "=" inside a parameter to start an init tag
+        { inMode(MODE_PARAMETER) }?
+        init_js |
+
+        // looking for "," to handle comma-separated declarations (or declarations in parameters)
+        { inTransparentMode(MODE_DECLARATION_JS) && !inTransparentMode(MODE_OBJECT_JS) }?
+        comma_declaration_js |
+
+        // looking for "each" after "for" (handles the obselete "for each...in")
+        { last_consumed == FOR }?
+        for_each_specifier_js |
+
+        // looking for a keyword or operator that does not belong to a statement
+        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | getter_js | setter_js |
+
+        // redundancy required to suppress warning with start[] overlap
+        { inLanguage(LANGUAGE_JAVASCRIPT) }?
+        (declaration_js[false] | range_in_js ) |
 
         // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
         start
@@ -5401,14 +5408,13 @@ rcurly[] { ENTRY_DEBUG } :
             if (inMode(MODE_BLOCK_CONTENT))
                 endMode(MODE_BLOCK_CONTENT);
 
-            // ensure block content ends before rcurly in JavaScript lambda arrow blocks
-            if (inTransparentMode(MODE_ARROW_BLOCK_JS) && inTransparentMode(MODE_BLOCK_CONTENT)) {
-                endDownToMode(MODE_BLOCK_CONTENT);
-                endMode(MODE_BLOCK_CONTENT);
-            }
-
-            // ensure block content ends before rcurly in JavaScript properties that contain a block
-            if (inTransparentMode(MODE_PROPERTY_JS) && inTransparentMode(MODE_BLOCK_CONTENT)) {
+            // ensure block content ends before rcurly in...
+            // - JavaScript lambda arrow blocks
+            // - JavaScript properties that contain a block
+            if (
+                (inTransparentMode(MODE_ARROW_BLOCK_JS) || inTransparentMode(MODE_PROPERTY_JS))
+                && inTransparentMode(MODE_BLOCK_CONTENT)
+            ) {
                 endDownToMode(MODE_BLOCK_CONTENT);
                 endMode(MODE_BLOCK_CONTENT);
             }
@@ -6023,11 +6029,6 @@ bar[] { LightweightElement element(this); ENTRY_DEBUG } :
 */
 comma[] { bool markup_comma = true; ENTRY_DEBUG } :
         {
-            // comma ends the current JavaScript property
-            if (inLanguage(LANGUAGE_JAVASCRIPT) && inTransparentMode(MODE_OBJECT_JS) && inTransparentMode(MODE_PROPERTY_JS)) {
-                endMode(MODE_PROPERTY_JS);
-            }
-
             // comma ends the current condition in a Python assert
             if (
                 inLanguage(LANGUAGE_PYTHON)
@@ -6046,6 +6047,14 @@ comma[] { bool markup_comma = true; ENTRY_DEBUG } :
                 endDownToMode(MODE_CONDITION);
                 endMode(MODE_CONDITION);
             }
+
+            // comma ends the current JavaScript property
+            if (
+                inLanguage(LANGUAGE_JAVASCRIPT)
+                && inTransparentMode(MODE_OBJECT_JS)
+                && inTransparentMode(MODE_PROPERTY_JS)
+            )
+                endMode(MODE_PROPERTY_JS);
 
             // comma ends the current item in a list or ends the current expression
             if (
@@ -8634,12 +8643,12 @@ identifier_list[] { ENTRY_DEBUG } :
         // Qt
         EMIT | FOREACH | SIGNAL | FOREVER |
 
+        // Python
+        PY_2_EXEC | PY_2_PRINT | PY_CASE | PY_MATCH | PY_TYPE |
+
         // JavaScript
         JS_BREAK | JS_CATCH | JS_CONTINUE | JS_DO | JS_ELSE | JS_FINALLY | JS_ASYNC | JS_DEBUGGER | JS_DEFAULT | JS_EACH |
-        JS_EXPORT | JS_FUNCTION | JS_IMPORT | JS_RANGE_IN | JS_WITH | JS_YIELD | JS_SWITCH | JS_TRY |
-
-        // Python
-        PY_2_EXEC | PY_2_PRINT | PY_CASE | PY_MATCH | PY_TYPE
+        JS_EXPORT | JS_FUNCTION | JS_IMPORT | JS_RANGE_IN | JS_WITH | JS_YIELD | JS_SWITCH | JS_TRY
 ;
 
 /*
@@ -8817,11 +8826,11 @@ compound_name_inner[bool index] {
             { inLanguage(LANGUAGE_C) }?
             compound_name_c[iscompound] |
 
-            // JavaScript and Python use the same C++ logic for names
+            // Python and JavaScript use the same C++ logic for names
             {
                 inLanguage(LANGUAGE_CXX)
-                || inLanguage(LANGUAGE_JAVASCRIPT)
                 || inLanguage(LANGUAGE_PYTHON)
+                || inLanguage(LANGUAGE_JAVASCRIPT)
             }?
             compound_name_cpp[iscompound] |
 
@@ -8870,7 +8879,7 @@ multops_star[] { ENTRY_DEBUG } :
 /*
   compound_name_cpp
 
-  Handles a compound name (C++, JavaScript, and Python).
+  Handles a compound name (C++, Python, and JavaScript).
 */
 compound_name_cpp[bool& iscompound] { namestack.fill(""); bool iscolon = false; ENTRY_DEBUG } :
         (options { greedy = true; } :
@@ -11814,12 +11823,12 @@ general_operators[] { LightweightElement element(this); ENTRY_DEBUG } :
             // Apple
             BLOCKOP |
 
-            // JavaScript
-            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_TYPEOF | JS_VOID |
-
             // Python
             { next_token() == PY_NOT }? PY_IS PY_NOT | { next_token() == PY_IN }? PY_NOT PY_IN |
-            EXPONENTIATION | PY_AND | PY_ATSIGN | PY_AWAIT | PY_COLON | PY_IN | PY_IS | PY_NOT | PY_OR
+            EXPONENTIATION | PY_AND | PY_ATSIGN | PY_AWAIT | PY_COLON | PY_IN | PY_IS | PY_NOT | PY_OR |
+
+            // JavaScript
+            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_TYPEOF | JS_VOID
         )
 ;
 
@@ -12244,6 +12253,41 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
 
         ENTRY_DEBUG
 } :
+        // do not mark JavaScript method blocks as objects (e.g., methodName() {})
+        { inLanguage(LANGUAGE_JAVASCRIPT) && last_consumed == RPAREN }?
+        lcurly[true] |
+
+        // looking for lcurly to start a JavaScript object
+        {
+            inLanguage(LANGUAGE_JAVASCRIPT)
+            && !inTransparentMode(MODE_LAMBDA_ARROW_JS)
+            && !inTransparentMode(MODE_GETTER_JS)
+            && !inTransparentMode(MODE_SETTER_JS)
+        }?
+        lcurly_object_js |
+
+        // looking for rcurly to end a JavaScript object
+        {
+            inLanguage(LANGUAGE_JAVASCRIPT)
+            && inTransparentMode(MODE_OBJECT_JS)
+            && !inTransparentMode(MODE_GETTER_JS)
+            && !inTransparentMode(MODE_SETTER_JS)
+        }?
+        rcurly_object_js |
+
+        // looking for lbracket to start a JavaScript array
+        { inLanguage(LANGUAGE_JAVASCRIPT) }?
+        array_js |
+
+        // functions that appear inside an expression
+        // "function:" is a property name, not a lambda
+        { inLanguage(LANGUAGE_JAVASCRIPT) && next_token() != COLON }?
+        lambda_js |
+
+        // classes that appear inside an expression
+        { inLanguage(LANGUAGE_JAVASCRIPT) }?
+        class_expression_js |
+
         // looking for a Python indexable function call (e.g., "a()[]", "b()[][]", etc.)
         {
             inLanguage(LANGUAGE_PYTHON)
@@ -12315,41 +12359,6 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
         // looking for a colon to start a Python type annotation
         { inLanguage(LANGUAGE_PYTHON) && !inTransparentMode(MODE_EXCLUDE_NO_PAREN_TUPLES_PY) }?
         type_alias_annotation_py |
-
-        // do not mark JavaScript method blocks as objects (e.g., methodName() {})
-        { inLanguage(LANGUAGE_JAVASCRIPT) && last_consumed == RPAREN }?
-        lcurly[true] |
-
-        // looking for lcurly to start a JavaScript object
-        {
-            inLanguage(LANGUAGE_JAVASCRIPT)
-            && !inTransparentMode(MODE_LAMBDA_ARROW_JS)
-            && !inTransparentMode(MODE_GETTER_JS)
-            && !inTransparentMode(MODE_SETTER_JS)
-        }?
-        lcurly_object_js |
-
-        // looking for rcurly to end a JavaScript object
-        {
-            inLanguage(LANGUAGE_JAVASCRIPT)
-            && inTransparentMode(MODE_OBJECT_JS)
-            && !inTransparentMode(MODE_GETTER_JS)
-            && !inTransparentMode(MODE_SETTER_JS)
-        }?
-        rcurly_object_js |
-
-        // looking for lbracket to start a JavaScript array
-        { inLanguage(LANGUAGE_JAVASCRIPT) }?
-        array_js |
-
-        // functions that appear inside an expression
-        // "function:" is a property name, not a lambda
-        { inLanguage(LANGUAGE_JAVASCRIPT) && next_token() != COLON }?
-        lambda_js |
-
-        // classes that appear inside an expression
-        { inLanguage(LANGUAGE_JAVASCRIPT) }?
-        class_expression_js |
 
         {
             !skip_ternary
@@ -12664,9 +12673,8 @@ squote_literal_py[bool markup = true] {
 */
 string_literal[bool markup = true] { LightweightElement element(this); ENTRY_DEBUG } :
         {
-            if (markup) {
+            if (markup)
                 startElement(SSTRING);
-            }
         }
 
         (STRING_START (STRING_END | RAW_STRING_END))
@@ -13347,7 +13355,7 @@ parameter_type_count[int& type_count, bool output_type = true] {
         CompleteElement element(this);
         bool is_compound = false;
 
-        if (inLanguage(LANGUAGE_JAVASCRIPT) || inLanguage(LANGUAGE_PYTHON))
+        if (inLanguage(LANGUAGE_PYTHON) || inLanguage(LANGUAGE_JAVASCRIPT))
             output_type = false;
 
         ENTRY_DEBUG
@@ -15542,210 +15550,15 @@ omp_argument[] { CompleteElement element(this); ENTRY_DEBUG } :
 ;
 
 /*
-  parameter_list_js
-
-  Handles a JavaScript parameter list.
-*/
-parameter_list_js[] { ENTRY_DEBUG } :
-        {
-            // list of parameters
-            if (next_token() != RPAREN)
-                startNewMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT);
-
-            // start the parameter list
-            startElement(SPARAMETER_LIST);
-        }
-
-        LPAREN
-;
-
-/*
-  rparen_parameter_list
-
-  Handles a right parenthesis for JavaScript parameter lists.
-*/
-rparen_parameter_list[] { ENTRY_DEBUG } :
-        {
-            if (inTransparentMode(MODE_PARAMETER)) {
-                endDownToMode(MODE_PARAMETER);
-                endMode(MODE_PARAMETER);
-            }
-        }
-
-        RPAREN
-
-        {
-            bool in_statement = inTransparentMode(MODE_STATEMENT);
-
-            endMode(MODE_PARAMETER_LIST_JS);
-
-            if (in_statement)
-                startNewMode(MODE_STATEMENT);
-        }
-;
-
-/*
-  name_list_js
-
-  Handles a JavaScript name list.
-*/
-name_list_js[] { ENTRY_DEBUG } :
-        {
-            // possible if a name list start after a comma in an import statement
-            if (!inMode(MODE_NAME_LIST_JS))
-                startNewMode(MODE_NAME_LIST_JS);
-
-            // start the name list
-            startElement(SNAME_LIST);
-        }
-
-        LCURLY
-
-        {
-            startNewMode(MODE_VARIABLE_NAME | MODE_LIST | MODE_ALIAS_COMPOUND_NAME_JS | MODE_LOCAL | MODE_END_AT_COMMA);
-
-            // SALIAS_COMPOUND_NAME encloses a JavaScript name with its respective alias in an extra name tag
-            if (next_token() != COMMA && next_token() != RCURLY)
-                startElement(SALIAS_COMPOUND_NAME);
-        }
-;
-
-/*
-  string_as_name_js
-
-  Ensures string literals get marked up as such in JavaScript name lists.
-  JavaScript "import 'string'" statements should not be marked with a name tag.
-*/
-string_as_name_js[] { bool lone_string = next_token_two() == TERMINATE; ENTRY_DEBUG } :
-        {
-            if (!lone_string) {
-                startNewMode(MODE_VARIABLE_NAME);
-                startElement(SNAME);
-            }
-        }
-
-        literals
-
-        {
-            if (!lone_string)
-                endMode(MODE_VARIABLE_NAME);
-        }
-;
-
-/*
-  rcurly_name_list
-
-  Handles a right curly brace for JavaScript name lists.
-*/
-rcurly_name_list[] { ENTRY_DEBUG } :
-        {
-            endDownToMode(MODE_NAME_LIST_JS);
-        }
-
-        RCURLY
-
-        {
-            bool in_statement = inTransparentMode(MODE_STATEMENT);
-
-            endMode(MODE_NAME_LIST_JS);
-
-            if (in_statement)
-                startNewMode(MODE_STATEMENT);
-        }
-;
-
-/*
-  rparen_control_js
-
-  Ensures a JavaScript control tag closes cleanly in "for...in" and "for...of" statements.
-*/
-rparen_control_js[] { ENTRY_DEBUG } :
-        {
-            if (inTransparentMode(MODE_FOR_LOOP_JS) && inTransparentMode(MODE_INIT)) {
-                endMode(MODE_DECLARATION_JS);
-                endMode(MODE_INIT);
-                endMode(MODE_CONTROL_INITIALIZATION);
-            }
-        }
-
-        RPAREN
-
-        {
-            endMode(MODE_CONTROL);
-        }
-;
-
-/*
-  rparen_argument_list_js
-
-  Ensures a JavaScript argument list tag closes cleanly.
-*/
-rparen_argument_list_js[] { ENTRY_DEBUG } :
-        {
-            endDownToMode(MODE_LIST);
-        }
-
-        RPAREN
-
-        {
-            endMode(MODE_ARGUMENT_LIST);
-        }
-;
-
-/*
-  rparen_catch_js
-
-  Consumes a right parenthesis in a JavaScript "catch" statement.
-  In this case, the paired parentheses are not surrounded by any tag.
-*/
-rparen_catch_js[] { ENTRY_DEBUG } :
-        {
-            endDownToMode(MODE_EXPRESSION);
-            endMode(MODE_EXPRESSION);
-        }
-
-        RPAREN
-
-        {
-            bool in_statement = inTransparentMode(MODE_STATEMENT);
-
-            if (in_statement)
-                startNewMode(MODE_STATEMENT);
-        }
-;
-
-/*
-  rparen_with_js
-
-  Consumes a right parenthesis in a JavaScript "with" statement.
-  In this case, the paired parentheses are not surrounded by any tag.
-*/
-rparen_with_js[] { ENTRY_DEBUG } :
-        {
-            endDownToMode(MODE_EXPRESSION);
-            endMode(MODE_EXPRESSION);
-        }
-
-        RPAREN
-
-        {
-            bool in_statement = inTransparentMode(MODE_STATEMENT);
-
-            if (in_statement)
-                startNewMode(MODE_STATEMENT);
-        }
-;
-
-/*
   if_statement_start
 
-  Starts a JavaScript "if" statement (if/else if/else) and a Python "if" statement (if/elif/else).
+  Starts a Python "if" statement (if/elif/else) or JavaScript "if" statement (if/else if/else).
   Wraps the entire "if...else" statement in an if statement tag.
   Wraps lone "if", "else", or "else if" blocks in an if statement tag to match existing functionality.
 */
 if_statement_start[] { ENTRY_DEBUG } :
         {
-            // Several Python statements include "else" that should not be marked as an if-statement
+            // Python for/while-loops can include "else" but should not be marked as an if-statement
             if (
                 !inMode(MODE_IF_STATEMENT)
                 && !inMode(MODE_TRY)
@@ -15764,244 +15577,13 @@ if_statement_start[] { ENTRY_DEBUG } :
 ;
 
 /*
-  declaration_statement_js
-
-  Handles a JavaScript declaration statement.
-*/
-declaration_statement_js[] { ENTRY_DEBUG } :
-        {
-            if (!inMode(MODE_DECLARATION_STATEMENT) && inMode(MODE_STATEMENT)) {
-                startNewMode(MODE_STATEMENT | MODE_DECL | MODE_DECLARATION_STATEMENT);
-
-                startElement(SDECLARATION_STATEMENT);
-            }
-        }
-;
-
-/*
-  declaration_js
-
-  Handles a Javascript declaration.  They start with "let", "var", "const", or "static".
-  If "export" is present, mark it as a specifier.
-*/
-declaration_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
-        declaration_statement_js
-
-        {
-            if (handle_specifiers) {
-                while (check_valid_specifier_js()) {
-                    specifier_js();
-                }
-            }
-
-            startNewMode(MODE_DECLARATION_JS);
-
-            // If the current declaration is not a part of a declaration statement, enclose it in an <init> tag
-            if (!inPrevMode(MODE_DECLARATION_STATEMENT))
-                startElement(SCONTROL_INITIALIZATION);
-
-            switch (LA(1)) {
-                case JS_LET :
-                    startElement(SDECLARATION_LET);
-                    current_decl_type_js = JS_LET;
-                    break;
-
-                case JS_VAR :
-                    startElement(SDECLARATION_VAR);
-                    current_decl_type_js = JS_VAR;
-                    break;
-
-                case JS_CONST :
-                    startElement(SDECLARATION_CONST);
-                    current_decl_type_js = JS_CONST;
-                    break;
-
-                case JS_STATIC :
-                    startElement(SDECLARATION_STATIC);
-                    current_decl_type_js = JS_STATIC;
-                    break;
-
-                default :
-                    break;
-            }
-
-            startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
-        }
-
-        (JS_LET | JS_VAR | JS_CONST | JS_STATIC)
-;
-
-/*
-  alias_js
-
-  Handles a JavaScript "as" expression.
-*/
-alias_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startElement(SALIAS);
-        }
-
-        JS_ALIAS
-        compound_name
-
-        {
-            if (inMode(MODE_ALIAS_COMPOUND_NAME_JS)) {
-                bool in_statement = inTransparentMode(MODE_STATEMENT);
-
-                endMode(MODE_ALIAS_COMPOUND_NAME_JS);
-
-                if (in_statement)
-                    startNewMode(MODE_STATEMENT);
-            }
-        }
-;
-
-/*
-  from_js
-
-  Handles a JavaScript "from" expression.
-*/
-from_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startElement(SFROM);
-        }
-
-        JS_FROM
-        literals
-;
-
-/*
-  extends_js
-
-  Handles a JavaScript "extends" expression.
-*/
-extends_js[] { ENTRY_DEBUG } :
-        (
-            (options { greedy = true; } :
-                super_list_java
-
-                extends_list
-                (options { greedy = true; } : extends_list)*
-            )
-        )
-
-        {
-            endMode();
-        }
-;
-
-/*
-  for_each_specifier_js
-
-  Used to mark "each" as a specifier (JavaScript).  Always follows the "for" keyword (not before "for").
-*/
-for_each_specifier_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startElement(SFUNCTION_SPECIFIER);
-        }
-
-        JS_EACH
-;
-
-/*
-  check_valid_specifier_js
-
-  Checks to see if the current token is a JavaScript specifier.
-*/
-check_valid_specifier_js[] returns [int isspecifier] {
-        isspecifier = false;
-
-        if (
-            LA(1) == JS_ASYNC
-            || (
-                LA(1) == JS_DEFAULT
-                && next_token() != COLON
-            )
-            || (
-                LA(1) == JS_EXPORT
-                && next_token() != LCURLY
-                && next_token() != MULTOPS
-            )
-        )
-            isspecifier = true;
-
-        ENTRY_DEBUG
-} :;
-
-/*
-  perform_post_specifier_check_js
-
-  Returns the next two tokens that occur after a JavaScript specifier.
-  If there are multiple specifiers in a row, returns the next two tokens after the last specifier.
-*/
-perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
-        keywords[0] = -1;
-        keywords[1] = -1;
-        int start = mark();
-        inputState->guessing++;
-
-        try {
-            while (true) {
-                consume();
-
-                if (!check_valid_specifier_js())
-                    break;
-            }
-
-            if (
-                LA(1) == JS_LET
-                || LA(1) == JS_VAR
-                || LA(1) == JS_CONST
-                || LA(1) == JS_STATIC
-                || LA(1) == JS_FUNCTION
-                || LA(1) == CLASS
-            ) {
-                keywords[0] = LA(1);
-                keywords[1] = next_token();
-            }
-        }
-        catch (...) {}
-
-        inputState->guessing--;
-        rewind(start);
-
-        ENTRY_DEBUG
-} :;
-
-/*
-  specifier_js
-
-  Used to mark "async", "default", and "export" as specifiers (JavaScript).
-*/
-specifier_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startElement(SFUNCTION_SPECIFIER);
-        }
-
-        (JS_ASYNC | JS_DEFAULT | JS_EXPORT)
-;
-
-/*
-  export_specifier
-
-  Handles an "export" specifier on certain JavaScript statements such as a function or class.
-*/
-export_specifier[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startElement(SFUNCTION_SPECIFIER);
-        }
-
-        JS_EXPORT
-;
-
-/*
   multops_as_name
 
-  Handles cases where "*" is a name in JavaScript import/export statements or Python import statements.
-  JavaScript: Invokes compound name logic if the next token is an "alias."
+  Handles cases where "*" is a name in Python/JavaScript import statements or JavaScript export statements.
 */
 multops_as_name[] { SingleElement element(this); ENTRY_DEBUG } :
         {
+            // If the next token is a JavaScript alias, start a compound name
             if (next_token() == JS_ALIAS) {
                 startNewMode(MODE_ALIAS_COMPOUND_NAME_JS);
                 startElement(SALIAS_COMPOUND_NAME);
@@ -16011,476 +15593,6 @@ multops_as_name[] { SingleElement element(this); ENTRY_DEBUG } :
         }
 
         MULTOPS
-;
-
-/*
-  range_in_js
-
-  Handles a JavaScript "in" expression using the range tag.
-*/
-range_in_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
-
-            startElement(SRANGE_IN);
-        }
-
-        JS_RANGE_IN
-        expression
-
-        {
-            if (inTransparentMode(MODE_FOR_LOOP_JS))
-                endDownToMode(MODE_INIT);
-        }
-;
-
-/*
-  range_of_js
-
-  Handles a JavaScript "of" expression using the range tag.
-*/
-range_of_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
-
-            startElement(SRANGE_OF);
-        }
-
-        JS_RANGE_OF
-        expression
-
-        {
-            endDownToMode(MODE_INIT);
-        }
-;
-
-/*
-  init_js
-
-  Handles a JavaScript "init" expression.
-*/
-init_js[] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
-
-            startElement(SINIT);
-        }
-
-        EQUAL
-        expression
-
-        {
-            endDownToMode(MODE_INIT);
-        }
-;
-
-/*
-  arrow_js
-
-  Handles specific arrow (`=>`) cases in JavaScript.
-  If the arrow is alone or the case is unhandled, mark it as an operator.
-  Otherwise, mark the entire expression as an arrow lambda.
-*/
-arrow_js[bool is_lambda = true] { SingleElement element(this); ENTRY_DEBUG } :
-        {
-            if (is_lambda) {
-                // enclose lambda in expression statement if not in a declaration statement
-                if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
-                    startNewMode(MODE_STATEMENT);
-                    startElement(SEXPRESSION_STATEMENT);
-                }
-
-                startNewMode(MODE_EXPRESSION);
-                startElement(SEXPRESSION);
-            }
-
-            startNewMode(MODE_LAMBDA_ARROW_JS);
-
-            // enclose name in parameter
-            if (is_lambda) {
-                startElement(SLAMBDA_ARROW_JS);
-
-                startNewMode(MODE_PARAMETER);
-                startElement(SPARAMETER);
-
-                startNewMode(MODE_DECL);
-                startElement(SDECLARATION);
-
-                compound_name();
-
-                endMode(MODE_DECL);
-                endMode(MODE_PARAMETER);
-            }
-
-            startNewMode(MODE_ARROW_OP_JS);
-            startElement(SOPERATOR);
-        }
-
-        JS_ARROW
-
-        {
-            endMode(MODE_ARROW_OP_JS);
-
-            bool in_expression = inTransparentMode(MODE_EXPRESSION);
-
-            if (!is_lambda)
-                endMode(MODE_LAMBDA_ARROW_JS);
-
-            if (in_expression)
-                startNewMode(MODE_EXPRESSION);
-
-            if (LA(1) == LCURLY)
-                arrow_lambda_block_js();
-        }
-;
-
-/*
-  perform_arrow_lambda_check
-
-  Checks to see if an arrow (`=>`) follows a parameter list.
-*/
-perform_arrow_lambda_check[] returns [bool islambda] {
-        islambda = false;
-        int start = mark();
-        inputState->guessing++;
-
-        try {
-            int token = LA(1);
-
-            while (true) {
-                consume();
-                token = LA(1);
-
-                if (token == RPAREN || token == TERMINATE || token == 1 /* EOF */)
-                    break;
-            }
-
-            if (next_token() == JS_ARROW)
-                islambda = true;
-        }
-        catch (...) {}
-
-        inputState->guessing--;
-        rewind(start);
-
-        ENTRY_DEBUG
-} :;
-
-/*
-  parameter_list_arrow_js
-
-  Handles a JavaScript parameter list followed by an arrow (`=>`).
-*/
-parameter_list_arrow_js[] { bool is_valid = perform_arrow_lambda_check(); ENTRY_DEBUG } :
-        {
-            if (is_valid) {
-                // enclose lambda in expression statement if not in a declaration statement
-                if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
-                    startNewMode(MODE_STATEMENT);
-                    startElement(SEXPRESSION_STATEMENT);
-                }
-
-                startNewMode(MODE_EXPRESSION);
-                startElement(SEXPRESSION);
-
-                startNewMode(MODE_LAMBDA_ARROW_JS);
-                startElement(SLAMBDA_ARROW_JS);
-
-                startNewMode(MODE_PARAMETER_LIST_JS);
-            }
-        }
-;
-
-/*
-  arrow_lambda_block_js
-
-  Handles the start of a JavaScript arrow lambda block. Not used directly, but can be called by arrow_js.
-*/
-arrow_lambda_block_js[] { ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_BLOCK);
-
-            startElement(SBLOCK);
-        }
-
-        LCURLY
-
-        {
-            startNewMode(MODE_BLOCK_CONTENT);
-            startNoSkipElement(SCONTENT);
-
-            incCurly();
-
-            startNewMode(MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_LIST | MODE_ARROW_BLOCK_JS);
-        }
-;
-
-/*
-  comma_declaration_js
-
-  Handles comma-separated JavaScript declarations and declarations inside parameters.
-*/
-comma_declaration_js[] {
-        // comma-separated paramaters appear in lambdas and constructors
-        bool has_multiple_params = (
-            inTransparentMode(MODE_DECLARATION_STATEMENT)
-            && (
-                inTransparentMode(MODE_LAMBDA_JS)
-                || inTransparentMode(MODE_CONSTRUCTOR_JS)
-                || inTransparentMode(MODE_LAMBDA_ARROW_JS)
-            )
-            && !inTransparentMode(MODE_FOR_LOOP_JS)
-        );
-
-        bool has_multiple_decls = !has_multiple_params;
-
-        ENTRY_DEBUG
-} :
-        {
-            // For JavaScript declaration statements or control expressions with
-            // more than one declaration, end down to the first declaration.
-            if (has_multiple_decls) {
-                endDownToMode(MODE_DECLARATION_JS);
-                endMode(MODE_DECLARATION_JS);
-            }
-
-            // For JavaScript parameter lists (in lambdas) that contain
-            // declarations, end down to the first parameter.
-            if (has_multiple_params) {
-                endDownToMode(MODE_PARAMETER);
-                endMode(MODE_PARAMETER);
-            }
-        }
-
-        COMMA
-
-        {
-            if (has_multiple_params) {
-                startNewMode(MODE_PARAMETER);
-                startElement(SPARAMETER);
-            }
-
-            // declaration statement has an additional declaration
-            startNewMode(MODE_DECLARATION_JS);
-
-            switch (current_decl_type_js) {
-                case JS_LET :
-                    if (has_multiple_decls) {
-                        startElement(SDECLARATION_LET);
-                        current_decl_type_js = JS_LET;
-                    }
-                    if (has_multiple_params)
-                        startElement(SDECLARATION);
-                    break;
-
-                case JS_VAR :
-                    if (has_multiple_decls) {
-                        startElement(SDECLARATION_VAR);
-                        current_decl_type_js = JS_VAR;
-                    }
-                    if (has_multiple_params)
-                        startElement(SDECLARATION);
-                    break;
-
-                case JS_CONST :
-                    if (has_multiple_decls) {
-                        startElement(SDECLARATION_CONST);
-                        current_decl_type_js = JS_CONST;
-                    }
-                    if (has_multiple_params)
-                        startElement(SDECLARATION);
-                    break;
-
-                case JS_STATIC :
-                    if (has_multiple_decls) {
-                        startElement(SDECLARATION_STATIC);
-                        current_decl_type_js = JS_STATIC;
-                    }
-                    if (has_multiple_params)
-                        startElement(SDECLARATION);
-                    break;
-
-                default :
-                    break;
-            }
-
-            startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
-        }
-;
-
-/*
-  lcurly_object_js
-
-  Handles a left curly brace for JavaScript objects.
-*/
-lcurly_object_js[] { ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_OBJECT_JS);
-            startElement(SOBJECT_JS);
-        }
-
-        LCURLY
-
-        {
-            startNewMode(MODE_PROPERTY_JS);
-            startElement(SPROPERTY);
-        }
-;
-
-/*
-  rcurly_object_js
-
-  Handles a right curly brace for JavaScript objects.
-*/
-rcurly_object_js[] { ENTRY_DEBUG } :
-        {
-            endDownToMode(MODE_OBJECT_JS);
-        }
-
-        RCURLY
-
-        {
-            endMode(MODE_OBJECT_JS);
-        }
-;
-
-/*
-  array_js
-
-  Handles JavaScript arrays.  Not used directly, but can be called by expression_part.
-*/
-array_js[] { CompleteElement element(this); ENTRY_DEBUG } :
-        {
-            // computed properties are not marked as arrays
-            if (!inMode(MODE_PROPERTY_JS)) {
-                startNewMode(MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_ARRAY_JS);
-
-                startElement(SARRAY);
-            }
-        }
-
-        LBRACKET
-
-        (
-            {
-                if (!inMode(MODE_EXPRESSION))
-                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
-            }
-            expression |
-
-            comma
-        )*
-
-        {
-            if (inMode(MODE_EXPRESSION))
-                endMode(MODE_EXPRESSION);
-        }
-
-        RBRACKET
-
-        {
-            if (inMode(MODE_ARRAY_JS))
-                endMode(MODE_ARRAY_JS);
-        }
-;
-
-/*
-  lambda_js
-
-  Handles JavaScript lambdas.  Not used directly, but can be called by expression_part.
-*/
-lambda_js[] { ENTRY_DEBUG } :
-        {
-            if (next_token() == MULTOPS)
-                startElement(SLAMBDA_GENERATOR_JS);
-            else
-                startElement(SLAMBDA_JS);
-
-            startNewMode(MODE_NEST | MODE_LAMBDA_JS);
-        }
-
-        JS_FUNCTION
-
-        {
-            startNewMode(MODE_PARAMETER_LIST_JS | MODE_EXPECT);
-        }
-;
-
-/*
-  class_expression_js
-
-  Handles JavaScript class expressions.  Not used directly, but can be called by expression_part.
-*/
-class_expression_js[] { ENTRY_DEBUG } :
-        {
-            startElement(SCLASS);
-
-            startNewMode(MODE_NEST | MODE_CLASS_EXPR_JS);
-        }
-
-        CLASS
-
-        {
-            startNewMode(MODE_VARIABLE_NAME);
-        }
-;
-
-/*
-  class_expression_method_js
-
-  Handles JavaScript class expression methods differently from calls.
-  Not used directly, but can be called by pattern_statements.
-*/
-class_expression_method_js[] { ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_STATEMENT | MODE_NEST);
-
-            startElement(SFUNCTION_STATEMENT);
-        }
-
-        compound_name
-
-        {
-            startNewMode(MODE_PARAMETER_LIST_JS);
-        }
-;
-
-/*
-  getter_js
-
-  Handles a "get" keyword in JavaScript for "get" functions.
-*/
-getter_js[] { ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_GETTER_JS);
-
-            startElement(SFUNCTION_GET_STATEMENT);
-        }
-
-        JS_GET
-
-        {
-            startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
-        }
-;
-
-/*
-  setter_js
-
-  Handles a "set" keyword in JavaScript for "set" functions.
-*/
-setter_js[] { ENTRY_DEBUG } :
-        {
-            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_SETTER_JS);
-
-            startElement(SFUNCTION_SET_STATEMENT);
-        }
-
-        JS_SET
-
-        {
-            startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
-        }
 ;
 
 /*
@@ -18879,5 +17991,901 @@ control_tuple_no_paren_py[] { int lparen_types_size = 0; ENTRY_DEBUG } :
                 endDownToMode(MODE_TUPLE_NO_PAREN_PY);
                 endMode(MODE_TUPLE_NO_PAREN_PY);
             }
+        }
+;
+
+/*
+  parameter_list_js
+
+  Handles a JavaScript parameter list.
+*/
+parameter_list_js[] { ENTRY_DEBUG } :
+        {
+            // list of parameters
+            if (next_token() != RPAREN)
+                startNewMode(MODE_PARAMETER | MODE_LIST | MODE_EXPECT);
+
+            // start the parameter list
+            startElement(SPARAMETER_LIST);
+        }
+
+        LPAREN
+;
+
+/*
+  rparen_parameter_list
+
+  Handles a right parenthesis for JavaScript parameter lists.
+*/
+rparen_parameter_list[] { ENTRY_DEBUG } :
+        {
+            if (inTransparentMode(MODE_PARAMETER)) {
+                endDownToMode(MODE_PARAMETER);
+                endMode(MODE_PARAMETER);
+            }
+        }
+
+        RPAREN
+
+        {
+            bool in_statement = inTransparentMode(MODE_STATEMENT);
+
+            endMode(MODE_PARAMETER_LIST_JS);
+
+            if (in_statement)
+                startNewMode(MODE_STATEMENT);
+        }
+;
+
+/*
+  name_list_js
+
+  Handles a JavaScript name list.
+*/
+name_list_js[] { ENTRY_DEBUG } :
+        {
+            // possible if a name list start after a comma in an import statement
+            if (!inMode(MODE_NAME_LIST_JS))
+                startNewMode(MODE_NAME_LIST_JS);
+
+            // start the name list
+            startElement(SNAME_LIST);
+        }
+
+        LCURLY
+
+        {
+            startNewMode(MODE_VARIABLE_NAME | MODE_LIST | MODE_ALIAS_COMPOUND_NAME_JS | MODE_LOCAL | MODE_END_AT_COMMA);
+
+            // SALIAS_COMPOUND_NAME encloses a JavaScript name with its respective alias in an extra name tag
+            if (next_token() != COMMA && next_token() != RCURLY)
+                startElement(SALIAS_COMPOUND_NAME);
+        }
+;
+
+/*
+  string_as_name_js
+
+  Ensures string literals get marked up as such in JavaScript name lists.
+  JavaScript "import 'string'" statements should not be marked with a name tag.
+*/
+string_as_name_js[] { bool lone_string = next_token_two() == TERMINATE; ENTRY_DEBUG } :
+        {
+            if (!lone_string) {
+                startNewMode(MODE_VARIABLE_NAME);
+                startElement(SNAME);
+            }
+        }
+
+        literals
+
+        {
+            if (!lone_string)
+                endMode(MODE_VARIABLE_NAME);
+        }
+;
+
+/*
+  rcurly_name_list
+
+  Handles a right curly brace for JavaScript name lists.
+*/
+rcurly_name_list[] { ENTRY_DEBUG } :
+        {
+            endDownToMode(MODE_NAME_LIST_JS);
+        }
+
+        RCURLY
+
+        {
+            bool in_statement = inTransparentMode(MODE_STATEMENT);
+
+            endMode(MODE_NAME_LIST_JS);
+
+            if (in_statement)
+                startNewMode(MODE_STATEMENT);
+        }
+;
+
+/*
+  rparen_control_js
+
+  Ensures a JavaScript control tag closes cleanly in "for...in" and "for...of" statements.
+*/
+rparen_control_js[] { ENTRY_DEBUG } :
+        {
+            if (inTransparentMode(MODE_FOR_LOOP_JS) && inTransparentMode(MODE_INIT)) {
+                endMode(MODE_DECLARATION_JS);
+                endMode(MODE_INIT);
+                endMode(MODE_CONTROL_INITIALIZATION);
+            }
+        }
+
+        RPAREN
+
+        {
+            endMode(MODE_CONTROL);
+        }
+;
+
+/*
+  rparen_argument_list_js
+
+  Ensures a JavaScript argument list tag closes cleanly.
+*/
+rparen_argument_list_js[] { ENTRY_DEBUG } :
+        {
+            endDownToMode(MODE_LIST);
+        }
+
+        RPAREN
+
+        {
+            endMode(MODE_ARGUMENT_LIST);
+        }
+;
+
+/*
+  rparen_catch_js
+
+  Consumes a right parenthesis in a JavaScript "catch" statement.
+  In this case, the paired parentheses are not surrounded by any tag.
+*/
+rparen_catch_js[] { ENTRY_DEBUG } :
+        {
+            endDownToMode(MODE_EXPRESSION);
+            endMode(MODE_EXPRESSION);
+        }
+
+        RPAREN
+
+        {
+            bool in_statement = inTransparentMode(MODE_STATEMENT);
+
+            if (in_statement)
+                startNewMode(MODE_STATEMENT);
+        }
+;
+
+/*
+  rparen_with_js
+
+  Consumes a right parenthesis in a JavaScript "with" statement.
+  In this case, the paired parentheses are not surrounded by any tag.
+*/
+rparen_with_js[] { ENTRY_DEBUG } :
+        {
+            endDownToMode(MODE_EXPRESSION);
+            endMode(MODE_EXPRESSION);
+        }
+
+        RPAREN
+
+        {
+            bool in_statement = inTransparentMode(MODE_STATEMENT);
+
+            if (in_statement)
+                startNewMode(MODE_STATEMENT);
+        }
+;
+
+/*
+  declaration_statement_js
+
+  Handles a JavaScript declaration statement.
+*/
+declaration_statement_js[] { ENTRY_DEBUG } :
+        {
+            if (!inMode(MODE_DECLARATION_STATEMENT) && inMode(MODE_STATEMENT)) {
+                startNewMode(MODE_STATEMENT | MODE_DECL | MODE_DECLARATION_STATEMENT);
+
+                startElement(SDECLARATION_STATEMENT);
+            }
+        }
+;
+
+/*
+  declaration_js
+
+  Handles a Javascript declaration.  They start with "let", "var", "const", or "static".
+  If "export" is present, mark it as a specifier.
+*/
+declaration_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
+        declaration_statement_js
+
+        {
+            if (handle_specifiers) {
+                while (check_valid_specifier_js()) {
+                    specifier_js();
+                }
+            }
+
+            startNewMode(MODE_DECLARATION_JS);
+
+            // If the current declaration is not a part of a declaration statement, enclose it in an <init> tag
+            if (!inPrevMode(MODE_DECLARATION_STATEMENT))
+                startElement(SCONTROL_INITIALIZATION);
+
+            switch (LA(1)) {
+                case JS_LET :
+                    startElement(SDECLARATION_LET);
+                    current_decl_type_js = JS_LET;
+                    break;
+
+                case JS_VAR :
+                    startElement(SDECLARATION_VAR);
+                    current_decl_type_js = JS_VAR;
+                    break;
+
+                case JS_CONST :
+                    startElement(SDECLARATION_CONST);
+                    current_decl_type_js = JS_CONST;
+                    break;
+
+                case JS_STATIC :
+                    startElement(SDECLARATION_STATIC);
+                    current_decl_type_js = JS_STATIC;
+                    break;
+
+                default :
+                    break;
+            }
+
+            startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
+        }
+
+        (JS_LET | JS_VAR | JS_CONST | JS_STATIC)
+;
+
+/*
+  alias_js
+
+  Handles a JavaScript "as" expression.
+*/
+alias_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SALIAS);
+        }
+
+        JS_ALIAS
+        compound_name
+
+        {
+            if (inMode(MODE_ALIAS_COMPOUND_NAME_JS)) {
+                bool in_statement = inTransparentMode(MODE_STATEMENT);
+
+                endMode(MODE_ALIAS_COMPOUND_NAME_JS);
+
+                if (in_statement)
+                    startNewMode(MODE_STATEMENT);
+            }
+        }
+;
+
+/*
+  from_js
+
+  Handles a JavaScript "from" expression.
+*/
+from_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SFROM);
+        }
+
+        JS_FROM
+        literals
+;
+
+/*
+  extends_js
+
+  Handles a JavaScript "extends" expression.
+*/
+extends_js[] { ENTRY_DEBUG } :
+        (
+            (options { greedy = true; } :
+                super_list_java
+
+                extends_list
+                (options { greedy = true; } : extends_list)*
+            )
+        )
+
+        {
+            endMode();
+        }
+;
+
+/*
+  for_each_specifier_js
+
+  Used to mark "each" as a specifier (JavaScript).  Always follows the "for" keyword (not before "for").
+*/
+for_each_specifier_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SFUNCTION_SPECIFIER);
+        }
+
+        JS_EACH
+;
+
+/*
+  check_valid_specifier_js
+
+  Checks to see if the current token is a JavaScript specifier.
+*/
+check_valid_specifier_js[] returns [int isspecifier] {
+        isspecifier = false;
+
+        if (
+            LA(1) == JS_ASYNC
+            || (
+                LA(1) == JS_DEFAULT
+                && next_token() != COLON
+            )
+            || (
+                LA(1) == JS_EXPORT
+                && next_token() != LCURLY
+                && next_token() != MULTOPS
+            )
+        )
+            isspecifier = true;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  perform_post_specifier_check_js
+
+  Returns the next two tokens that occur after a JavaScript specifier.
+  If there are multiple specifiers in a row, returns the next two tokens after the last specifier.
+*/
+perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
+        keywords[0] = -1;
+        keywords[1] = -1;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                consume();
+
+                if (!check_valid_specifier_js())
+                    break;
+            }
+
+            if (
+                LA(1) == JS_LET
+                || LA(1) == JS_VAR
+                || LA(1) == JS_CONST
+                || LA(1) == JS_STATIC
+                || LA(1) == JS_FUNCTION
+                || LA(1) == CLASS
+            ) {
+                keywords[0] = LA(1);
+                keywords[1] = next_token();
+            }
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  specifier_js
+
+  Used to mark "async", "default", and "export" as specifiers (JavaScript).
+*/
+specifier_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SFUNCTION_SPECIFIER);
+        }
+
+        (JS_ASYNC | JS_DEFAULT | JS_EXPORT)
+;
+
+/*
+  export_specifier
+
+  Handles an "export" specifier on certain JavaScript statements such as a function or class.
+*/
+export_specifier[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SFUNCTION_SPECIFIER);
+        }
+
+        JS_EXPORT
+;
+
+/*
+  range_in_js
+
+  Handles a JavaScript "in" expression using the range tag.
+*/
+range_in_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+
+            startElement(SRANGE_IN);
+        }
+
+        JS_RANGE_IN
+        expression
+
+        {
+            if (inTransparentMode(MODE_FOR_LOOP_JS))
+                endDownToMode(MODE_INIT);
+        }
+;
+
+/*
+  range_of_js
+
+  Handles a JavaScript "of" expression using the range tag.
+*/
+range_of_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+
+            startElement(SRANGE_OF);
+        }
+
+        JS_RANGE_OF
+        expression
+
+        {
+            endDownToMode(MODE_INIT);
+        }
+;
+
+/*
+  init_js
+
+  Handles a JavaScript "init" expression.
+*/
+init_js[] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+
+            startElement(SINIT);
+        }
+
+        EQUAL
+        expression
+
+        {
+            endDownToMode(MODE_INIT);
+        }
+;
+
+/*
+  arrow_js
+
+  Handles specific arrow (`=>`) cases in JavaScript.
+  If the arrow is alone or the case is unhandled, mark it as an operator.
+  Otherwise, mark the entire expression as an arrow lambda.
+*/
+arrow_js[bool is_lambda = true] { SingleElement element(this); ENTRY_DEBUG } :
+        {
+            if (is_lambda) {
+                // enclose lambda in expression statement if not in a declaration statement
+                if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
+                    startNewMode(MODE_STATEMENT);
+                    startElement(SEXPRESSION_STATEMENT);
+                }
+
+                startNewMode(MODE_EXPRESSION);
+                startElement(SEXPRESSION);
+            }
+
+            startNewMode(MODE_LAMBDA_ARROW_JS);
+
+            // enclose name in parameter
+            if (is_lambda) {
+                startElement(SLAMBDA_ARROW_JS);
+
+                startNewMode(MODE_PARAMETER);
+                startElement(SPARAMETER);
+
+                startNewMode(MODE_DECL);
+                startElement(SDECLARATION);
+
+                compound_name();
+
+                endMode(MODE_DECL);
+                endMode(MODE_PARAMETER);
+            }
+
+            startNewMode(MODE_ARROW_OP_JS);
+            startElement(SOPERATOR);
+        }
+
+        JS_ARROW
+
+        {
+            endMode(MODE_ARROW_OP_JS);
+
+            bool in_expression = inTransparentMode(MODE_EXPRESSION);
+
+            if (!is_lambda)
+                endMode(MODE_LAMBDA_ARROW_JS);
+
+            if (in_expression)
+                startNewMode(MODE_EXPRESSION);
+
+            if (LA(1) == LCURLY)
+                arrow_lambda_block_js();
+        }
+;
+
+/*
+  perform_arrow_lambda_check
+
+  Checks to see if an arrow (`=>`) follows a parameter list.
+*/
+perform_arrow_lambda_check[] returns [bool islambda] {
+        islambda = false;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            int token = LA(1);
+
+            while (true) {
+                consume();
+                token = LA(1);
+
+                if (token == RPAREN || token == TERMINATE || token == 1 /* EOF */)
+                    break;
+            }
+
+            if (next_token() == JS_ARROW)
+                islambda = true;
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  parameter_list_arrow_js
+
+  Handles a JavaScript parameter list followed by an arrow (`=>`).
+*/
+parameter_list_arrow_js[] { bool is_valid = perform_arrow_lambda_check(); ENTRY_DEBUG } :
+        {
+            if (is_valid) {
+                // enclose lambda in expression statement if not in a declaration statement
+                if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
+                    startNewMode(MODE_STATEMENT);
+                    startElement(SEXPRESSION_STATEMENT);
+                }
+
+                startNewMode(MODE_EXPRESSION);
+                startElement(SEXPRESSION);
+
+                startNewMode(MODE_LAMBDA_ARROW_JS);
+                startElement(SLAMBDA_ARROW_JS);
+
+                startNewMode(MODE_PARAMETER_LIST_JS);
+            }
+        }
+;
+
+/*
+  arrow_lambda_block_js
+
+  Handles the start of a JavaScript arrow lambda block. Not used directly, but can be called by arrow_js.
+*/
+arrow_lambda_block_js[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_BLOCK);
+
+            startElement(SBLOCK);
+        }
+
+        LCURLY
+
+        {
+            startNewMode(MODE_BLOCK_CONTENT);
+            startNoSkipElement(SCONTENT);
+
+            incCurly();
+
+            startNewMode(MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_LIST | MODE_ARROW_BLOCK_JS);
+        }
+;
+
+/*
+  comma_declaration_js
+
+  Handles comma-separated JavaScript declarations and declarations inside parameters.
+*/
+comma_declaration_js[] {
+        // comma-separated paramaters appear in lambdas and constructors
+        bool has_multiple_params = (
+            inTransparentMode(MODE_DECLARATION_STATEMENT)
+            && (
+                inTransparentMode(MODE_LAMBDA_JS)
+                || inTransparentMode(MODE_CONSTRUCTOR_JS)
+                || inTransparentMode(MODE_LAMBDA_ARROW_JS)
+            )
+            && !inTransparentMode(MODE_FOR_LOOP_JS)
+        );
+
+        bool has_multiple_decls = !has_multiple_params;
+
+        ENTRY_DEBUG
+} :
+        {
+            // For JavaScript declaration statements or control expressions with
+            // more than one declaration, end down to the first declaration.
+            if (has_multiple_decls) {
+                endDownToMode(MODE_DECLARATION_JS);
+                endMode(MODE_DECLARATION_JS);
+            }
+
+            // For JavaScript parameter lists (in lambdas) that contain
+            // declarations, end down to the first parameter.
+            if (has_multiple_params) {
+                endDownToMode(MODE_PARAMETER);
+                endMode(MODE_PARAMETER);
+            }
+        }
+
+        COMMA
+
+        {
+            if (has_multiple_params) {
+                startNewMode(MODE_PARAMETER);
+                startElement(SPARAMETER);
+            }
+
+            // declaration statement has an additional declaration
+            startNewMode(MODE_DECLARATION_JS);
+
+            switch (current_decl_type_js) {
+                case JS_LET :
+                    if (has_multiple_decls) {
+                        startElement(SDECLARATION_LET);
+                        current_decl_type_js = JS_LET;
+                    }
+                    if (has_multiple_params)
+                        startElement(SDECLARATION);
+                    break;
+
+                case JS_VAR :
+                    if (has_multiple_decls) {
+                        startElement(SDECLARATION_VAR);
+                        current_decl_type_js = JS_VAR;
+                    }
+                    if (has_multiple_params)
+                        startElement(SDECLARATION);
+                    break;
+
+                case JS_CONST :
+                    if (has_multiple_decls) {
+                        startElement(SDECLARATION_CONST);
+                        current_decl_type_js = JS_CONST;
+                    }
+                    if (has_multiple_params)
+                        startElement(SDECLARATION);
+                    break;
+
+                case JS_STATIC :
+                    if (has_multiple_decls) {
+                        startElement(SDECLARATION_STATIC);
+                        current_decl_type_js = JS_STATIC;
+                    }
+                    if (has_multiple_params)
+                        startElement(SDECLARATION);
+                    break;
+
+                default :
+                    break;
+            }
+
+            startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
+        }
+;
+
+/*
+  lcurly_object_js
+
+  Handles a left curly brace for JavaScript objects.
+*/
+lcurly_object_js[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_OBJECT_JS);
+            startElement(SOBJECT_JS);
+        }
+
+        LCURLY
+
+        {
+            startNewMode(MODE_PROPERTY_JS);
+            startElement(SPROPERTY);
+        }
+;
+
+/*
+  rcurly_object_js
+
+  Handles a right curly brace for JavaScript objects.
+*/
+rcurly_object_js[] { ENTRY_DEBUG } :
+        {
+            endDownToMode(MODE_OBJECT_JS);
+        }
+
+        RCURLY
+
+        {
+            endMode(MODE_OBJECT_JS);
+        }
+;
+
+/*
+  array_js
+
+  Handles JavaScript arrays.  Not used directly, but can be called by expression_part.
+*/
+array_js[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            // computed properties are not marked as arrays
+            if (!inMode(MODE_PROPERTY_JS)) {
+                startNewMode(MODE_LOCAL | MODE_TOP | MODE_LIST | MODE_ARRAY_JS);
+
+                startElement(SARRAY);
+            }
+        }
+
+        LBRACKET
+
+        (
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
+
+        {
+            if (inMode(MODE_EXPRESSION))
+                endMode(MODE_EXPRESSION);
+        }
+
+        RBRACKET
+
+        {
+            if (inMode(MODE_ARRAY_JS))
+                endMode(MODE_ARRAY_JS);
+        }
+;
+
+/*
+  lambda_js
+
+  Handles JavaScript lambdas.  Not used directly, but can be called by expression_part.
+*/
+lambda_js[] { ENTRY_DEBUG } :
+        {
+            if (next_token() == MULTOPS)
+                startElement(SLAMBDA_GENERATOR_JS);
+            else
+                startElement(SLAMBDA_JS);
+
+            startNewMode(MODE_NEST | MODE_LAMBDA_JS);
+        }
+
+        JS_FUNCTION
+
+        {
+            startNewMode(MODE_PARAMETER_LIST_JS | MODE_EXPECT);
+        }
+;
+
+/*
+  class_expression_js
+
+  Handles JavaScript class expressions.  Not used directly, but can be called by expression_part.
+*/
+class_expression_js[] { ENTRY_DEBUG } :
+        {
+            startElement(SCLASS);
+
+            startNewMode(MODE_NEST | MODE_CLASS_EXPR_JS);
+        }
+
+        CLASS
+
+        {
+            startNewMode(MODE_VARIABLE_NAME);
+        }
+;
+
+/*
+  class_expression_method_js
+
+  Handles JavaScript class expression methods differently from calls.
+  Not used directly, but can be called by pattern_statements.
+*/
+class_expression_method_js[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_STATEMENT | MODE_NEST);
+
+            startElement(SFUNCTION_STATEMENT);
+        }
+
+        compound_name
+
+        {
+            startNewMode(MODE_PARAMETER_LIST_JS);
+        }
+;
+
+/*
+  getter_js
+
+  Handles a "get" keyword in JavaScript for "get" functions.
+*/
+getter_js[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_GETTER_JS);
+
+            startElement(SFUNCTION_GET_STATEMENT);
+        }
+
+        JS_GET
+
+        {
+            startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
+        }
+;
+
+/*
+  setter_js
+
+  Handles a "set" keyword in JavaScript for "set" functions.
+*/
+setter_js[] { ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_STATEMENT | MODE_NEST | MODE_SETTER_JS);
+
+            startElement(SFUNCTION_SET_STATEMENT);
+        }
+
+        JS_SET
+
+        {
+            startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
         }
 ;
