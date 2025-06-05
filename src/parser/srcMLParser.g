@@ -1533,7 +1533,7 @@ start_javascript[] {
 
         // redundancy required to suppress warning with start[] overlap
         { inLanguage(LANGUAGE_JAVASCRIPT) }?
-        (declaration_js[false] | range_in_js ) |
+        (declaration_js[false] | range_in_js) |
 
         // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
         start
@@ -5470,12 +5470,19 @@ terminate[] { ENTRY_DEBUG resumeStream(); } :
             )
                 endDownToMode(MODE_DECLARATION_STATEMENT);
 
-            // ensure JavaScript declarations end before the terminate token in the "init" portion of a for-loop control
-            if (inLanguage(LANGUAGE_JAVASCRIPT) && inTransparentMode(MODE_CONTROL_CONDITION)) {
+            // ensure JavaScript declarations end before the terminate token in the "init"
+            // portion of a for-loop control; only applicable for the nested "init"
+            if (
+                inLanguage(LANGUAGE_JAVASCRIPT)
+                && inTransparentMode(MODE_INIT)
+                && inTransparentMode(MODE_DECLARATION_JS)
+                && inTransparentMode(MODE_CONTROL_CONDITION)
+            ) {
                 endDownToMode(MODE_INIT);
                 endMode(MODE_DECLARATION_JS);
             }
 
+            // special case for manually-inserted JavaScript terminate tokens
             if (inLanguage(LANGUAGE_JAVASCRIPT) && LT(1)->getText().empty() && inMode(MODE_NEST)) {
                 terminate_token_plain();
                 return;
