@@ -772,6 +772,7 @@ public:
     size_t number_finishing_elements = 0;
     std::vector<std::pair<srcMLState::MODE_TYPE, std::stack<int>>> finish_elements_add;
     std::deque<char> lparen_types_py;
+    std::deque<char> lparen_types_js;
     bool in_template_param = false;
     int current_decl_type_js = 0;
     int start_count = 0;
@@ -1403,6 +1404,10 @@ start_javascript[] {
             return temp_array;
         }();
 
+        // ensure the lparen deque never starts empty by adding a dummy entry
+        if (lparen_types_js.empty())
+            lparen_types_js.emplace_back('*');
+
         // check if the current token is a specifier that occurs before a keyword
         if (check_valid_specifier_js()) {
             std::array<int, 2> post_specifier_tokens = perform_post_specifier_check_js();
@@ -1476,7 +1481,7 @@ start_javascript[] {
         rparen_control_js |
 
         // looking for rparen to end the current argument list
-        { inTransparentMode(MODE_ARGUMENT | MODE_LIST) }?
+        { inTransparentMode(MODE_ARGUMENT | MODE_LIST) && lparen_types_js.back() == 'c' }?
         rparen_argument_list_js |
 
         // looking for lparen while expecting a parameter list
@@ -6003,6 +6008,9 @@ lparen_marked[] { LightweightElement element(this); ENTRY_DEBUG } :
             incParen();
 
             startElement(SOPERATOR);
+
+            if (inLanguage(LANGUAGE_JAVASCRIPT))
+                lparen_types_js.emplace_back('o');
         }
 
         LPAREN
@@ -9652,6 +9660,10 @@ call_argument_list[] { ENTRY_DEBUG } :
             // lparen starts a call
             if (inLanguage(LANGUAGE_PYTHON))
                 lparen_types_py.emplace_back('c');  // call LPAREN
+
+            // lparen starts a call
+            if (inLanguage(LANGUAGE_JAVASCRIPT))
+                lparen_types_js.emplace_back('c');  // call LPAREN
         }
 
         (
@@ -11901,6 +11913,10 @@ rparen[bool markup = true, bool end_control_incr = false] {
                         break;
                 }
             }
+
+            // found JavaScript rparen
+            if (inLanguage(LANGUAGE_JAVASCRIPT) && lparen_types_js.back() != '*')
+                lparen_types_js.pop_back();
 
             if (isempty) {
                 // additional right parentheses indicates end of non-list modes
