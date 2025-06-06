@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="JavaScript" filename="goto.js" url="goto">
+
+    <!--Unit 1-->
+    <unit language="JavaScript">
+        <goto>goto;</goto>
+    </unit>
+
+    <!--Unit 2-->
+    <unit language="JavaScript">
+        <goto>goto <name>label</name>;</goto>
+    </unit>
+
+    <!--Unit 3-->
+    <unit language="JavaScript">
+        <goto>goto <name>case <literal type="number">1</literal></name>;</goto>
+    </unit>
+
+    <!--Unit 4-->
+    <unit language="JavaScript">
+        <goto>goto <name>case <literal type="string">'a'</literal></name>;</goto>
+    </unit>
+
+    <!--Unit 5-->
+    <unit language="JavaScript">
+        <goto>goto <name>case b</name>;</goto>
+    </unit>
+
+</unit>

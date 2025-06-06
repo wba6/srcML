@@ -15,7 +15,7 @@ LANGUAGE_ALL_BASE literal
 LANGUAGE_ALL_NO_PYTHON operator_base
 LANGUAGE_ALL_BASE whitespace
 LANGUAGE_ALL_NO_PYTHON specifier
-LANGUAGE_ALL_NO_PYTHON goto
+LANGUAGE_ALL_NO_JAVASCRIPT_NO_PYTHON goto
 LANGUAGE_ALL_NO_PYTHON break
 LANGUAGE_ALL_NO_PYTHON continue
 LANGUAGE_ALL_NO_PYTHON ternary
@@ -300,6 +300,17 @@ LANGUAGE_PYTHON typedef_py
 LANGUAGE_PYTHON while_py
 LANGUAGE_PYTHON with_py
 LANGUAGE_PYTHON yield_py
+
+# JavaScript
+LANGUAGE_JAVASCRIPT class_js
+LANGUAGE_JAVASCRIPT comparisons_js
+LANGUAGE_JAVASCRIPT context_sensitive_keyword_js
+LANGUAGE_JAVASCRIPT functions_js
+LANGUAGE_JAVASCRIPT goto_js
+LANGUAGE_JAVASCRIPT objects_js
+LANGUAGE_JAVASCRIPT regex_js
+LANGUAGE_JAVASCRIPT specifier_js
+LANGUAGE_JAVASCRIPT variable_js
 
 # class -> struct
 LANGUAGE_TRANSFORM struct.cpp.xml class.cpp.xml struct class2struct.xsl

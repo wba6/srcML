@@ -178,6 +178,10 @@ foreach(GEN IN ITEMS ${SUITE})
 
         list(APPEND TESTFILES "${URL}.py.xml")
 
+    elseif(CATEGORY STREQUAL "LANGUAGE_JAVASCRIPT")
+
+        list(APPEND TESTFILES "${URL}.js.xml")
+
     elseif(CATEGORY STREQUAL "LANGUAGE_JAVA_GEN")
 
     elseif(CATEGORY STREQUAL "LANGUAGE_OBJECTIVE_C")
@@ -252,25 +256,6 @@ foreach(GENURL IN ITEMS ${TESTFILES})
         OUTPUT ${URL}.all.${LANGEXT}.xml
     )
     list(APPEND CONTEXT_FILES ${URL}.all.${LANGEXT}.xml)
-
-endforeach()
-
-# Create a copy of CONTEXT_FILES to avoid modifying the original list
-set(JS_XML_FILES ${CONTEXT_FILES})
-
-# Filter the JS_XML_FILES list to include only files matching *.js.xml
-list(APPEND JS_XML_FILES "${TESTFILES}")
-list(FILTER JS_XML_FILES INCLUDE REGEX ".*\\.js\\.xml$")
-
-# Generate variations: formfeed, comment, block, etc.
-foreach(GENURL IN ITEMS ${JS_XML_FILES})
-
-    # ${URL}.${LANGEXT}.xml
-    get_filename_component(SRCFILENAME "${GENURL}" NAME_WLE)
-    get_filename_component(URL "${SRCFILENAME}" NAME_WLE)
-    get_filename_component(EXTENSION "${SRCFILENAME}" LAST_EXT)
-    # remove '.'
-    string(SUBSTRING "${EXTENSION}" 1 -1 LANGEXT)
 
 endforeach()
 
