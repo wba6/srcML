@@ -54,11 +54,27 @@ set(CPACK_WIX_UI_REF "srcMLUI_InstallDir")
 # Add to CMake registry so that other CMake files can use find_program()
 set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY srcML)
 
-# Extra dialog for adding to path
-set(CPACK_WIX_EXTRA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcml_extra_dialog.wxs" "${CMAKE_CURRENT_SOURCE_DIR}/install_dir.wxs")
+# Set WiX version to v4 if no version specified
+if(NOT CPACK_WIX_VERSION)
+    set(CPACK_WIX_VERSION 4)
+endif()
 
-# Path for path environment
-set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/patch_path_env.xml")
+# Determine which WiX files to use based on version
+if (CPACK_WIX_VERSION EQUAL 4)
+    # Custom UI with extra dialog for adding to path
+    set(CPACK_WIX_EXTRA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcMLUI_InstallDir.wxs" "${CMAKE_CURRENT_SOURCE_DIR}/srcml_extra_dialog_v4.wxs")
 
-# Template instead of default WiX template
-set(CPACK_WIX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/WIX.template.in")
+    # Patch for path environment
+    set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/patch_path_env_v4.xml")
+
+else()
+    # Extra dialog for adding to path
+    set(CPACK_WIX_EXTRA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/srcml_extra_dialog.wxs" "${CMAKE_CURRENT_SOURCE_DIR}/install_dir.wxs")
+
+    # Patch for path environment
+    set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/patch_path_env.xml")
+
+    # Template instead of default WiX template
+    set(CPACK_WIX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/WIX.template.in")
+
+endif()
