@@ -5332,11 +5332,7 @@ block_end[] { bool in_issue_empty = inTransparentMode(MODE_ISSUE_EMPTY_AT_POP); 
             }
 
             // ensure JavaScript properties end before a comma or rcurly
-            if (
-                inLanguage(LANGUAGE_JAVASCRIPT)
-                && inTransparentMode(MODE_PROPERTY_JS)
-                && (LA(1) == COMMA || LA(1) == RCURLY)
-            ) {
+            if (inTransparentMode(MODE_PROPERTY_JS) && (LA(1) == COMMA || LA(1) == RCURLY)) {
                 endDownToMode(MODE_PROPERTY_JS);
                 endMode(MODE_PROPERTY_JS);
 
@@ -5344,10 +5340,18 @@ block_end[] { bool in_issue_empty = inTransparentMode(MODE_ISSUE_EMPTY_AT_POP); 
             }
 
             // ensure a trailing comma is handled after the last property in a JavaScript object
-            if (inLanguage(LANGUAGE_JAVASCRIPT) && inMode(MODE_OBJECT_JS) && LA(1) == TERMINATE) {
+            if (inMode(MODE_OBJECT_JS) && LA(1) == TERMINATE) {
                 endDownToMode(MODE_OBJECT_JS);
                 endMode(MODE_OBJECT_JS);
                 endMode(MODE_TOP);
+
+                return;
+            }
+
+            // ensure JavaScript lambdas in parenthesized expressions do not end the expression statement early
+            if (inTransparentMode(MODE_LAMBDA_JS) && LA(1) == RPAREN) {
+                endDownToMode(MODE_LAMBDA_JS);
+                endMode(MODE_LAMBDA_JS);
 
                 return;
             }

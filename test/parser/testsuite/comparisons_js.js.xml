@@ -243,12 +243,12 @@
 
     <!--Unit 47-->
     <unit language="JavaScript">
-        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda></expr></expr_stmt>) <expr_stmt><expr><operator>instanceof</operator> <name>Function</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda><operator>)</operator> <operator>instanceof</operator> <name>Function</name></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 48-->
     <unit language="JavaScript">
-        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda></expr></expr_stmt>) <expr_stmt><expr><operator>instanceof</operator> <name>Object</name></expr>;</expr_stmt>
+        <expr_stmt><expr><operator>(</operator><lambda>function<parameter_list>()</parameter_list> <block>{<block_content/>}</block></lambda><operator>)</operator> <operator>instanceof</operator> <name>Object</name></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 49-->
