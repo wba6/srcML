@@ -18,7 +18,7 @@
             </block_content>}</block></constructor>
         </block_content>}</block></class>
 
-        <decl_stmt><decl type="const">const <name>myCar</name> <init>= <expr><operator>new</operator> <call><name>Car</name><argument_list>(<argument><expr><literal type="string">'Toyota'</literal></expr></argument></argument_list></call></expr></init></decl>, <decl type="const">'Corolla'</decl>, <decl type="const">2021</decl></decl_stmt>)<empty_stmt>;</empty_stmt>
+        <decl_stmt><decl type="const">const <name>myCar</name> <init>= <expr><operator>new</operator> <call><name>Car</name><argument_list>(<argument><expr><literal type="string">'Toyota'</literal></expr></argument>, <argument><expr><literal type="string">'Corolla'</literal></expr></argument>, <argument><expr><literal type="number">2021</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
     </unit>
 
     <!--Unit 3-->

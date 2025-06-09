@@ -1521,7 +1521,12 @@ start_javascript[] {
         init_js |
 
         // looking for "," to handle comma-separated declarations (or declarations in parameters)
-        { inTransparentMode(MODE_DECLARATION_JS) && !inTransparentMode(MODE_OBJECT_JS) }?
+        // do not trigger this logic in objects or arguments (in function calls)
+        {
+            inTransparentMode(MODE_DECLARATION_JS)
+            && !inTransparentMode(MODE_OBJECT_JS)
+            && !inTransparentMode(MODE_ARGUMENT)
+        }?
         comma_declaration_js |
 
         // looking for "each" after "for" (handles the obselete "for each...in")
@@ -5369,7 +5374,12 @@ block_end[] { bool in_issue_empty = inTransparentMode(MODE_ISSUE_EMPTY_AT_POP); 
                 endMode();
             }
 
-            if (!(anonymous_class) && (!(inMode(MODE_CLASS) || inMode(MODE_ENUM)) || endstatement))
+            // do not allow anonymous classes, classes, or JavaScript class expressions
+            if (
+                !(anonymous_class)
+                && (!(inMode(MODE_CLASS) || inMode(MODE_ENUM)) || endstatement)
+                && (!inLanguage(LANGUAGE_JAVASCRIPT) || LA(1) != TERMINATE)
+            )
                 else_handling();
 
             // if true, we need to markup the (abbreviated) variable declaration
@@ -18497,7 +18507,19 @@ init_js[] { SingleElement element(this); ENTRY_DEBUG } :
         }
 
         EQUAL
-        expression
+
+        (options { greedy = true; } :
+            { inMode(MODE_ARGUMENT) }?
+            argument |
+
+            {
+                if (!inMode(MODE_EXPRESSION))
+                    startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+            }
+            expression |
+
+            comma
+        )*
 
         {
             endDownToMode(MODE_INIT);
