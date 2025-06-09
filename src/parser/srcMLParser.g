@@ -18396,6 +18396,7 @@ check_valid_specifier_js[] returns [int isspecifier] {
 perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
         keywords[0] = -1;
         keywords[1] = -1;
+        int last_consumed_current = last_consumed;
         int start = mark();
         inputState->guessing++;
 
@@ -18423,6 +18424,8 @@ perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
 
         inputState->guessing--;
         rewind(start);
+
+        last_consumed = last_consumed_current;
 
         ENTRY_DEBUG
 } :;
@@ -18593,6 +18596,7 @@ arrow_js[bool is_lambda = true] { SingleElement element(this); ENTRY_DEBUG } :
 */
 perform_arrow_lambda_check[] returns [bool islambda] {
         islambda = false;
+        int last_consumed_current = last_consumed;
         int start = mark();
         inputState->guessing++;
 
@@ -18614,6 +18618,8 @@ perform_arrow_lambda_check[] returns [bool islambda] {
 
         inputState->guessing--;
         rewind(start);
+
+        last_consumed = last_consumed_current;
 
         ENTRY_DEBUG
 } :;
