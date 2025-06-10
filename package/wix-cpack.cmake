@@ -54,7 +54,7 @@ set(CPACK_WIX_UI_REF "srcMLUI_InstallDir")
 # Add to CMake registry so that other CMake files can use find_program()
 set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY srcML)
 
-# Set WiX version to v4
+# Set WiX version to use WiX .NET Tools
 set(CPACK_WIX_VERSION 4)
 
 # Custom UI with extra dialog for adding to path
