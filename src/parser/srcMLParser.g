@@ -5424,13 +5424,13 @@ rcurly[] { ENTRY_DEBUG } :
             // end any sections inside the mode
             endWhileMode(MODE_TOP_SECTION);
 
+            // ensure block content ends before rcurly if...
+            // - in MODE_BLOCK_CONTENT
+            // - in JavaScript lambda arrow blocks
+            // - in JavaScript properties that contain a block
             if (inMode(MODE_BLOCK_CONTENT))
                 endMode(MODE_BLOCK_CONTENT);
-
-            // ensure block content ends before rcurly in...
-            // - JavaScript lambda arrow blocks
-            // - JavaScript properties that contain a block
-            if (
+            else if (
                 (inTransparentMode(MODE_ARROW_BLOCK_JS) || inTransparentMode(MODE_PROPERTY_JS))
                 && inTransparentMode(MODE_BLOCK_CONTENT)
             ) {
