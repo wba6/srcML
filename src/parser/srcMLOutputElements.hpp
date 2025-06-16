@@ -358,5 +358,6 @@ const std::unordered_map<int, Element> srcMLOutput::process = {
     { TOKEN::SNAME_LIST,                    { "name_list",         SRC,      0,           0,     0,      0 }},
     { TOKEN::SOBJECT_JS,                    { "object",            SRC,      0,           0,     0,      0 }},
     { TOKEN::SRANGE_OF,                     { "range",             SRC,      0,           0,     0,      0 }},
+    { TOKEN::SUNDEFINED_JS,                 { "literal",           SRC, "type", "undefined",     0,      0 }},
     { TOKEN::SYIELD_GENERATOR_STATEMENT,    { "yield",             SRC, "type", "generator",     0,      0 }},
 };

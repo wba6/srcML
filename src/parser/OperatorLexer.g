@@ -144,7 +144,7 @@ OPERATORS options { testLiterals = true; } {
     '&' ('&')? ('=')? |
 
     // >, >>=, >=, >>> (JavaScript), >>>= (JavaScript), not >>
-    '>' (('>' '=') => '>' '=')? ({ inLanguage(LANGUAGE_JAVASCRIPT) }? '>')* ('=')? |
+    '>' (('>' '=') => '>' '=' | { inLanguage(LANGUAGE_JAVASCRIPT) }? ('>' '>' '=') => '>' '>' '=')? ('=')? |
 
     // <, << (C/C++), <=, <<< (CUDA)
     '<' ('=' | '<' ({ inLanguage(LANGUAGE_CXX) || inLanguage(LANGUAGE_C) }? '<' | '=')? )? |

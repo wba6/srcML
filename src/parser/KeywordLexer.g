@@ -382,6 +382,7 @@ tokens {
     JS_SWITCH;
     JS_TRY;
     JS_TYPEOF;
+    JS_UNDEFINED;
     JS_VAR;
     JS_VOID;
     JS_WITH;
@@ -871,6 +872,7 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "switch"       , JS_SWITCH         , LANGUAGE_JAVASCRIPT },
         { "try"          , JS_TRY            , LANGUAGE_JAVASCRIPT },
         { "typeof"       , JS_TYPEOF         , LANGUAGE_JAVASCRIPT },
+        { "undefined"    , JS_UNDEFINED      , LANGUAGE_JAVASCRIPT },
         { "var"          , JS_VAR            , LANGUAGE_JAVASCRIPT },
         { "void"         , JS_VOID           , LANGUAGE_JAVASCRIPT },
         { "with"         , JS_WITH           , LANGUAGE_JAVASCRIPT },

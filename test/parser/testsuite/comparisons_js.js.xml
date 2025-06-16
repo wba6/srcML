@@ -3,7 +3,6 @@
 
     <!--Unit 1-->
     <unit language="JavaScript">
-        <comment type="line">// Loose Equality (==)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>==</operator> <literal type="string">'5'</literal></expr>;</expr_stmt>
     </unit>
 
@@ -14,7 +13,7 @@
 
     <!--Unit 3-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="null">null</literal> <operator>==</operator> <name>undefined</name></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="null">null</literal> <operator>==</operator> <literal type="undefined">undefined</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 4-->
@@ -34,7 +33,6 @@
 
     <!--Unit 7-->
     <unit language="JavaScript">
-        <comment type="line">// Strict Equality (===)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>===</operator> <literal type="string">'5'</literal></expr>;</expr_stmt>
     </unit>
 
@@ -45,7 +43,7 @@
 
     <!--Unit 9-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="null">null</literal> <operator>===</operator> <name>undefined</name></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="null">null</literal> <operator>===</operator> <literal type="undefined">undefined</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 10-->
@@ -65,7 +63,6 @@
 
     <!--Unit 13-->
     <unit language="JavaScript">
-        <comment type="line">// Loose Inequality (!=)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>!=</operator> <literal type="string">'5'</literal></expr>;</expr_stmt>
     </unit>
 
@@ -76,7 +73,7 @@
 
     <!--Unit 15-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="null">null</literal> <operator>!=</operator> <name>undefined</name></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="null">null</literal> <operator>!=</operator> <literal type="undefined">undefined</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 16-->
@@ -91,7 +88,6 @@
 
     <!--Unit 18-->
     <unit language="JavaScript">
-        <comment type="line">// Strict Inequality (!==)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>!==</operator> <literal type="string">'5'</literal></expr>;</expr_stmt>
     </unit>
 
@@ -102,7 +98,7 @@
 
     <!--Unit 20-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="null">null</literal> <operator>!==</operator> <name>undefined</name></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="null">null</literal> <operator>!==</operator> <literal type="undefined">undefined</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 21-->
@@ -122,7 +118,6 @@
 
     <!--Unit 24-->
     <unit language="JavaScript">
-        <comment type="line">// Less Than (&lt;)</comment>
         <expr_stmt><expr><literal type="number">3</literal> <operator>&lt;</operator> <literal type="number">5</literal></expr>;</expr_stmt>
     </unit>
 
@@ -143,7 +138,6 @@
 
     <!--Unit 28-->
     <unit language="JavaScript">
-        <comment type="line">// Less Than or Equal To (&lt;=)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>&lt;=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
     </unit>
 
@@ -164,7 +158,6 @@
 
     <!--Unit 32-->
     <unit language="JavaScript">
-        <comment type="line">// Greater Than (&gt;)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>&gt;</operator> <literal type="number">3</literal></expr>;</expr_stmt>
     </unit>
 
@@ -185,7 +178,6 @@
 
     <!--Unit 36-->
     <unit language="JavaScript">
-        <comment type="line">// Greater Than or Equal To (&gt;=)</comment>
         <expr_stmt><expr><literal type="number">5</literal> <operator>&gt;=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
     </unit>
 
@@ -206,33 +198,31 @@
 
     <!--Unit 40-->
     <unit language="JavaScript">
-        <comment type="line">// 'in' Operator</comment>
-        <expr_stmt><expr><literal type="string">'a'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'a'</literal> <operator>in</operator> <object>{<property><name>a</name>:<expr><literal type="number">1</literal></expr></property>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 41-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="string">'c'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'c'</literal> <operator>in</operator> <object>{<property><name>a</name>:<expr><literal type="number">1</literal></expr></property>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 42-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="string">'toString'</literal> <range>in <expr><object>{<property/><name>a</name>:<expr><literal type="number">1</literal></expr>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="string">'toString'</literal> <operator>in</operator> <object>{<property><name>a</name>:<expr><literal type="number">1</literal></expr></property>, <property><name>b</name>:<expr><literal type="number">2</literal></expr></property>}</object></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 43-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="number">0</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">0</literal> <operator>in</operator> <array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 44-->
     <unit language="JavaScript">
-        <expr_stmt><expr><literal type="number">3</literal> <range>in <expr><array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr></range></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="number">3</literal> <operator>in</operator> <array>[<expr><literal type="number">10</literal></expr>, <expr><literal type="number">20</literal></expr>, <expr><literal type="number">30</literal></expr>]</array></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 45-->
     <unit language="JavaScript">
-        <comment type="line">// 'instanceof' Operator</comment>
         <expr_stmt><expr><operator>new</operator> <call><name>Date</name><argument_list>()</argument_list></call> <operator>instanceof</operator> <name>Date</name></expr>;</expr_stmt>
     </unit>
 
@@ -273,8 +263,6 @@
 
     <!--Unit 53-->
     <unit language="JavaScript">
-        <comment type="line">// @TODO Nan, Infinity, and undefined are global properties in javascript should they be marked differently</comment>
-        <comment type="line">// Comparing NaN</comment>
         <expr_stmt><expr><name>NaN</name> <operator>==</operator> <name>NaN</name></expr>;</expr_stmt>
     </unit>
 
@@ -290,7 +278,6 @@
 
     <!--Unit 56-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing Infinity</comment>
         <expr_stmt><expr><name>Infinity</name> <operator>&gt;</operator> <literal type="number">1000</literal></expr>;</expr_stmt>
     </unit>
 
@@ -306,28 +293,26 @@
 
     <!--Unit 59-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing with undefined and null</comment>
-        <expr_stmt><expr><name>undefined</name> <operator>&lt;</operator> <literal type="null">null</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="undefined">undefined</literal> <operator>&lt;</operator> <literal type="null">null</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 60-->
     <unit language="JavaScript">
-        <expr_stmt><expr><name>undefined</name> <operator>&gt;</operator> <literal type="null">null</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="undefined">undefined</literal> <operator>&gt;</operator> <literal type="null">null</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 61-->
     <unit language="JavaScript">
-        <expr_stmt><expr><name>undefined</name> <operator>==</operator> <literal type="null">null</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="undefined">undefined</literal> <operator>==</operator> <literal type="null">null</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 62-->
     <unit language="JavaScript">
-        <expr_stmt><expr><name>undefined</name> <operator>===</operator> <literal type="null">null</literal></expr>;</expr_stmt>
+        <expr_stmt><expr><literal type="undefined">undefined</literal> <operator>===</operator> <literal type="null">null</literal></expr>;</expr_stmt>
     </unit>
 
     <!--Unit 63-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing different types</comment>
         <expr_stmt><expr><literal type="string">'5'</literal> <operator>&gt;</operator> <literal type="number">3</literal></expr>;</expr_stmt>
     </unit>
 
@@ -363,7 +348,6 @@
 
     <!--Unit 70-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing Objects</comment>
         <decl_stmt><decl type="const">const <name>obj1</name> <init>= <expr><object>{ <property><name>x</name>: <expr><literal type="number">1</literal></expr></property> }</object></expr></init></decl>;</decl_stmt>
     </unit>
 
@@ -399,7 +383,6 @@
 
     <!--Unit 77-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing Functions</comment>
         <function>function <name>func1</name><parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
     </unit>
 
@@ -435,7 +418,6 @@
 
     <!--Unit 84-->
     <unit language="JavaScript">
-        <comment type="line">// Comparing Symbols</comment>
         <decl_stmt><decl type="const">const <name>sym1</name> <init>= <expr><call><name>Symbol</name><argument_list>(<argument><expr><literal type="string">'foo'</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
     </unit>
 

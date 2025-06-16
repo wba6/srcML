@@ -733,6 +733,7 @@ tokens {
     SNAME_LIST;
     SOBJECT_JS;
     SRANGE_OF;
+    SUNDEFINED_JS;
     SYIELD_GENERATOR_STATEMENT;
 }
 
@@ -1533,12 +1534,12 @@ start_javascript[] {
         { last_consumed == FOR }?
         for_each_specifier_js |
 
-        // looking for a keyword or operator that does not belong to a statement
-        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | getter_js | setter_js |
+        // looking for "in" in a declaration (should not be an operator "in" or property name "in")
+        { inTransparentMode(MODE_DECLARATION_JS) && !inMode(MODE_PROPERTY_JS)}?
+        range_in_js |
 
-        // redundancy required to suppress warning with start[] overlap
-        { inLanguage(LANGUAGE_JAVASCRIPT) }?
-        (declaration_js[false] | range_in_js) |
+        // looking for a keyword or operator that does not belong to a statement
+        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | getter_js | setter_js | declaration_js[false] |
 
         // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
         start
@@ -8777,6 +8778,8 @@ pointer_dereference[] { ENTRY_DEBUG bool flag = false; } :
             (compound_name_inner[false])* |
 
             // special name prefix of namespace or class
+            // redundancy required to suppress warning
+            { inLanguage(LANGUAGE_C_FAMILY) }?
             identifier
             (generic_argument_list (generic_type_constraint)*)*
             DCOLON
@@ -11861,7 +11864,7 @@ general_operators[] { LightweightElement element(this); ENTRY_DEBUG } :
             EXPONENTIATION | PY_AND | PY_ATSIGN | PY_AWAIT | PY_COLON | PY_IN | PY_IS | PY_NOT | PY_OR |
 
             // JavaScript
-            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_TYPEOF | JS_VOID
+            JS_AWAIT | JS_DELETE | JS_INSTANCE_OF | JS_RANGE_IN | JS_TYPEOF | JS_VOID
         )
 ;
 
@@ -12491,6 +12494,7 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
         // general math operators
         // looks like general operators and variable identifiers can match same thing
         (options { generateAmbigWarnings = false; } :
+            { !inLanguage(LANGUAGE_JAVASCRIPT) || !inMode(MODE_PROPERTY_JS) }?
             general_operators
 
             {
@@ -12631,6 +12635,9 @@ rparen_expression[] { bool end_control_incr = false; ENTRY_DEBUG } :
   Handles various rules for literals.
 */
 literals[] { ENTRY_DEBUG } :
+        { inLanguage(LANGUAGE_JAVASCRIPT) }?
+        undefined_literal_js |
+
         { inLanguage(LANGUAGE_PYTHON) }?
         dquote_literal_py |
 
@@ -12639,6 +12646,17 @@ literals[] { ENTRY_DEBUG } :
 
         string_literal | char_literal | backtick_literal | literal | boolean | null_literal |
         complex_literal | nil_literal | none_literal | ellipsis_literal
+;
+
+/*
+  undefined_literal_js
+*/
+undefined_literal_js[] { LightweightElement element(this); ENTRY_DEBUG } :
+        {
+            startElement(SUNDEFINED_JS);
+        }
+
+        JS_UNDEFINED
 ;
 
 /*
