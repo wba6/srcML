@@ -235,4 +235,11 @@ token_set(srcMLParser, multiline_literals_py_token_set,
     srcMLParser::SQUOTE_DOCSTRING_END, srcMLParser::SQUOTE_DOXYGEN_END
 )
 
+token_set(srcMLParser, post_specifier_js_token_set,
+    // JavaScript keywords that follow one or more specifiers
+    srcMLParser::CLASS, srcMLParser::FOR, srcMLParser::LPAREN, srcMLParser::JS_CONST,
+    srcMLParser::JS_FUNCTION, srcMLParser::JS_GET, srcMLParser::JS_LET, srcMLParser::JS_SET,
+    srcMLParser::JS_STATIC, srcMLParser::JS_VAR
+)
+
 #endif

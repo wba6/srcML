@@ -797,6 +797,7 @@ public:
     static const antlr::BitSet right_bracket_py_token_set;
     static const antlr::BitSet comment_py_token_set;
     static const antlr::BitSet multiline_literals_py_token_set;
+    static const antlr::BitSet post_specifier_js_token_set;
 
     // constructor
     srcMLParser(antlr::TokenStream& lexer, int lang, const OPTION_TYPE& options);
@@ -1410,29 +1411,52 @@ start_javascript[] {
             lparen_types_js.emplace_back('*');
 
         // check if the current token is a specifier that occurs before a keyword
+        bool is_specifier_arrow_lambda = false;
         if (check_valid_specifier_js()) {
             std::array<int, 2> post_specifier_tokens = perform_post_specifier_check_js();
 
-            // looking for declarations (e.g., var/let/const/static) separately since they are not in the table
-            if (
-                post_specifier_tokens[0] == JS_LET
-                || post_specifier_tokens[0] == JS_VAR
-                || post_specifier_tokens[0] == JS_CONST
-                || post_specifier_tokens[0] == JS_STATIC
-            ) {
-                declaration_js(true);
-            }
-            // looking for functions or classes
-            else if (post_specifier_tokens[0] != -1) {
-                if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
-                    const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
-                    if (lookup)
-                        post_specifier_tokens[0] = lookup;
-                }
-                const auto& rule = javascript_rules[post_specifier_tokens[0]];
-                if (rule.elementToken && processRule(rule)) {
-                    return;
-                }
+            // looking at the first token immediately after the last specifier
+            switch (post_specifier_tokens[0]) {
+                // looking for declarations separately since they are not in the table
+                case JS_LET :
+                case JS_VAR :
+                case JS_CONST :
+                case JS_STATIC :
+                    declaration_js(true);
+                    break;
+
+                // looking for getters
+                case JS_GET :
+                    getter_js(true);
+                    break;
+
+                // looking for setters
+                case JS_SET :
+                    setter_js(true);
+                    break;
+
+                // looking for LPAREN to start an arrow lambda
+                case LPAREN :
+                    if (perform_arrow_lambda_check()) {
+                        parameter_list_arrow_js(true);
+                        is_specifier_arrow_lambda = true;
+                    }
+                    break;
+
+                default :
+                    // looking for functions or classes
+                    if (post_specifier_tokens[0] != -1) {
+                        if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
+                            const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
+                            if (lookup)
+                                post_specifier_tokens[0] = lookup;
+                        }
+                        const auto& rule = javascript_rules[post_specifier_tokens[0]];
+                        if (rule.elementToken && processRule(rule)) {
+                            return;
+                        }
+                    }
+                    break;
             }
         }
 
@@ -1460,8 +1484,8 @@ start_javascript[] {
             arrow_js(true);
 
         // special case for a parameter list to start an arrow lambda tag
-        if (LA(1) == LPAREN)
-            parameter_list_arrow_js();
+        if (LA(1) == LPAREN && !is_specifier_arrow_lambda && perform_arrow_lambda_check())
+            parameter_list_arrow_js(false);
 
         ENTRY_DEBUG_START
         ENTRY_DEBUG
@@ -1538,8 +1562,11 @@ start_javascript[] {
         { inTransparentMode(MODE_DECLARATION_JS) && !inMode(MODE_PROPERTY_JS)}?
         range_in_js |
 
+        // looking for a getter or setter with no specifiers
+        getter_js[false] | setter_js[false] |
+
         // looking for a keyword or operator that does not belong to a statement
-        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | getter_js | setter_js | declaration_js[false] |
+        extends_js | alias_js | from_js | range_of_js | arrow_js[false] | declaration_js[false] |
 
         // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
         start
@@ -18430,14 +18457,7 @@ perform_post_specifier_check_js[] returns [std::array<int, 2> keywords] {
                     break;
             }
 
-            if (
-                LA(1) == JS_LET
-                || LA(1) == JS_VAR
-                || LA(1) == JS_CONST
-                || LA(1) == JS_STATIC
-                || LA(1) == JS_FUNCTION
-                || LA(1) == CLASS
-            ) {
+            if (post_specifier_js_token_set.member(LA(1))) {
                 keywords[0] = LA(1);
                 keywords[1] = next_token();
             }
@@ -18618,19 +18638,27 @@ arrow_js[bool is_lambda = true] { SingleElement element(this); ENTRY_DEBUG } :
 */
 perform_arrow_lambda_check[] returns [bool islambda] {
         islambda = false;
+        int paren_count = 0;
         int last_consumed_current = last_consumed;
         int start = mark();
         inputState->guessing++;
 
         try {
-            int token = LA(1);
-
             while (true) {
-                consume();
-                token = LA(1);
+                if (LA(1) == LPAREN)
+                    ++paren_count;
 
-                if (token == RPAREN || token == TERMINATE || token == 1 /* EOF */)
+                if (LA(1) == RPAREN) {
+                    --paren_count;
+
+                    if (paren_count < 1)
+                        break;
+                }
+
+                if (LA(1) == LCURLY || LA(1) == TERMINATE || LA(1) == 1 /* EOF */)
                     break;
+
+                consume();
             }
 
             if (next_token() == JS_ARROW)
@@ -18650,24 +18678,29 @@ perform_arrow_lambda_check[] returns [bool islambda] {
   parameter_list_arrow_js
 
   Handles a JavaScript parameter list followed by an arrow (`=>`).
+  If "async" or "default" are present, mark them as specifiers.
 */
-parameter_list_arrow_js[] { bool is_valid = perform_arrow_lambda_check(); ENTRY_DEBUG } :
+parameter_list_arrow_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
         {
-            if (is_valid) {
-                // enclose lambda in expression statement if not in a declaration statement
-                if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
-                    startNewMode(MODE_STATEMENT);
-                    startElement(SEXPRESSION_STATEMENT);
-                }
-
-                startNewMode(MODE_EXPRESSION);
-                startElement(SEXPRESSION);
-
-                startNewMode(MODE_LAMBDA_ARROW_JS);
-                startElement(SLAMBDA_ARROW_JS);
-
-                startNewMode(MODE_PARAMETER_LIST_JS);
+            // enclose lambda in expression statement if not in a declaration statement
+            if (!inTransparentMode(MODE_DECLARATION_STATEMENT)) {
+                startNewMode(MODE_STATEMENT);
+                startElement(SEXPRESSION_STATEMENT);
             }
+
+            startNewMode(MODE_EXPRESSION);
+            startElement(SEXPRESSION);
+
+            if (handle_specifiers) {
+                while (check_valid_specifier_js()) {
+                    specifier_js();
+                }
+            }
+
+            startNewMode(MODE_LAMBDA_ARROW_JS);
+            startElement(SLAMBDA_ARROW_JS);
+
+            startNewMode(MODE_PARAMETER_LIST_JS);
         }
 ;
 
@@ -18929,9 +18962,16 @@ class_expression_method_js[] { ENTRY_DEBUG } :
   getter_js
 
   Handles a "get" keyword in JavaScript for "get" functions.
+  If "async" or "default" are present, mark them as specifiers.
 */
-getter_js[] { ENTRY_DEBUG } :
+getter_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
         {
+            if (handle_specifiers) {
+                while (check_valid_specifier_js()) {
+                    specifier_js();
+                }
+            }
+
             startNewMode(MODE_STATEMENT | MODE_NEST | MODE_GETTER_JS);
 
             startElement(SFUNCTION_GET_STATEMENT);
@@ -18948,9 +18988,16 @@ getter_js[] { ENTRY_DEBUG } :
   setter_js
 
   Handles a "set" keyword in JavaScript for "set" functions.
+  If "async" or "default" are present, mark them as specifiers.
 */
-setter_js[] { ENTRY_DEBUG } :
+setter_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
         {
+            if (handle_specifiers) {
+                while (check_valid_specifier_js()) {
+                    specifier_js();
+                }
+            }
+
             startNewMode(MODE_STATEMENT | MODE_NEST | MODE_SETTER_JS);
 
             startElement(SFUNCTION_SET_STATEMENT);
