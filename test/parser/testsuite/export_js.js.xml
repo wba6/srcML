@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="JavaScript" filename="export.js" url="export">
+
+    <unit language="JavaScript">
+        <decl_stmt><specifier>export</specifier> <decl type="let">let <name>name1</name></decl>, <decl type="let"><name>name2</name></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><specifier>export</specifier> <decl type="const">const <name>name1</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>, <decl type="const"><name>name2</name> <init>= <expr><literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <function><specifier>export</specifier> function <name>functionName</name><parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <class><specifier>export</specifier> class <name>ClassName</name> <block>{<block_content/>}</block></class>
+    </unit>
+
+    <unit language="JavaScript">
+        <function type="generator"><specifier>export</specifier> function* <name>generatorFunctionName</name><parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><specifier>export</specifier> <decl type="const">const { <name>name1</name>, <name>name2</name> } <init>= <expr><name>o</name></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><specifier>export</specifier> <decl type="const">const [ <name>name1</name>, <name>name2</name> ] <init>= <expr><name>array</name></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name>name1</name>, <name>name2</name> }</name_list>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name><name>variable1</name> <alias>as <name>name1</name></alias></name>, <name><name>variable2</name> <alias>as <name>name2</name></alias></name> }</name_list>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name><name>variable1</name> <alias>as <literal type="string">"string name"</literal></alias></name> }</name_list>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name><name>name1</name> <alias>as <name>default</name></alias></name> }</name_list>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <specifier>default</specifier> <expr><name>expression</name></expr>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <specifier>default</specifier> <expr><literal type="number">1</literal> <operator>+</operator> <literal type="number">1</literal></expr>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <function><specifier>export</specifier> <specifier>default</specifier> function <name>functionName</name><parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <class><specifier>export</specifier> <specifier>default</specifier> class <name>ClassName</name> <block>{<block_content/>}</block></class>
+    </unit>
+
+    <unit language="JavaScript">
+        <function type="generator"><specifier>export</specifier> <specifier>default</specifier> function* <name>generatorFunctionName</name><parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <function><specifier>export</specifier> <specifier>default</specifier> function <parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <class><specifier>export</specifier> <specifier>default</specifier> class <block>{<block_content/>}</block></class>
+    </unit>
+
+    <unit language="JavaScript">
+        <function type="generator"><specifier>export</specifier> <specifier>default</specifier> function* <parameter_list>()</parameter_list> <block>{<block_content/>}</block></function>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name>*</name> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name><name>*</name> <alias>as <name>name1</name></alias></name> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name>name1</name>, <name>name2</name> }</name_list> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name><name>import1</name> <alias>as <name>name1</name></alias></name>, <name><name>import2</name> <alias>as <name>name2</name></alias></name> }</name_list> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name>default</name> }</name_list> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+    <unit language="JavaScript">
+        <export>export <name_list>{ <name><name>default</name> <alias>as <name>name1</name></alias></name> }</name_list> <from>from <literal type="string">"module-name"</literal></from>;</export>
+    </unit>
+
+</unit>

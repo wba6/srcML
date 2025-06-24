@@ -1443,19 +1443,36 @@ start_javascript[] {
                     }
                     break;
 
-                default :
-                    // looking for functions or classes
-                    if (post_specifier_tokens[0] != -1) {
-                        if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
-                            const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
-                            if (lookup)
-                                post_specifier_tokens[0] = lookup;
-                        }
-                        const auto& rule = javascript_rules[post_specifier_tokens[0]];
-                        if (rule.elementToken && processRule(rule)) {
-                            return;
-                        }
+                // looking for statement keywords (e.g., "class", "for", "function")
+                case CLASS :
+                case FOR :
+                case JS_FUNCTION : {
+                    if (duplex_keyword_set.member((unsigned int) post_specifier_tokens[0])) {
+                        const auto lookup = duplexKeywords[post_specifier_tokens[0] + (post_specifier_tokens[1] << 8)];
+                        if (lookup)
+                            post_specifier_tokens[0] = lookup;
                     }
+                    const auto& rule = javascript_rules[post_specifier_tokens[0]];
+                    if (rule.elementToken && processRule(rule)) {
+                        return;
+                    }
+                    break;
+                }
+
+                default :
+                    // If here, then "export" begins an "export" statement
+                    // unless used as the name of a JavaScript property
+                    if (LA(1) == JS_EXPORT && !inMode(MODE_PROPERTY_JS)) {
+                        startNewMode(MODE_STATEMENT);
+                        startElement(SEXPORT_STATEMENT);
+                        startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+                        consume();  // JS_EXPORT
+
+                        // process specifiers, if applicable
+                        while (check_valid_specifier_js())
+                            specifier_js();
+                    }
+
                     break;
             }
         }
@@ -6142,9 +6159,9 @@ comma[] { bool markup_comma = true; ENTRY_DEBUG } :
                 || (
                     inLanguage(LANGUAGE_JAVASCRIPT)
                     && (
-                        inMode(MODE_OBJECT_JS)
-                        || inMode(MODE_NAME_LIST_JS)
-                        || inMode(MODE_ARRAY_JS)
+                        inTransparentMode(MODE_OBJECT_JS)
+                        || inTransparentMode(MODE_NAME_LIST_JS)
+                        || inTransparentMode(MODE_ARRAY_JS)
                     )
                 )
             )
@@ -18333,10 +18350,69 @@ declaration_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
                     break;
             }
 
-            startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
+            // only accept "NAME" + "=" if the next token is not an LCURLY or LBRACKET
+            if (next_token() != LCURLY && next_token() != LBRACKET)
+                startNewMode(MODE_INIT | MODE_VARIABLE_NAME | MODE_EXPECT);
         }
 
         (JS_LET | JS_VAR | JS_CONST | JS_STATIC)
+
+        {
+            switch (LA(1)) {
+                // looking for LCURLY to handle a special case of "object"
+                case LCURLY :
+                    export_decl_object_js();
+                    break;
+
+                // looking for LBRACKET to handle a special case of "array"
+                case LBRACKET :
+                    export_decl_array_js();
+                    break;
+
+                default :
+                    break;
+            }
+        }
+;
+
+/*
+  export_decl_object_js
+
+  Handles a JavaScript declared object that is meant to be exported.
+  These objects should only contain names.
+*/
+export_decl_object_js[] { ENTRY_DEBUG } :
+        LCURLY
+
+        (options { greedy = true; } :
+            compound_name | COMMA
+        )*
+
+        RCURLY
+
+        {
+            startNewMode(MODE_INIT | MODE_EXPECT);
+        }
+;
+
+/*
+  export_decl_array_js
+
+  Handles a JavaScript declared array that is meant to be exported.
+  These arrays should only contain names.
+*/
+export_decl_array_js[] { ENTRY_DEBUG } :
+        LBRACKET
+
+        (options { greedy = true; } :
+            compound_name | COMMA
+        )*
+
+        RBRACKET
+
+        {
+            startNewMode(MODE_INIT | MODE_EXPECT);
+        }
 ;
 
 /*
@@ -18350,7 +18426,7 @@ alias_js[] { SingleElement element(this); ENTRY_DEBUG } :
         }
 
         JS_ALIAS
-        compound_name
+        expression_part
 
         {
             if (inMode(MODE_ALIAS_COMPOUND_NAME_JS)) {
