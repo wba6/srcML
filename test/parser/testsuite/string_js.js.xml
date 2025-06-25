@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="JavaScript" filename="string.js" url="string">
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">"a"</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">"ab"</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">"a\"b"</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">"a'b'"</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">"a\
+        b"</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'a'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\\'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\n'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\t'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\r'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\b'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\%'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\f'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\0'</literal> <literal type="string">'\1'</literal> <literal type="string">'\2'</literal> <literal type="string">'\3'</literal> <literal type="string">'\4'</literal> <literal type="string">'\5'</literal> <literal type="string">'\6'</literal> <literal type="string">'\7'</literal> <literal type="string">'\8'</literal> <literal type="string">'\9'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\14'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\?'</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><literal type="string">'\''</literal></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>a</name> <init>= <expr><literal type="string">`Hello ${b}`</literal></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>a</name> <init>= <expr><literal type="string">`Hello ${b}
+        Hello ${c}
+        Hello ${d}`</literal></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <decl_stmt><decl type="const">const <name>a</name> <init>= <expr><call><name>taggedTemplate</name><argument><expr><literal type="string">`example ${b}`</literal></expr></argument></call></expr></init></decl>;</decl_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><call><name><name>console</name><operator>.</operator><name>log</name></name><argument><expr><literal type="string">`Hello`</literal></expr></argument></call></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><call><call><name><name>console</name><operator>.</operator><name>log</name><operator>.</operator><name>bind</name></name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call><argument><expr><literal type="string">`Hello`</literal></expr></argument></call></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><operator>new</operator> <call><call><name>Function</name><argument_list>(<argument><expr><literal type="string">"console.log(arguments)"</literal></expr></argument>)</argument_list></call><argument><expr><literal type="string">`Hello`</literal></expr></argument></call></expr>;</expr_stmt>
+    </unit>
+
+    <unit language="JavaScript">
+        <expr_stmt><expr><call><call><name>recursive</name><argument><expr><literal type="string">`Hello`</literal></expr></argument></call><argument><expr><literal type="string">`World`</literal></expr></argument></call></expr>;</expr_stmt>
+    </unit>
+
+</unit>

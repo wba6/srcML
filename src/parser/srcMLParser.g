@@ -1437,7 +1437,7 @@ start_javascript[] {
 
                 // looking for LPAREN to start an arrow lambda
                 case LPAREN :
-                    if (perform_arrow_lambda_check()) {
+                    if (perform_arrow_lambda_check_js()) {
                         parameter_list_arrow_js(true);
                         is_specifier_arrow_lambda = true;
                     }
@@ -1501,7 +1501,7 @@ start_javascript[] {
             arrow_js(true);
 
         // special case for a parameter list to start an arrow lambda tag
-        if (LA(1) == LPAREN && !is_specifier_arrow_lambda && perform_arrow_lambda_check())
+        if (LA(1) == LPAREN && !is_specifier_arrow_lambda && perform_arrow_lambda_check_js())
             parameter_list_arrow_js(false);
 
         ENTRY_DEBUG_START
@@ -12337,6 +12337,10 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
 
         ENTRY_DEBUG
 } :
+        // looking for name to start JavaScript tagged template (e.g., a`b`, a(b)`c`, a`b``c`, etc.)
+        { inLanguage(LANGUAGE_JAVASCRIPT) && perform_tagged_template_check_js(call_count) }?
+        tagged_template_js[call_count] |
+
         // do not mark JavaScript method blocks as objects (e.g., methodName() {})
         { inLanguage(LANGUAGE_JAVASCRIPT) && last_consumed == RPAREN }?
         lcurly[true] |
@@ -18708,11 +18712,11 @@ arrow_js[bool is_lambda = true] { SingleElement element(this); ENTRY_DEBUG } :
 ;
 
 /*
-  perform_arrow_lambda_check
+  perform_arrow_lambda_check_js
 
   Checks to see if an arrow (`=>`) follows a parameter list.
 */
-perform_arrow_lambda_check[] returns [bool islambda] {
+perform_arrow_lambda_check_js[] returns [bool islambda] {
         islambda = false;
         int paren_count = 0;
         int last_consumed_current = last_consumed;
@@ -19083,5 +19087,92 @@ setter_js[bool handle_specifiers = false] { ENTRY_DEBUG } :
 
         {
             startNewMode(MODE_PARAMETER_LIST_JS | MODE_VARIABLE_NAME | MODE_EXPECT);
+        }
+;
+
+/*
+  perform_tagged_template_check_js
+
+  Checks to see if a name or function call preceeds a JavaScript tagged template (e.g., a`b`).
+  Also checks for any JavaScript tagged template variations (e.g., a(b)`c` or a`b``c`).
+*/
+perform_tagged_template_check_js[int& call_count] returns [bool istagged] {
+        istagged = false;
+        call_count = 0;
+
+        int last_consumed_current = last_consumed;
+        int start = mark();
+        inputState->guessing++;
+
+        try {
+            while (true) {
+                // process consecutive argument lists
+                while (LA(1) == LPAREN) {
+                    paren_pair();
+                    ++call_count;
+                }
+
+                // handle consecutive backtick arguments
+                while (LA(1) == BACKTICK_START) {
+                    backtick_literal();
+                    ++call_count;
+                    istagged = true;
+                }
+
+                if (
+                    LA(1) == LCURLY /* block or object start */
+                    || LA(1) == COLON /* property start */
+                    || LA(1) == TERMINATE
+                    || LA(1) == 1 /* EOF */
+                )
+                    break;
+
+                consume();
+            }
+
+            if (!istagged)
+                call_count = 0;
+        }
+        catch (...) {}
+
+        inputState->guessing--;
+        rewind(start);
+
+        last_consumed = last_consumed_current;
+
+        ENTRY_DEBUG
+} :;
+
+/*
+  tagged_template_js
+
+  Handles a JavaScript tagged template (e.g., a`b`, a`b`(c), a`b``c`, etc.).
+*/
+tagged_template_js[int call_count = 1] { ENTRY_DEBUG } :
+        {
+            do {
+                // start a new mode that will end after the argument list
+                startNewMode(MODE_ARGUMENT | MODE_LIST | MODE_ARGUMENT_LIST | MODE_FUNCTION_CALL);
+
+                // start the function call element
+                startElement(SFUNCTION_CALL);
+            } while (--call_count > 0);
+        }
+
+        compound_name
+
+        (
+            { LA(1) == BACKTICK_START }?
+            argument |
+
+            call_argument_list
+        )
+
+        {
+            // end call in preparation for the next call (e.g., a`b``c`)
+            if (LA(1) == BACKTICK_START) {
+                endDownToMode(MODE_FUNCTION_CALL);
+                endMode(MODE_FUNCTION_CALL);
+            }
         }
 ;
