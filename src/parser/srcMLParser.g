@@ -714,6 +714,23 @@ tokens {
     SWITH_STATEMENT;
     SYIELD_STATEMENT;
     SYIELD_FROM_STATEMENT;
+
+    // OPENQASM
+    SARGUMENT_LIST_QUANTUM;
+    SBARRIER_STATEMENT;
+    SBOX_STATEMENT;
+    SDEFCALGRAMMAR_STATEMENT;
+    SDELAY_STATEMENT;
+    SEND_STATEMENT;
+    SGATE;
+    SGATE_DEFCAL;
+    SINCLUDE_STATEMENT;
+    SMEASURE_STATEMENT;
+    SPARAMETER_LIST_QUANTUM;
+    SPRAGMA_STATEMENT;
+    SRESET_STATEMENT;
+    SQUBIT;
+    SVERSION_STATEMENT;
 }
 
 /*
@@ -1051,6 +1068,55 @@ start[] { ++start_count; ENTRY_DEBUG_START ENTRY_DEBUG } :
 
         // in the middle of a statement
         statement_part
+;
+exception
+catch[...] {
+        CATCH_DEBUG
+
+        // need to consume the token. If we got here because
+        // of an error with EOF token, then call EOF directly
+        if (LA(1) == 1)
+            eof();
+        else
+            consume();
+}
+
+/*
+  start_openqasm
+*/
+
+start_openqasm[] {
+        ++start_count;
+
+        const size_t OPENQASM_RULES_SIZE = 800;
+
+        static const std::array<Rule, OPENQASM_RULES_SIZE> openqasm_rules = [this](){
+            std::array<Rule, OPENQASM_RULES_SIZE> temp_array;
+
+            /* GENERIC STATEMENTS */
+            temp_array[QASM_RESET] = { SRESET_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
+
+            return temp_array;
+        }();
+
+        // ensure the lparen deque never starts empty by adding a dummy entry
+        if (lparen_types_py.empty())
+            lparen_types_py.emplace_back('*');
+
+        // invoke the table to handle keywords and duplex keywords
+        if (inMode(MODE_STATEMENT)) {
+            auto token = LA(1);
+
+            const auto& rule = openqasm_rules[token];
+            if (rule.elementToken && processRule(rule)) {
+                return;
+            }
+        }
+
+        ENTRY_DEBUG_START
+        ENTRY_DEBUG
+}:
+        start
 ;
 exception
 catch[...] {

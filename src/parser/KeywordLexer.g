@@ -350,6 +350,24 @@ tokens {
     PY_TYPE;
     PY_WITH;
     PY_YIELD;
+
+    // OpenQASM
+    LITERAL_QUBIT;
+    QASM_BARRIER;
+    QASM_BOX;
+    QASM_DEFCAL;
+    QASM_DEFCALGRAMMAR;
+    QASM_DELAY;
+    QASM_END;
+    QASM_FUNCTION;
+    QASM_GATE;
+    QASM_INCLUDE;
+    QASM_MEASURE;
+    QASM_PRAGMA;
+    QASM_RESET;
+    QASM_VERSION;
+
+
 }
 
 {
@@ -801,6 +819,9 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "type"         , PY_TYPE           , LANGUAGE_PYTHON },
         { "with"         , PY_WITH           , LANGUAGE_PYTHON },
         { "yield"        , PY_YIELD          , LANGUAGE_PYTHON },
+
+        // OpenQASM
+        { "reset"        , QASM_RESET        , LANGUAGE_OPENQASM},
    };
 
     // fill up the literals for the language that we are parsing

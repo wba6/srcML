@@ -49,6 +49,8 @@ namespace LanguageName {
 
     /** String constant for Python language */
     const char* const LANGUAGE_PYTHON = "Python";
+
+    const char* const LANGUAGE_OPENQASM = "OpenQASM";
 }
 
 /**
@@ -89,6 +91,9 @@ public:
 
         /** Python language */
         LANGUAGE_PYTHON = 32,
+
+        /** OpenQASM language */
+        LANGUAGE_OPENQASM = 64,
 
         /** C++ family i.e. C++/C#  */
         LANGUAGE_CXX_FAMILY = LANGUAGE_CXX | LANGUAGE_CSHARP | LANGUAGE_PYTHON,

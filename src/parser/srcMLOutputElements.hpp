@@ -339,4 +339,21 @@ const std::unordered_map<int, Element> srcMLOutput::process = {
     { TOKEN::SWITH_STATEMENT,               { "with",              SRC,      0,           0,        0,                   0 }},
     { TOKEN::SYIELD_STATEMENT,              { "yield",             SRC,      0,           0,        0,                   0 }},
     { TOKEN::SYIELD_FROM_STATEMENT,         { "yield",             SRC, "type",      "from",        0,                   0 }},
+
+    // OpenQASM
+    { TOKEN::SARGUMENT_LIST_QUANTUM,        { "argument_list",     SRC, "type",   "quantum",        0,                   0 }},
+    { TOKEN::SBARRIER_STATEMENT,            { "barrier",           SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SBOX_STATEMENT,                { "box",               SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SDEFCALGRAMMAR_STATEMENT,      { "defcalgrammar",     SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SDELAY_STATEMENT,              { "delay",             SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SEND_STATEMENT,                { "end",               SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SGATE,                         { "gate",              SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SGATE_DEFCAL,                  { "alias",             SRC,  "type",   "defcal",        0,                   0 }},
+    { TOKEN::SINCLUDE_STATEMENT,            { "include",           SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SMEASURE_STATEMENT,            { "measure",           SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SPARAMETER_LIST_QUANTUM,       { "parameter_list",    SRC,  "type",  "quantum",        0,                   0 }},
+    { TOKEN::SPRAGMA_STATEMENT,             { "pragma",            SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SRESET_STATEMENT,              { "reset",             SRC,      0,           0,        0,                   0 }},
+    { TOKEN::SQUBIT,                        { "literal",           SRC,  "type",    "qubit",        0,                   0 }},
+    { TOKEN::SVERSION_STATEMENT,            { "version",           SRC,      0,           0,        0,                   0 }},
 };

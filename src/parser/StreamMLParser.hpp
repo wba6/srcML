@@ -175,7 +175,9 @@ private:
             case LANGUAGE_PYTHON:
                 srcMLParser::start_python();
                 break;
-
+            case LANGUAGE_OPENQASM:
+                srcMLParser::start_openqasm();
+                break;
             default:
                 srcMLParser::start();
             }
