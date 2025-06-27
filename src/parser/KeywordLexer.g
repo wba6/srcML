@@ -355,17 +355,22 @@ tokens {
     LITERAL_QUBIT;
     QASM_BARRIER;
     QASM_BOX;
+    QASM_CALIBRATION;
     QASM_DEFCAL;
     QASM_DEFCALGRAMMAR;
     QASM_DELAY;
     QASM_END;
+    QASM_EXTERN;
     QASM_FUNCTION;
     QASM_GATE;
     QASM_INCLUDE;
     QASM_MEASURE;
+    QASM_NOP;
     QASM_PRAGMA;
     QASM_RESET;
     QASM_VERSION;
+
+    QASM_ARROW;
 
 
 }
@@ -821,7 +826,25 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "yield"        , PY_YIELD          , LANGUAGE_PYTHON },
 
         // OpenQASM
-        { "reset"        , QASM_RESET        , LANGUAGE_OPENQASM},
+        { "barrier"      , QASM_BARRIER       , LANGUAGE_OPENQASM },
+        { "box"          , QASM_BOX           , LANGUAGE_OPENQASM },
+        { "cal"          , QASM_CALIBRATION   , LANGUAGE_OPENQASM },
+        { "def"          , QASM_FUNCTION      , LANGUAGE_OPENQASM },
+        { "defcal"       , QASM_DEFCAL        , LANGUAGE_OPENQASM },
+        { "defcalgrammar", QASM_DEFCALGRAMMAR , LANGUAGE_OPENQASM },
+        { "delay"        , QASM_DELAY         , LANGUAGE_OPENQASM },
+        { "end"          , QASM_END           , LANGUAGE_OPENQASM },
+        { "extern"       , QASM_EXTERN        , LANGUAGE_OPENQASM },
+        { "gate"         , QASM_GATE          , LANGUAGE_OPENQASM },
+        { "include"      , QASM_INCLUDE       , LANGUAGE_OPENQASM },
+        { "measure"      , QASM_MEASURE       , LANGUAGE_OPENQASM },
+        { "nop"          , QASM_NOP           , LANGUAGE_OPENQASM },
+        { "OPENQASM"     , QASM_VERSION       , LANGUAGE_OPENQASM },
+        { "pragma"       , QASM_PRAGMA        , LANGUAGE_OPENQASM },
+        { "reset"        , QASM_RESET         , LANGUAGE_OPENQASM },
+        { "->"           , QASM_ARROW         , LANGUAGE_OPENQASM },
+        
+
    };
 
     // fill up the literals for the language that we are parsing
