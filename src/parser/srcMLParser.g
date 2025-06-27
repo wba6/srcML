@@ -1108,7 +1108,7 @@ start_openqasm[] {
             temp_array[QASM_DEFCALGRAMMAR] = { SDEFCALGRAMMAR_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION, nullptr, nullptr };
             temp_array[QASM_END]           = { SEND_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
             temp_array[QASM_FUNCTION]      = { SFUNCTION_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_FUNCTION_PARAMETER | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
-            temp_array[QASM_GATE]          = { SGATE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_GATE_CLASSICAL_PARAMETER_LIST_QASM | MODE_GATE_QUANTUM_PARAMETER_LIST_QASM | MODE_VARIABLE_NAME | MODE_EXPECT, nullptr, nullptr };
+            temp_array[QASM_GATE]          = { SGATE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_GATE_CLASSICAL_PARAMETER_LIST_QASM | MODE_GATE_QUANTUM_PARAMETER_LIST_QASM | MODE_EXPECT, nullptr, &srcMLParser::compound_name };
             temp_array[QASM_INCLUDE]       = { SINCLUDE_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION, nullptr, nullptr };
             temp_array[QASM_PRAGMA]        = { SPRAGMA_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION, nullptr, nullptr };
             temp_array[QASM_RESET]         = { SRESET_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, nullptr };
@@ -1140,7 +1140,7 @@ start_openqasm[] {
         openqasm_gate_classical_parameter_list |
 
         // Quantum parameters
-        { !inMode(MODE_VARIABLE_NAME) && inMode(MODE_GATE_QUANTUM_PARAMETER_LIST_QASM) }?
+        { inMode(MODE_GATE_QUANTUM_PARAMETER_LIST_QASM) }?
         openqasm_gate_quantum_parameter_list |
         
 
@@ -17618,7 +17618,7 @@ openqasm_gate_quantum_parameter_list[] { CompleteElement element(this); ENTRY_DE
 
             startNewMode(MODE_GATE_PARAMETER_QASM | MODE_LIST | MODE_EXPECT);
 
-            startElement(SPARAMETER_LIST);
+            startElement(SPARAMETER_LIST_QUANTUM);
         }
 
         (
