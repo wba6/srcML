@@ -1104,6 +1104,7 @@ start_openqasm[] {
             temp_array[WHILE]              = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
             
             /* OPENQASM STATEMENTS */
+            temp_array[QASM_BARRIER]       = { SBARRIER_STATEMENT, 0, MODE_STATEMENT, MODE_QUANTUM_ARGUMENT_LIST_QASM | MODE_EXPECT, nullptr, nullptr };
             temp_array[QASM_CALIBRATION]   = { SCALIBRATION_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, 0, nullptr, nullptr };
             temp_array[QASM_DEFCALGRAMMAR] = { SDEFCALGRAMMAR_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION, nullptr, nullptr };
             temp_array[QASM_END]           = { SEND_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
@@ -1142,7 +1143,10 @@ start_openqasm[] {
         // Quantum parameters
         { inMode(MODE_GATE_QUANTUM_PARAMETER_LIST_QASM) }?
         openqasm_gate_quantum_parameter_list |
-        
+
+        // Quantum arguments
+        { inMode(MODE_QUANTUM_ARGUMENT_LIST_QASM) }?
+        openqasm_quantum_argument_list |
 
         // Get the type of a function when -> is encountered
         function_type_qasm |
@@ -17633,6 +17637,26 @@ openqasm_gate_quantum_parameter_list[] { CompleteElement element(this); ENTRY_DE
         )*
 ;
 
+openqasm_quantum_argument_list[] { ENTRY_DEBUG; } :
+        {
+            assertMode(MODE_QUANTUM_ARGUMENT_LIST_QASM);
+
+            startNewMode(MODE_QUANTUM_ARGUMENT_QASM | MODE_LIST | MODE_EXPECT);
+
+            startElement(SARGUMENT_LIST_QUANTUM);
+        }
+
+        (
+            {
+                if(!inMode(MODE_QUANTUM_ARGUMENT_QASM | MODE_LIST | MODE_EXPECT))
+                    endMode();
+            }
+            comma |
+
+            complete_openqasm_quantum_argument
+        )*
+;
+
 complete_openqasm_gate_parameter[] { ENTRY_DEBUG; } :
         {
             startNewMode(MODE_GATE_PARAMETER_QASM);
@@ -17645,6 +17669,18 @@ complete_openqasm_gate_parameter[] { ENTRY_DEBUG; } :
 
         (
             compound_name
+        )
+;
+
+complete_openqasm_quantum_argument[] { ENTRY_DEBUG; } :
+        {
+            startNewMode(MODE_QUANTUM_ARGUMENT_QASM);
+
+            //startNewMode(MODE_EXPRESSION | MODE_EXPECT);
+        }
+
+        (
+            argument
         )
 ;
 

@@ -330,6 +330,10 @@ const static srcMLState::MODE_TYPE MODE_GATE_PARAMETER_QASM;
 
 const static srcMLState::MODE_TYPE MODE_FUNCTION_TYPE_QASM;
 
+const static srcMLState::MODE_TYPE MODE_QUANTUM_ARGUMENT_LIST_QASM;
+
+const static srcMLState::MODE_TYPE MODE_QUANTUM_ARGUMENT_QASM;
+
 
 
 #endif
