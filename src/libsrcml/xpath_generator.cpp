@@ -235,9 +235,10 @@ std::string XPathGenerator::convert() {
         else if (token == "BY") { /* Do nothing */ }
 
         // FOLLOWED BY scopes
-        else if (token == "SIBLING"           ||
+        else if (token == "SIBLING"            ||
                  token == "SIBLING-DESCENDANT" ||
-                 token == "ANCESTOR-SIBLING") {
+                 token == "ANCESTOR-SIBLING"   ||
+                 token == "FIRST-SIBLING") {
             operations.pop_back();
             operations.push_back(std::string("FOLLOWED-"+token));
         }
@@ -553,7 +554,8 @@ std::string XPathGenerator::convert() {
         if(operations[i] == "FOLLOWED"                    ||
            operations[i] == "FOLLOWED-SIBLING"            ||
            operations[i] == "FOLLOWED-SIBLING-DESCENDANT" ||
-           operations[i] == "FOLLOWED-ANCESTOR-SIBLING") {
+           operations[i] == "FOLLOWED-ANCESTOR-SIBLING"   ||
+           operations[i] == "FOLLOWED-FIRST-SIBLING") {
             for (int j = i; j >= 0; --j) {
                 if (operations[j] == "FROM"      ||
                     operations[j] == "UNION"     ||
@@ -695,7 +697,6 @@ std::string XPathGenerator::convert() {
 
         /* FOLLOWED BY ANCESTOR-SIBLING Check
          *     x CONTAINS y FOLLOWED BY ANCESTOR-SIBLING z
-               x[.//y[set:intersection(./following::z                       ,./ancestor::x//descendant::z)] and .//z]
          *     x[.//y[set:intersection(./ancestor::* /following-sibling::z],./ancestor::x//descendant::z)] and .//z]
          *     -----------------------------
          *     y[following-sibling::*[descendant::z]]
@@ -724,21 +725,21 @@ std::string XPathGenerator::convert() {
             XPathNode* right_arg_end;
             if (rhs_copy->get_type() == PARENTHESES) {
                 right_arg_end = new XPathNode("descendant::*",ANY);
-                XPathNode* temp = new XPathNode("",PREDICATE);
+                XPathNode* temp = new XPathNode("", PREDICATE);
                 auto terms = split(rhs_copy->get_text(),"|");
                 rhs_copy->set_text(std::string("self::"+split(terms[0],"//")[0]+"|self::"+split(terms[1],"//")[0]));
                 temp->add_child(rhs_copy);
                 rhs_copy = temp;
             }
             else {
-                right_arg_end = new XPathNode("descendant::",ANY);
+                right_arg_end = new XPathNode("descendant::", ANY);
                 rhs_copy->set_type(NO_CONN);
             }
             right_arg_end->add_child(rhs_copy);
 
             // Right Argument X part
             if (add_top->get_type() == PARENTHESES) {
-                auto terms = split(add_top->get_text(),"|");
+                auto terms = split(add_top->get_text(), "|");
                 add_top->set_text(std::string("./ancestor::"+split(terms[0],"//")[0]+"|./ancestor::"+split(terms[1],"//")[0]));
                 add_top->add_child(right_arg_end);
                 right_arg = new XPathNode("");
@@ -755,7 +756,7 @@ std::string XPathGenerator::convert() {
             call->add_child(left_arg);
             call->add_child(right_arg);
 
-            XPathNode* pred = new XPathNode("",PREDICATE);
+            XPathNode* pred = new XPathNode("", PREDICATE);
             pred->add_child(call);
             lhs->add_child(pred);
 
@@ -763,6 +764,39 @@ std::string XPathGenerator::convert() {
 
             change_adds_to_matches(contains_insert);
             source_exprs[i+1] = contains_insert;
+        }
+
+        /* FOLLOWED BY FIRST-SIBLING Check
+         *     x CONTAINS y FOLLOWED BY FIRST-SIBLING z
+         *     x[.//y[set:intersection(./following-sibling::z,./following-sibling::*[1])]]
+         *     -----------------------------
+         *     y[set:intersection(./following-sibling::z,./following-sibling::*[1])]
+         */
+        else if (operations[i] == "FOLLOWED-FIRST-SIBLING") {
+            XPathNode* rhs = source_exprs[i+1]; // z
+            XPathNode* lhs = source_exprs[i]; // y
+            XPathNode* call = new XPathNode("set:intersection", CALL);
+
+            // Left Arg
+            if (rhs->get_type() == PARENTHESES) {
+                auto terms = split(rhs->get_text(),"|");
+                rhs->set_text(std::string("./following-sibling::"+split(terms[0],"//")[0]+"|./following-sibling::"+split(terms[1],"//")[0]));
+                call->add_child(rhs);
+            }
+            else {
+                rhs->set_type(NO_CONN);
+                XPathNode* left_arg = new XPathNode("./following-sibling::",NO_CONN);
+                left_arg->add_child(rhs);
+                call->add_child(left_arg);
+            }
+
+            // Right Arg
+            XPathNode* right_arg = new XPathNode("./following-sibling::*[1]",NO_CONN);
+            call->add_child(right_arg);
+
+            XPathNode* insert = new XPathNode("",PREDICATE);
+            insert->add_child(call);
+            lhs->add_child(insert);
         }
     }
 
