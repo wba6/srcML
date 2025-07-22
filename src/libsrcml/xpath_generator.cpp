@@ -170,7 +170,8 @@ XPathNode* XPathGenerator::get_xpath_from_argument(std::string src_query) {
     bool change_from_macro = pat_to_srcml.find("macro") != std::string::npos;
     bool extract_expr_from_expr_stmt = language == "Python" &&
                                        pat_to_srcml.find("<",1) == pat_to_srcml.find("<expr_stmt>") &&
-                                       pat_to_srcml.find("<expr_stmt>") == pat_to_srcml.rfind("<expr_stmt>");
+                                       pat_to_srcml.find("<expr_stmt>") == pat_to_srcml.rfind("<expr_stmt>") &&
+                                       pat_to_srcml.find(";</expr_stmt>") == std::string::npos;
 
     if (change_from_macro) {
         srcml_unit* macro_change = srcml_unit_create(holder);
@@ -462,10 +463,6 @@ std::string XPathGenerator::convert() {
         }
     }
 
-    for (auto op : operations) {
-        std::cout << "\t" << op << std::endl;
-    }
-
     // WHERE NOT and WHERE COUNT and WITH
     for (size_t i = 0; i < operations.size(); ++i) {
        /* WHERE NOT check
@@ -542,20 +539,17 @@ std::string XPathGenerator::convert() {
             --i;
         }
     }
-    
+
 
     // Various FOLLOWED BY Checks 
     for (int i = operations.size()-1; i >= 0; --i) {
-
         // Get reference to the scope (if the scope is pertinent)
         // TODO - this needs to check for a CONTAINS - if there isn't one, then
         //     we need to do a "simple" followed by
+        bool has_contains = false;
         XPathNode* add_top;
-        if(operations[i] == "FOLLOWED"                    ||
-           operations[i] == "FOLLOWED-SIBLING"            ||
-           operations[i] == "FOLLOWED-SIBLING-DESCENDANT" ||
-           operations[i] == "FOLLOWED-ANCESTOR-SIBLING"   ||
-           operations[i] == "FOLLOWED-FIRST-SIBLING") {
+        if(operations[i] == "FOLLOWED" ||
+           operations[i] == "FOLLOWED-ANCESTOR-SIBLING") {
             for (int j = i; j >= 0; --j) {
                 if (operations[j] == "FROM"      ||
                     operations[j] == "UNION"     ||
@@ -564,19 +558,25 @@ std::string XPathGenerator::convert() {
                     add_top = new XPathNode(*source_exprs[j+1]);
                     break;
                 }
+                else if (operations[j] == "CONTAINS") {
+                    has_contains = true;
+                }
                 if (j == 0) {
                     add_top = new XPathNode(*source_exprs[0]);
                 }
             }
         }
+        std::cout << "!!" << operations[i] << "-" << (has_contains ? "Has contains!" : "No contains") << std::endl;
 
-        /* FOLLOWED BY Check
+
+
+        /* CONTAINS FOLLOWED BY Check
          *     x CONTAINS y FOLLOWED BY z
          *     x[.//y[set:intersection(./following::z,./ancestor::x//descendant::z)] and .//z]
          *     -------------------------------------------------------------------------------
          *     y[set:intersection(./following::z,./ancestor::x//descendant::z)] and .//z]
          */
-        if (operations[i] == "FOLLOWED") {
+        if (operations[i] == "FOLLOWED" && has_contains) {
             XPathNode* rhs = source_exprs[i+1]; // z
             XPathNode* lhs = source_exprs[i]; // y
             XPathNode* call = new XPathNode("set:intersection",CALL);
@@ -641,23 +641,24 @@ std::string XPathGenerator::convert() {
             source_exprs[i+1] = contains_insert;
         }
 
-        /* FOLLOWED BY SIBLING Check
-         *     x CONTAINS y FOLLOWED BY SIBLING z
-         *     x[.//y[following-sibling::z]]
-         *     -----------------------------
-         *     y[following-sibling::z]
+
+        /* FOLLOWED BY Check
+         *     x FOLLOWED BY y
+         *     //x[following::y]
          */
-        else if (operations[i] == "FOLLOWED-SIBLING") {
-            XPathNode* rhs = source_exprs[i+1]; // z
-            XPathNode* lhs = source_exprs[i]; // y
-            if (rhs->get_type() == PARENTHESES) {
+        else if (operations[i] == "FOLLOWED" && !has_contains) {
+            XPathNode* rhs = source_exprs[i+1]; // y
+            XPathNode* lhs = source_exprs[i]; // x
+
+            if(rhs->get_type() == PARENTHESES) {
                 auto terms = split(rhs->get_text(),"|");
-                rhs->set_text(std::string("following-sibling::"+split(terms[0],"//")[0]+"|following-sibling::"+split(terms[1],"//")[0]));
+                rhs->set_text(std::string("following::"+split(terms[0],"//")[0]+"|following::"+split(terms[1],"//")[0]));
             }
             else {
-                rhs->set_text("following-sibling::"+rhs->get_text());
+                rhs->set_text("following::"+rhs->get_text());
                 rhs->set_type(NO_CONN);
             }
+
             XPathNode* insert = new XPathNode("",PREDICATE);
             insert->add_child(rhs);
             lhs->add_child(insert);
@@ -665,43 +666,14 @@ std::string XPathGenerator::convert() {
             source_exprs.erase(source_exprs.begin()+i+1);
         }
 
-        /* FOLLOWED BY SIBLING-DESCENDANT Check
-         *     x CONTAINS y FOLLOWED BY SIBLING-DESCENDANT z
-         *     x[.//y[following-sibling::*[descendant::z]]]
-         *     -----------------------------
-         *     y[following-sibling::*[descendant::z]]
-         */
-        else if (operations[i] == "FOLLOWED-SIBLING-DESCENDANT") {
-            XPathNode* rhs = source_exprs[i+1]; // z
-            XPathNode* lhs = source_exprs[i]; // y
-            if (rhs->get_type() == PARENTHESES) {
-                auto terms = split(rhs->get_text(),"|");
-                rhs->set_text(std::string("descendant::"+split(terms[0],"//")[0]+"|descendant::"+split(terms[1],"//")[0]));
-                XPathNode* following_sibling_node = new XPathNode("following-sibling::*",NO_CONN);
-                XPathNode* empty_pred = new XPathNode("",PREDICATE);
-                empty_pred->add_child(rhs);
-                following_sibling_node->add_child(empty_pred);
-                rhs = following_sibling_node;
 
-            }
-            else {
-                rhs->set_text("following-sibling::*[descendant::"+rhs->get_text()+"]");
-                rhs->set_type(NO_CONN);
-            }
-            XPathNode* insert = new XPathNode("",PREDICATE);
-            insert->add_child(rhs);
-            lhs->add_child(insert);
-            operations.erase(operations.begin()+i);
-            source_exprs.erase(source_exprs.begin()+i+1);
-        }
-
-        /* FOLLOWED BY ANCESTOR-SIBLING Check
+        /* CONTAINS FOLLOWED BY ANCESTOR-SIBLING Check
          *     x CONTAINS y FOLLOWED BY ANCESTOR-SIBLING z
          *     x[.//y[set:intersection(./ancestor::* /following-sibling::z],./ancestor::x//descendant::z)] and .//z]
          *     -----------------------------
          *     y[following-sibling::*[descendant::z]]
          */
-        else if (operations[i] == "FOLLOWED-ANCESTOR-SIBLING") {
+        else if (operations[i] == "FOLLOWED-ANCESTOR-SIBLING" && has_contains) {
             XPathNode* rhs = source_exprs[i+1]; // z
             XPathNode* lhs = source_exprs[i]; // y
             XPathNode* call = new XPathNode("set:intersection",CALL);
@@ -766,6 +738,87 @@ std::string XPathGenerator::convert() {
             source_exprs[i+1] = contains_insert;
         }
 
+
+        /* FOLLOWED BY ANCESTOR-SIBLING Check
+         *     x FOLLOWED BY ANCESTOR-SIBLING y
+         *     //x[ancestor::* /following-sibling::y]
+         */
+        else if (operations[i] == "FOLLOWED-ANCESTOR-SIBLING" && !has_contains) {
+            XPathNode* rhs = source_exprs[i+1]; // y
+            XPathNode* lhs = source_exprs[i]; // x
+
+            if (rhs->get_type() == PARENTHESES) {
+                auto terms = split(rhs->get_text(),"|");
+                rhs->set_text(std::string("./ancestor::*/following-sibling::"+split(terms[0],"//")[0]+"|./ancestor::*//following-sibling::"+split(terms[1],"//")[0]));
+            }
+            else {
+                rhs->set_text("ancestor::*/following-sibling::"+rhs->get_text());
+                rhs->set_type(NO_CONN);
+            }
+
+            XPathNode* insert = new XPathNode("",PREDICATE);
+            insert->add_child(rhs);
+            lhs->add_child(insert);
+            operations.erase(operations.begin()+i);
+            source_exprs.erase(source_exprs.begin()+i+1);
+        }
+
+
+        /* FOLLOWED BY SIBLING Check
+         *     x CONTAINS y FOLLOWED BY SIBLING z
+         *     x[.//y[following-sibling::z]]
+         *     -----------------------------
+         *     y[following-sibling::z]
+         */
+        else if (operations[i] == "FOLLOWED-SIBLING") {
+            XPathNode* rhs = source_exprs[i+1]; // z
+            XPathNode* lhs = source_exprs[i]; // y
+            if (rhs->get_type() == PARENTHESES) {
+                auto terms = split(rhs->get_text(),"|");
+                rhs->set_text(std::string("following-sibling::"+split(terms[0],"//")[0]+"|following-sibling::"+split(terms[1],"//")[0]));
+            }
+            else {
+                rhs->set_text("following-sibling::"+rhs->get_text());
+                rhs->set_type(NO_CONN);
+            }
+            XPathNode* insert = new XPathNode("",PREDICATE);
+            insert->add_child(rhs);
+            lhs->add_child(insert);
+            operations.erase(operations.begin()+i);
+            source_exprs.erase(source_exprs.begin()+i+1);
+        }
+
+        /* FOLLOWED BY SIBLING-DESCENDANT Check
+         *     x CONTAINS y FOLLOWED BY SIBLING-DESCENDANT z
+         *     x[.//y[following-sibling::*[descendant::z]]]
+         *     -----------------------------
+         *     y[following-sibling::*[descendant::z]]
+         */
+        else if (operations[i] == "FOLLOWED-SIBLING-DESCENDANT") {
+            XPathNode* rhs = source_exprs[i+1]; // z
+            XPathNode* lhs = source_exprs[i]; // y
+            if (rhs->get_type() == PARENTHESES) {
+                auto terms = split(rhs->get_text(),"|");
+                rhs->set_text(std::string("descendant::"+split(terms[0],"//")[0]+"|descendant::"+split(terms[1],"//")[0]));
+                XPathNode* following_sibling_node = new XPathNode("following-sibling::*",NO_CONN);
+                XPathNode* empty_pred = new XPathNode("",PREDICATE);
+                empty_pred->add_child(rhs);
+                following_sibling_node->add_child(empty_pred);
+                rhs = following_sibling_node;
+
+            }
+            else {
+                rhs->set_text("following-sibling::*[descendant::"+rhs->get_text()+"]");
+                rhs->set_type(NO_CONN);
+            }
+            XPathNode* insert = new XPathNode("",PREDICATE);
+            insert->add_child(rhs);
+            lhs->add_child(insert);
+            operations.erase(operations.begin()+i);
+            source_exprs.erase(source_exprs.begin()+i+1);
+        }
+
+
         /* FOLLOWED BY FIRST-SIBLING Check
          *     x CONTAINS y FOLLOWED BY FIRST-SIBLING z
          *     x[.//y[set:intersection(./following-sibling::z,./following-sibling::*[1])]]
@@ -797,6 +850,8 @@ std::string XPathGenerator::convert() {
             XPathNode* insert = new XPathNode("",PREDICATE);
             insert->add_child(call);
             lhs->add_child(insert);
+            operations.erase(operations.begin()+i);
+            source_exprs.erase(source_exprs.begin()+i+1);
         }
     }
 

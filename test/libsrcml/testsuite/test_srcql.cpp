@@ -7608,6 +7608,454 @@ const std::vector<std::string> followed_by_scoping_srcml {
 
 
 
+
+    const std::vector<std::string> followed_by_no_scoping_src {
+        R"(if(true) {
+    "0";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "1";
+    /*1*/
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "2";
+    a;
+    for(/*2*/) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "3";
+    a;
+    for(a) {
+        /*3*/;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "4";
+    a;
+    for(a) {
+        a;
+    }
+    /*4*/
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "5";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+/*5*/
+
+while(a) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "6";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(/*6*/) {
+    a;
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "7";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    /*7*/
+    if(a) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "8";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(/*8*/) {
+        a;
+    }
+}
+)",
+
+        R"(if(true) {
+    "9";
+    a;
+    for(a) {
+        a;
+    }
+    a;
+}
+
+a;
+
+while(a) {
+    a;
+    if(a) {
+        /*9*/
+    }
+}
+)",
+    };
+
+    const std::vector<std::string> followed_by_no_scoping_srcml {
+        R"(<expr_stmt><expr><literal type="string">"0"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"1"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"2"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"3"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"4"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"5"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"6"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"7"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"8"</literal></expr>;</expr_stmt>)",
+        R"(<expr_stmt><expr><literal type="string">"9"</literal></expr>;</expr_stmt>)"
+    };
+
+
+
+
+
+    // FIND "$X"; FOLLOWED BY src:comment
+    {
+        for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
+            std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
+            char* s;
+            size_t size;
+
+            srcml_archive* oarchive = srcml_archive_create();
+            srcml_archive_write_open_memory(oarchive,&s, &size);
+
+            srcml_unit* unit = srcml_unit_create(oarchive);
+            srcml_unit_set_language(unit,"C++");
+            srcml_unit_parse_memory(unit,followed_by_no_scoping_src[i].c_str(),followed_by_no_scoping_src[i].size());
+            dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+            srcml_unit_free(unit);
+            srcml_archive_close(oarchive);
+            srcml_archive_free(oarchive);
+
+            std::string srcml_text = std::string(s, size);
+            free(s);
+
+            srcml_archive* iarchive = srcml_archive_create();
+            srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY src:comment"), SRCML_STATUS_OK);
+
+            unit = srcml_archive_read_unit(iarchive);
+            srcml_transform_result* result = nullptr;
+            srcml_unit_apply_transforms(iarchive, unit, &result);
+
+            if (i == 0) {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+            }
+            else {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+                dassert(srcml_transform_get_unit_size(result), 1);
+                dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), followed_by_no_scoping_srcml[i]);
+            }
+
+
+            srcml_unit_free(unit);
+            srcml_transform_free(result);
+            srcml_archive_close(iarchive);
+            srcml_archive_free(iarchive);
+        }
+    }
+
+    // FIND "$X"; FOLLOWED BY SIBLING src:comment
+    {
+        for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
+            std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
+            char* s;
+            size_t size;
+
+            srcml_archive* oarchive = srcml_archive_create();
+            srcml_archive_write_open_memory(oarchive,&s, &size);
+
+            srcml_unit* unit = srcml_unit_create(oarchive);
+            srcml_unit_set_language(unit,"C++");
+            srcml_unit_parse_memory(unit,followed_by_no_scoping_src[i].c_str(),followed_by_no_scoping_src[i].size());
+            dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+            srcml_unit_free(unit);
+            srcml_archive_close(oarchive);
+            srcml_archive_free(oarchive);
+
+            std::string srcml_text = std::string(s, size);
+            free(s);
+
+            srcml_archive* iarchive = srcml_archive_create();
+            srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY SIBLING src:comment"), SRCML_STATUS_OK);
+
+            unit = srcml_archive_read_unit(iarchive);
+            srcml_transform_result* result = nullptr;
+            srcml_unit_apply_transforms(iarchive, unit, &result);
+
+            if (i != 1 && i != 4) {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+            }
+            else {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+                dassert(srcml_transform_get_unit_size(result), 1);
+                dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), followed_by_no_scoping_srcml[i]);
+            }
+
+
+            srcml_unit_free(unit);
+            srcml_transform_free(result);
+            srcml_archive_close(iarchive);
+            srcml_archive_free(iarchive);
+        }
+    }
+
+    // FIND "$X"; FOLLOWED BY SIBLING-DESCENDANT src:comment
+    {
+        for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
+            std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
+            char* s;
+            size_t size;
+
+            srcml_archive* oarchive = srcml_archive_create();
+            srcml_archive_write_open_memory(oarchive,&s, &size);
+
+            srcml_unit* unit = srcml_unit_create(oarchive);
+            srcml_unit_set_language(unit,"C++");
+            srcml_unit_parse_memory(unit,followed_by_no_scoping_src[i].c_str(),followed_by_no_scoping_src[i].size());
+            dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+            srcml_unit_free(unit);
+            srcml_archive_close(oarchive);
+            srcml_archive_free(oarchive);
+
+            std::string srcml_text = std::string(s, size);
+            free(s);
+
+            srcml_archive* iarchive = srcml_archive_create();
+            srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY SIBLING-DESCENDANT src:comment"), SRCML_STATUS_OK);
+
+            unit = srcml_archive_read_unit(iarchive);
+            srcml_transform_result* result = nullptr;
+            srcml_unit_apply_transforms(iarchive, unit, &result);
+
+            if (i != 2 && i != 3) {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+            }
+            else {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+                dassert(srcml_transform_get_unit_size(result), 1);
+                dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), followed_by_no_scoping_srcml[i]);
+            }
+
+
+            srcml_unit_free(unit);
+            srcml_transform_free(result);
+            srcml_archive_close(iarchive);
+            srcml_archive_free(iarchive);
+        }
+    }
+
+    // FIND "$X"; FOLLOWED BY ANCESTOR-SIBLING src:comment
+    {
+        for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
+            std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
+            char* s;
+            size_t size;
+
+            srcml_archive* oarchive = srcml_archive_create();
+            srcml_archive_write_open_memory(oarchive,&s, &size);
+
+            srcml_unit* unit = srcml_unit_create(oarchive);
+            srcml_unit_set_language(unit,"C++");
+            srcml_unit_parse_memory(unit,followed_by_no_scoping_src[i].c_str(),followed_by_no_scoping_src[i].size());
+            dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+            srcml_unit_free(unit);
+            srcml_archive_close(oarchive);
+            srcml_archive_free(oarchive);
+
+            std::string srcml_text = std::string(s, size);
+            free(s);
+
+            srcml_archive* iarchive = srcml_archive_create();
+            srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY ANCESTOR-SIBLING src:comment"), SRCML_STATUS_OK);
+
+            unit = srcml_archive_read_unit(iarchive);
+            srcml_transform_result* result = nullptr;
+            srcml_unit_apply_transforms(iarchive, unit, &result);
+
+            if (i != 5) {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+            }
+            else {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+                dassert(srcml_transform_get_unit_size(result), 1);
+                dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), followed_by_no_scoping_srcml[i]);
+            }
+
+
+            srcml_unit_free(unit);
+            srcml_transform_free(result);
+            srcml_archive_close(iarchive);
+            srcml_archive_free(iarchive);
+        }
+    }
+
+    // FIND "$X"; FOLLOWED BY FIRST-SIBLING src:comment
+    {
+        for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
+            std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
+            char* s;
+            size_t size;
+
+            srcml_archive* oarchive = srcml_archive_create();
+            srcml_archive_write_open_memory(oarchive,&s, &size);
+
+            srcml_unit* unit = srcml_unit_create(oarchive);
+            srcml_unit_set_language(unit,"C++");
+            srcml_unit_parse_memory(unit,followed_by_no_scoping_src[i].c_str(),followed_by_no_scoping_src[i].size());
+            dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+            srcml_unit_free(unit);
+            srcml_archive_close(oarchive);
+            srcml_archive_free(oarchive);
+
+            std::string srcml_text = std::string(s, size);
+            free(s);
+
+            srcml_archive* iarchive = srcml_archive_create();
+            srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY FIRST-SIBLING src:comment"), SRCML_STATUS_OK);
+
+            unit = srcml_archive_read_unit(iarchive);
+            srcml_transform_result* result = nullptr;
+            srcml_unit_apply_transforms(iarchive, unit, &result);
+
+            if (i != 1) {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+            }
+            else {
+                dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+                dassert(srcml_transform_get_unit_size(result), 1);
+                dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), followed_by_no_scoping_srcml[i]);
+            }
+
+
+            srcml_unit_free(unit);
+            srcml_transform_free(result);
+            srcml_archive_close(iarchive);
+            srcml_archive_free(iarchive);
+        }
+    }
+
+
+
+
     const std::string multi_followed_by_sibling_functions_src = R"(
 void same1() { x; }
 void diff1() { a; }
@@ -7623,20 +8071,20 @@ void same5Interrupted() { x; if(true){} x; while(true){} x; for(;;){} x; break; 
 void diff5Interrupted() { a; if(true){} b; while(true){} c; for(;;){} d; break; e; }
 )";
 
-const std::vector<std::string> multi_followed_by_sibling_functions_srcml {
-    "<function><type><name>void</name></type> <name>same1</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>diff1</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>same2</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>diff2</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>same3</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>diff3</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>same4</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>diff4</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>same5</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    "<function><type><name>void</name></type> <name>diff5</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> <expr_stmt><expr><name>e</name></expr>;</expr_stmt> </block_content>}</block></function>",
-    R"(<function><type><name>void</name></type> <name>same5Interrupted</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></if></if_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <while>while<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></while> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <for>for<control>(<init>;</init><condition>;</condition><incr/>)</control><block>{<block_content/>}</block></for> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <break>break;</break> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>)",
-    R"(<function><type><name>void</name></type> <name>diff5Interrupted</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></if></if_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <while>while<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></while> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <for>for<control>(<init>;</init><condition>;</condition><incr/>)</control><block>{<block_content/>}</block></for> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> <break>break;</break> <expr_stmt><expr><name>e</name></expr>;</expr_stmt> </block_content>}</block></function>)"
-};
+    const std::vector<std::string> multi_followed_by_sibling_functions_srcml {
+        "<function><type><name>void</name></type> <name>same1</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>diff1</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>same2</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>diff2</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>same3</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>diff3</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>same4</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>diff4</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>same5</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        "<function><type><name>void</name></type> <name>diff5</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> <expr_stmt><expr><name>e</name></expr>;</expr_stmt> </block_content>}</block></function>",
+        R"(<function><type><name>void</name></type> <name>same5Interrupted</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></if></if_stmt> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <while>while<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></while> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <for>for<control>(<init>;</init><condition>;</condition><incr/>)</control><block>{<block_content/>}</block></for> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> <break>break;</break> <expr_stmt><expr><name>x</name></expr>;</expr_stmt> </block_content>}</block></function>)",
+        R"(<function><type><name>void</name></type> <name>diff5Interrupted</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><name>a</name></expr>;</expr_stmt> <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></if></if_stmt> <expr_stmt><expr><name>b</name></expr>;</expr_stmt> <while>while<condition>(<expr><literal type="boolean">true</literal></expr>)</condition><block>{<block_content/>}</block></while> <expr_stmt><expr><name>c</name></expr>;</expr_stmt> <for>for<control>(<init>;</init><condition>;</condition><incr/>)</control><block>{<block_content/>}</block></for> <expr_stmt><expr><name>d</name></expr>;</expr_stmt> <break>break;</break> <expr_stmt><expr><name>e</name></expr>;</expr_stmt> </block_content>}</block></function>)"
+    };
 
     // FIND src:function CONTAINS x;
     {
