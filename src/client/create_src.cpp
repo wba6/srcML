@@ -18,6 +18,7 @@
 #include <SRCMLStatus.hpp>
 #include <libarchive_utilities.hpp>
 #include <srcml_utilities.hpp>
+#include <langinfo.h>
 
 #include <stdio.h>
 #if !defined(_MSC_VER)
@@ -153,8 +154,15 @@ void create_src(const srcml_request_t& srcml_request,
 
             // set encoding for source output
             // NOTE: How this is done may change in the future
-            if (srcml_request.src_encoding)
+            if (srcml_request.src_encoding) {
                 srcml_archive_set_src_encoding(arch.get(), srcml_request.src_encoding->data());
+            } else {
+
+                // default source encoding is the shell locale
+                setlocale(LC_CTYPE, "");
+                const char* codeset = nl_langinfo(CODESET);
+                srcml_archive_set_src_encoding(arch.get(), codeset);
+            }
 
             // if requested eol, then use that
             if (srcml_request.eol)
@@ -218,8 +226,15 @@ void create_src(const srcml_request_t& srcml_request,
 
         // set encoding for source output
         // NOTE: How this is done may change in the future
-        if (srcml_request.src_encoding)
+        if (srcml_request.src_encoding) {
             srcml_archive_set_src_encoding(arch.get(), srcml_request.src_encoding->data());
+        } else {
+
+            // default source encoding is the shell locale
+            setlocale(LC_CTYPE, "");
+            const char* codeset = nl_langinfo(CODESET);
+            srcml_archive_set_src_encoding(arch.get(), codeset);
+        }
 
         // if requested eol, then use that
         if (srcml_request.eol)
