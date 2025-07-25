@@ -239,7 +239,7 @@ std::string XPathGenerator::convert() {
         else if (token == "SIBLING"            ||
                  token == "SIBLING-DESCENDANT" ||
                  token == "ANCESTOR-SIBLING"   ||
-                 token == "FIRST-SIBLING") {
+                 token == "NEXT-SIBLING") {
             operations.pop_back();
             operations.push_back(std::string("FOLLOWED-"+token));
         }
@@ -819,13 +819,13 @@ std::string XPathGenerator::convert() {
         }
 
 
-        /* FOLLOWED BY FIRST-SIBLING Check
-         *     x CONTAINS y FOLLOWED BY FIRST-SIBLING z
+        /* FOLLOWED BY NEXT-SIBLING Check
+         *     x CONTAINS y FOLLOWED BY NEXT-SIBLING z
          *     x[.//y[set:intersection(./following-sibling::z,./following-sibling::*[1])]]
          *     -----------------------------
          *     y[set:intersection(./following-sibling::z,./following-sibling::*[1])]
          */
-        else if (operations[i] == "FOLLOWED-FIRST-SIBLING") {
+        else if (operations[i] == "FOLLOWED-NEXT-SIBLING") {
             XPathNode* rhs = source_exprs[i+1]; // z
             XPathNode* lhs = source_exprs[i]; // y
             XPathNode* call = new XPathNode("set:intersection", CALL);

@@ -7568,7 +7568,7 @@ const std::vector<std::string> followed_by_scoping_srcml {
         srcml_archive_free(iarchive);
     }
 
-    // FIND src:function CONTAINS x; FOLLOWED BY FIRST-SIBLING src:comment
+    // FIND src:function CONTAINS x; FOLLOWED BY NEXT-SIBLING src:comment
     {
         char* s;
         size_t size;
@@ -7590,7 +7590,7 @@ const std::vector<std::string> followed_by_scoping_srcml {
 
         srcml_archive* iarchive = srcml_archive_create();
         srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
-        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS x; FOLLOWED BY FIRST-SIBLING src:comment"), SRCML_STATUS_OK);
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS x; FOLLOWED BY NEXT-SIBLING src:comment"), SRCML_STATUS_OK);
 
         unit = srcml_archive_read_unit(iarchive);
         srcml_transform_result* result = nullptr;
@@ -8006,7 +8006,7 @@ while(a) {
         }
     }
 
-    // FIND "$X"; FOLLOWED BY FIRST-SIBLING src:comment
+    // FIND "$X"; FOLLOWED BY NEXT-SIBLING src:comment
     {
         for (size_t i = 0; i < followed_by_no_scoping_src.size(); ++i) {
             std::cout << i << "::" << followed_by_no_scoping_srcml[i] << std::endl;
@@ -8030,7 +8030,7 @@ while(a) {
 
             srcml_archive* iarchive = srcml_archive_create();
             srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
-            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY FIRST-SIBLING src:comment"), SRCML_STATUS_OK);
+            dassert(srcml_append_transform_srcql(iarchive,"FIND \"$X\"; FOLLOWED BY NEXT-SIBLING src:comment"), SRCML_STATUS_OK);
 
             unit = srcml_archive_read_unit(iarchive);
             srcml_transform_result* result = nullptr;
@@ -9387,6 +9387,462 @@ const std::vector<std::string> multi_followed_by_ancestor_sibling_functions_srcm
         srcml_archive_free(iarchive);
     }
     */
+
+
+
+    const std::string invalid_ancestor_sibling_function_src = R"(
+int foo() { int a; }
+int b;
+
+class X {
+    int bar() { int a; }
+    int b;
+};
+int b;
+)";
+
+
+    // FIND $TYPE $FNAME() {} CONTAINS $TYPE a; FOLLOWED BY ANCESTOR-SIBLING $TYPE b;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,invalid_ancestor_sibling_function_src.c_str(),invalid_ancestor_sibling_function_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND $TYPE $FNAME() {} CONTAINS $TYPE a; FOLLOWED BY ANCESTOR-SIBLING $TYPE b;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_NONE);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+
+    const std::string all_followed_by_functions_src = R"(
+int foo() {
+    a;
+    if(true) {
+        b;
+        while(false) {}
+        c;
+        d;
+        if(false) {
+            e;
+        }
+    }
+    f;
+}
+
+int bar() {
+    a;
+    if(true) {
+        b;
+        while(false) {}
+        c;
+        d;
+        if(false) {
+            e;
+        }
+    }
+}
+f;
+
+int baz() {
+    for(int i = 0; i < 2; ++i) {
+        a;
+        if(true) {
+            b;
+            while(false) {}
+            c;
+            d;
+            if(false) {
+                e;
+            }
+        }
+    }
+    f;
+}
+
+int biz() {
+    f;
+    if(true) {
+        a;
+        while(false) {}
+        b;
+        c;
+        if(false) {
+            d;
+        }
+    }
+    e;
+}
+)";
+
+    const std::vector<std::string> all_followed_by_functions_srcml {
+        R"(<function><type><name>int</name></type> <name>foo</name><parameter_list>()</parameter_list> <block>{<block_content>
+    <expr_stmt><expr><name>a</name></expr>;</expr_stmt>
+    <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition> <block>{<block_content>
+        <expr_stmt><expr><name>b</name></expr>;</expr_stmt>
+        <while>while<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content/>}</block></while>
+        <expr_stmt><expr><name>c</name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>d</name></expr>;</expr_stmt>
+        <if_stmt><if>if<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content>
+            <expr_stmt><expr><name>e</name></expr>;</expr_stmt>
+        </block_content>}</block></if></if_stmt>
+    </block_content>}</block></if></if_stmt>
+    <expr_stmt><expr><name>f</name></expr>;</expr_stmt>
+</block_content>}</block></function>)",
+
+        R"(<function><type><name>int</name></type> <name>bar</name><parameter_list>()</parameter_list> <block>{<block_content>
+    <expr_stmt><expr><name>a</name></expr>;</expr_stmt>
+    <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition> <block>{<block_content>
+        <expr_stmt><expr><name>b</name></expr>;</expr_stmt>
+        <while>while<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content/>}</block></while>
+        <expr_stmt><expr><name>c</name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>d</name></expr>;</expr_stmt>
+        <if_stmt><if>if<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content>
+            <expr_stmt><expr><name>e</name></expr>;</expr_stmt>
+        </block_content>}</block></if></if_stmt>
+    </block_content>}</block></if></if_stmt>
+</block_content>}</block></function>)",
+
+        R"(<function><type><name>int</name></type> <name>baz</name><parameter_list>()</parameter_list> <block>{<block_content>
+    <for>for<control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">2</literal></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+        <expr_stmt><expr><name>a</name></expr>;</expr_stmt>
+        <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition> <block>{<block_content>
+            <expr_stmt><expr><name>b</name></expr>;</expr_stmt>
+            <while>while<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content/>}</block></while>
+            <expr_stmt><expr><name>c</name></expr>;</expr_stmt>
+            <expr_stmt><expr><name>d</name></expr>;</expr_stmt>
+            <if_stmt><if>if<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content>
+                <expr_stmt><expr><name>e</name></expr>;</expr_stmt>
+            </block_content>}</block></if></if_stmt>
+        </block_content>}</block></if></if_stmt>
+    </block_content>}</block></for>
+    <expr_stmt><expr><name>f</name></expr>;</expr_stmt>
+</block_content>}</block></function>)",
+
+        R"(<function><type><name>int</name></type> <name>biz</name><parameter_list>()</parameter_list> <block>{<block_content>
+    <expr_stmt><expr><name>f</name></expr>;</expr_stmt>
+    <if_stmt><if>if<condition>(<expr><literal type="boolean">true</literal></expr>)</condition> <block>{<block_content>
+        <expr_stmt><expr><name>a</name></expr>;</expr_stmt>
+        <while>while<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content/>}</block></while>
+        <expr_stmt><expr><name>b</name></expr>;</expr_stmt>
+        <expr_stmt><expr><name>c</name></expr>;</expr_stmt>
+        <if_stmt><if>if<condition>(<expr><literal type="boolean">false</literal></expr>)</condition> <block>{<block_content>
+            <expr_stmt><expr><name>d</name></expr>;</expr_stmt>
+        </block_content>}</block></if></if_stmt>
+    </block_content>}</block></if></if_stmt>
+    <expr_stmt><expr><name>e</name></expr>;</expr_stmt>
+</block_content>}</block></function>)"
+    };
+
+
+    // FIND src:function CONTAINS a;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 4);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[1]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), all_followed_by_functions_srcml[2]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,3)), all_followed_by_functions_srcml[3]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND src:function CONTAINS a; FOLLOWED BY b;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a; FOLLOWED BY b;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 4);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[1]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), all_followed_by_functions_srcml[2]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,3)), all_followed_by_functions_srcml[3]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 4);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[1]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), all_followed_by_functions_srcml[2]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,3)), all_followed_by_functions_srcml[3]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 3);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[1]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), all_followed_by_functions_srcml[2]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 3);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[1]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), all_followed_by_functions_srcml[2]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e; FOLLOWED BY ANCESTOR-SIBLING f;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND src:function CONTAINS a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e; FOLLOWED BY ANCESTOR-SIBLING f;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 2);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), all_followed_by_functions_srcml[0]);
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), all_followed_by_functions_srcml[2]);
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+    // FIND a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e; FOLLOWED BY ANCESTOR-SIBLING f;
+    {
+        char* s;
+        size_t size;
+
+        srcml_archive* oarchive = srcml_archive_create();
+        srcml_archive_write_open_memory(oarchive,&s, &size);
+
+        srcml_unit* unit = srcml_unit_create(oarchive);
+        srcml_unit_set_language(unit,"C++");
+        srcml_unit_parse_memory(unit,all_followed_by_functions_src.c_str(),all_followed_by_functions_src.size());
+        dassert(srcml_archive_write_unit(oarchive,unit), SRCML_STATUS_OK);
+
+        srcml_unit_free(unit);
+        srcml_archive_close(oarchive);
+        srcml_archive_free(oarchive);
+
+        std::string srcml_text = std::string(s, size);
+        free(s);
+
+        srcml_archive* iarchive = srcml_archive_create();
+        srcml_archive_read_open_memory(iarchive,srcml_text.c_str(),srcml_text.size());
+        dassert(srcml_append_transform_srcql(iarchive,"FIND a; FOLLOWED BY b; FOLLOWED BY SIBLING c; FOLLOWED BY NEXT-SIBLING d; FOLLOWED BY SIBLING-DESCENDANT e; FOLLOWED BY ANCESTOR-SIBLING f;"), SRCML_STATUS_OK);
+
+        unit = srcml_archive_read_unit(iarchive);
+        srcml_transform_result* result = nullptr;
+        srcml_unit_apply_transforms(iarchive, unit, &result);
+
+        dassert(srcml_transform_get_type(result), SRCML_RESULT_UNITS);
+        dassert(srcml_transform_get_unit_size(result), 3);
+
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,0)), std::string("<expr_stmt><expr><name>a</name></expr>;</expr_stmt>"));
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,1)), std::string("<expr_stmt><expr><name>a</name></expr>;</expr_stmt>"));
+        dassert(srcml_unit_get_srcml_inner(srcml_transform_get_unit(result,2)), std::string("<expr_stmt><expr><name>a</name></expr>;</expr_stmt>"));
+
+        srcml_unit_free(unit);
+        srcml_transform_free(result);
+        srcml_archive_close(iarchive);
+        srcml_archive_free(iarchive);
+    }
+
+
 
 
 
