@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="C++" url="structured_binding_cpp" filename="structured_binding_cpp">
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>, <decl><type ref="prev"/><name>c</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><modifier>...</modifier><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><modifier>...</modifier><name>b</name></decl>, <decl><type ref="prev"/><name>c</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>, <decl><type ref="prev"/><modifier>...</modifier><name>c</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><modifier>...</modifier><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><specifier>const</specifier> <name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><specifier>const</specifier> <name>auto</name><modifier>&amp;</modifier></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name><modifier>&amp;</modifier></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name><modifier>&amp;&amp;</modifier></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><name>data</name></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>a</name></decl>, <decl><type ref="prev"/><name>b</name></decl>] <init>= <expr><call><name>getData</name><argument_list>()</argument_list></call></expr></init>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" language="C++">
+<if_stmt><if>if <condition>(<decl_stmt><type><name>auto</name></type> [<decl><type ref="prev"/><name>iter</name></decl>, <decl><type ref="prev"/><name>value</name></decl>] <init>= <expr><call><name><name>set</name><operator>.</operator><name>insert</name></name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr></init>;</decl_stmt> <expr><name>value</name></expr>)</condition> <block>{<block_content/>}</block></if></if_stmt>
+</unit>
+
+</unit>
