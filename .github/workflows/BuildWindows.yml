@@ -71,7 +71,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -G Ninja
+          cmake .. --preset ci-msvc
 
       # - name: CMake Setup on Windows
       #   uses: lukka/run-cmake@v10
