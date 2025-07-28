@@ -1109,7 +1109,7 @@ start_python[] {
         const size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
 
         // A duplex keyword is a pair of adjacent keywords
-        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = [this](){
+        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = [=, this](){
             std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> temp_array;
 
             temp_array[PY_EXCEPT + (MULTOPS << 8)] = PY_EXCEPT_MULTOPS;
