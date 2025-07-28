@@ -40,6 +40,13 @@ jobs:
           mkdir "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys"
           curl -L https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/cmake/compile_wrapper_consider_clang-cl.patch -o "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys/compile_wrapper_consider_clang-cl.patch"
 
+      - name: Create single-config triplet
+        run: |
+          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_BUILD_TYPE release)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
 
@@ -71,7 +78,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc
+          cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release
 
       # - name: CMake Setup on Windows
       #   uses: lukka/run-cmake@v10
