@@ -23,16 +23,27 @@ jobs:
           cd vcpkg
           git checkout 7476f0d4e77d3333fbb249657df8251c28c4faae
 
-      - name: Create single-config triplet
+      - name: Create custom triplet
         run: |
-          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_BUILD_TYPE release)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+          cat > vcpkg/triplets/community/x64-windows-release.cmake <<'EOF'
+          set(VCPKG_TARGET_ARCHITECTURE x64)
+          set(VCPKG_CRT_LINKAGE dynamic)
+          set(VCPKG_LIBRARY_LINKAGE dynamic)
+          set(VCPKG_BUILD_TYPE release)
+          EOF
 
-      - name: Restore artifacts, or run vcpkg, build (and cache artifacts as post step)
+      - name: Restore vcpkg cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg/installed
+            vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('vcpkg/triplets/community/x64-windows-release.cmake') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Run vcpkg (with custom triplet)
         uses: lukka/run-vcpkg@v11
-        id: runvcpkg
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
