@@ -26,12 +26,10 @@ jobs:
       - name: Create custom triplet
         shell: bash
         run: |
-          cat > vcpkg/triplets/community/x64-windows-release.cmake <<'EOF'
-set(VCPKG_TARGET_ARCHITECTURE x64)
-set(VCPKG_CRT_LINKAGE dynamic)
-set(VCPKG_LIBRARY_LINKAGE dynamic)
-set(VCPKG_BUILD_TYPE release)
-EOF
+          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> vcpkg/triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_BUILD_TYPE release)" >> vcpkg/triplets/community/x64-windows-release.cmake
 
       - name: Restore vcpkg cache
         uses: actions/cache@v4
