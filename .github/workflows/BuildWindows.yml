@@ -29,7 +29,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         id: runvcpkg
         with:
-          vcpkgGitCommitId: 'acc3bcf76b84ae5041c86ab55fe138ae7b8255c7'
+          vcpkgGitCommitId: '7476f0d4e77d3333fbb249657df8251c28c4faae'
 
       # There is a missing directory/file in Visual Studio 2022 vcpkg support
       # A later update should fix this
