@@ -17,11 +17,18 @@ jobs:
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
 
-      - name: Run vcpkg (with custom triplet)
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg/installed
+            ${{ github.workspace }}/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+
+      - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: "7476f0d4e77d3333fbb249657df8251c28c4faae"
-          doNotCache: false
 
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
