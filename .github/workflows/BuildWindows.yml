@@ -26,11 +26,11 @@ jobs:
       # There is a missing directory/file in Visual Studio 2022 vcpkg support
       # A later update should fix this
       # In the meantime, create the missing directory and download the missing file
-      - name: Fix vcpkg
-        shell: bash
-        run: |
-          mkdir "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys"
-          curl -L https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/cmake/compile_wrapper_consider_clang-cl.patch -o "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys/compile_wrapper_consider_clang-cl.patch"
+      # - name: Fix vcpkg
+      #   shell: bash
+      #   run: |
+      #     mkdir "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys"
+      #     curl -L https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/cmake/compile_wrapper_consider_clang-cl.patch -o "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys/compile_wrapper_consider_clang-cl.patch"
 
       - name: Create single-config triplet
         run: |
