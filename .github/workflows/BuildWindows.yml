@@ -33,7 +33,7 @@ jobs:
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
-          path: vcpkg_installed
+          path: vcpkg/installed
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Cache vcpkg downloads
@@ -46,7 +46,7 @@ jobs:
         run: .\vcpkg\bootstrap-vcpkg.bat
 
       - name: Install dependencies in custom directory for cache purposes
-        run: .\vcpkg\vcpkg.exe install --x-install-root=${{ github.workspace }}\vcpkg_installed --triplet x64-windows-release
+        run: .\vcpkg\vcpkg.exe install --triplet x64-windows-release
 
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
@@ -79,7 +79,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR="${{ github.workspace }}/vcpkg_installed"
+          cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release
 
       - name: Build
         shell: bash
