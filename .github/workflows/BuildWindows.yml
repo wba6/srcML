@@ -17,34 +17,10 @@ jobs:
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
 
-      - name: Clone vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          cd vcpkg
-          git checkout 7476f0d4e77d3333fbb249657df8251c28c4faae
-
-      - name: Create custom triplet
-        shell: bash
-        run: |
-          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_BUILD_TYPE release)" >> vcpkg/triplets/community/x64-windows-release.cmake
-
-      - name: Restore vcpkg cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            vcpkg/installed
-            vcpkg/downloads
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('vcpkg/triplets/community/x64-windows-release.cmake') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-
-
       - name: Run vcpkg (with custom triplet)
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: "7476f0d4e77d3333fbb249657df8251c28c4faae"
 
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
@@ -77,7 +53,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release
+          cmake .. --preset ci-msvc
 
       # - name: CMake Setup on Windows
       #   uses: lukka/run-cmake@v10
