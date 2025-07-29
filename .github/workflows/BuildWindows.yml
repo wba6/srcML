@@ -36,15 +36,6 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      # There is a missing directory/file in Visual Studio 2022 vcpkg support
-      # A later update should fix this
-      # In the meantime, create the missing directory and download the missing file
-      # - name: Fix vcpkg
-      #   shell: bash
-      #   run: |
-      #     mkdir "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys"
-      #     curl -L https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/cmake/compile_wrapper_consider_clang-cl.patch -o "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/scripts/msys/compile_wrapper_consider_clang-cl.patch"
-
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
 
