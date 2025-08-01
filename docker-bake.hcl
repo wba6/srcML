@@ -249,6 +249,7 @@ EOF
   tags     = [categoryTagName(dist, "files")]
   output   = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
   inherits = ["base"]
+  no-cache-filter = ["dist"]
 }
 
 target "image" {
@@ -296,6 +297,7 @@ EOF
   tags      = [categoryTagName(dist, "logs")]
   output    = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
   inherits  = ["base"]
+  no-cache-filter = ["dist"]
 }
 
 # Target name
