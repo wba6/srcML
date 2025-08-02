@@ -40,7 +40,15 @@ set(LIBSRCML_OBJECTS $<TARGET_OBJECTS:libsrcml> $<TARGET_OBJECTS:parser> $<TARGE
 if(NOT MSVC)
     set(LIBSRCML_OBJECT_FILENAME libsrcml${CMAKE_CXX_OUTPUT_EXTENSION})
 
-    if(NOT "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+   if(${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
+        # Use emcc to combine wasm32 objects
+        add_custom_command(
+            OUTPUT ${LIBSRCML_OBJECT_FILENAME}
+            COMMAND emcc -r ${LIBSRCML_OBJECTS} -o ${LIBSRCML_OBJECT_FILENAME}
+            DEPENDS libsrcml parser antlr
+            COMMAND_EXPAND_LISTS
+        )
+    elsif(NOT "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
         # Generate a single-object library for both architectures, then combine them into one
         add_custom_command(
           OUTPUT ${LIBSRCML_OBJECT_FILENAME}
