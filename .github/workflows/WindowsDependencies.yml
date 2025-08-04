@@ -6,6 +6,36 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+     - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        id: runvcpkg
+        with:
+          vcpkgGitCommitId: 'acc3bcf76b84ae5041c86ab55fe138ae7b8255c7'
+
+      - name: Add release triplet
+        run: |
+          cd vcpkg
+          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> triplets/community/x64-windows-release.cmake
+          echo "set(VCPKG_BUILD_TYPE release)" >> triplets/community/x64-windows-release.cmake
+          .\bootstrap-vcpkg.bat
+
+      - name: Setup devcmd to use cl.exe
+        uses: ilammy/msvc-dev-cmd@v1.12.1
+
+      - name: Run vcpkg install in srcML
+        shell: bash
+        run: |
+          vcpkg\vcpkg install --triplet x64-windows-release
+
+      - name: Export dependencies
+        shell: bash
+        run: |
+          vcpkg export --zip --output-dir dep
+
