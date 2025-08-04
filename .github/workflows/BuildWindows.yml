@@ -107,6 +107,8 @@ jobs:
           if [ -n "$export_zip" ]; then
             unzip "$export_zip" -d deps/exported
           fi
+          mv deps/exported/vcpkg-export-*/* deps/exported/
+          touch deps/exported/.vcpkg-root
       # - name: Download vcpkg dependencies artifact
       #   uses: actions/download-artifact@v4
       #   with:
@@ -123,8 +125,12 @@ jobs:
         run: |
           mkdir build
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: Install Ninja
+        shell: bash
+        run: choco install ninja
 
       - name: Configure CMake to use exported vcpkg packages
         shell: bash
