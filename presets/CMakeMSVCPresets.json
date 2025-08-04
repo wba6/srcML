@@ -16,7 +16,7 @@
         "CMAKE_CXX_COMPILER": "cl",
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_BUILD_TYPE": "Release",
-        "VCPKG_BUILD_TYPE": "release",
+        // "VCPKG_BUILD_TYPE": "release",
         // /Wall
         // /D_CRT_SECURE_NO_WARNINGS  # disable strcpy() warnings
         // /D_CRT_NONSTDC_NO_WARNINGS # disable read() warnings
