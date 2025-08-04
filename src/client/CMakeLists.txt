@@ -42,15 +42,17 @@ FetchContent_Declare(ctpl_stl_src
 FetchContent_MakeAvailable(ctpl_stl_src)
 set(MARKER_FILE "${ctpl_stl_src_SOURCE_DIR}/ctpl_stl_patched.marker")
 if(NOT EXISTS ${MARKER_FILE})
+    message(STATUS "Patching CTPL sources")
 
     # Patch the header file using your patch
-    set(CTPL_STL_H "${ctpl_stl_src_SOURCE_DIR}/ctpl_stl.h")
-    file(READ "${CTPL_STL_H}" FILE_CONTENTS)
-    string(REPLACE
-        "std::function<void(int id)> * _f;"
-        "std::function<void(int id)> * _f = nullptr;"
-        FILE_CONTENTS "${FILE_CONTENTS}")
-    file(WRITE "${CTPL_STL_H}" "${FILE_CONTENTS}")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E chdir ${ctpl_stl_src_SOURCE_DIR}
+                ${CMAKE_COMMAND} -E env bash -c "patch -p1 < '${CMAKE_CURRENT_SOURCE_DIR}/ctpl_stl.patch'"
+        RESULT_VARIABLE PATCH_RESULT
+    )
+    if(NOT PATCH_RESULT EQUAL 0)
+        message(FATAL_ERROR "Patching CTPL failed with exit code: ${PATCH_RESULT}")
+    endif()
 
     # Create marker file to indicate patch applied
     file(WRITE ${MARKER_FILE} "CTPL patched.")
