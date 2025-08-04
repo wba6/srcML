@@ -33,7 +33,7 @@ jobs:
       - name: Run vcpkg install in srcML
         shell: bash
         run: |
-          vcpkg/vcpkg install --triplet x64-windows-release
+          vcpkg/vcpkg install --triplet x64-windows
 
       - name: Export dependencies
         shell: bash
