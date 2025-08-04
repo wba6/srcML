@@ -1,4 +1,5 @@
-name: WindowsDependencies
+---
+name: Windows Dependencies
 
 on:
   workflow_dispatch:
@@ -11,11 +12,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-     - name: Setup vcpkg
+      - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         id: runvcpkg
         with:
-          vcpkgGitCommitId: 'acc3bcf76b84ae5041c86ab55fe138ae7b8255c7'
+          vcpkgGitCommitId: '3bdaa9b42070c241c1bdb02b4cf01f90de579738'
 
       - name: Add release triplet
         run: |
@@ -32,10 +33,15 @@ jobs:
       - name: Run vcpkg install in srcML
         shell: bash
         run: |
-          vcpkg\vcpkg install --triplet x64-windows-release
+          vcpkg/vcpkg install --triplet x64-windows-release
 
       - name: Export dependencies
         shell: bash
         run: |
-          vcpkg export --zip --output-dir dep
+          vcpkg/vcpkg export --zip --output-dir dep
 
+      - name: Upload vcpkg dependencies zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-dependencies
+          path: dep/*.zip
