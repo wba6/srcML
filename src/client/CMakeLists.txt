@@ -46,7 +46,7 @@ if(NOT EXISTS ${MARKER_FILE})
     # Patch the header file using your patch
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E chdir ${ctpl_stl_src_SOURCE_DIR}
-                ${CMAKE_COMMAND} -E env bash -c "patch -p1 < '${CMAKE_CURRENT_SOURCE_DIR}/ctpl_stl.patch'"
+                ${CMAKE_COMMAND} -E env patch -p1 < '${CMAKE_CURRENT_SOURCE_DIR}/ctpl_stl.patch'
         RESULT_VARIABLE PATCH_RESULT
         OUTPUT_VARIABLE PATCH_MESSAGE
         OUTPUT_STRIP_TRAILING_WHITESPACE
