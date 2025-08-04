@@ -38,8 +38,8 @@ namespace {
     bool request_create_src        (const srcml_request_t&);
 }
 
-const int SRCML_CLIENT_VERSION_NUMBER = 10000;
-const char* SRCML_CLIENT_VERSION_STRING = "1.0.0";
+const char* SRCML_CLIENT_VERSION_STRING = "1.1.0";
+const int SRCML_CLIENT_VERSION_NUMBER = 10100;
 
 int main(int argc, char* argv[]) {
 
@@ -54,13 +54,15 @@ int main(int argc, char* argv[]) {
     // version
     if (option(SRCML_COMMAND_VERSION)) {
 
+        // output the client and libsrcml versions
+        std::cout << "srcml client: " << SRCML_CLIENT_VERSION_STRING << '\n'
+                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n';
+
         // output the supported srcML source-code languages
         for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
             std::cout << "srcml " << srcml_get_language_list(i) << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
         }
 
-        std::cout << "srcml client: " << SRCML_CLIENT_VERSION_STRING << '\n'
-                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n';
         return 0;
     }
 
