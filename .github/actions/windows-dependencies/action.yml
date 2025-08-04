@@ -1,0 +1,39 @@
+name: 'Windows Dependencies'
+description: 'Sets up vcpkg dependencies for Windows, exports, and uploads as artifact.'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      id: runvcpkg
+      with:
+        vcpkgGitCommitId: '3bdaa9b42070c241c1bdb02b4cf01f90de579738'
+
+    - name: Add release triplet
+      shell: bash
+      run: |
+        cd vcpkg
+        echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > triplets/community/x64-windows-release.cmake
+        echo "set(VCPKG_CRT_LINKAGE dynamic)" >> triplets/community/x64-windows-release.cmake
+        echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> triplets/community/x64-windows-release.cmake
+        echo "set(VCPKG_BUILD_TYPE release)" >> triplets/community/x64-windows-release.cmake
+        ./bootstrap-vcpkg.sh || ./bootstrap-vcpkg.bat
+
+    - name: Run vcpkg install in srcML
+      shell: bash
+      run: |
+        vcpkg/vcpkg install --triplet x64-windows
+
+    - name: Export dependencies
+      shell: bash
+      run: |
+        vcpkg/vcpkg export --zip --output-dir dep
+
+    - name: Upload vcpkg dependencies zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: vcpkg-dependencies
+        path: dep/*.zip
