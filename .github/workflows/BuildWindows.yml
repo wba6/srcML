@@ -95,9 +95,18 @@ jobs:
         if: env.ARTIFACT_ID != ''
         shell: bash
         run: |
-          mkdir -p deps/exported
-          unzip deps.zip -d deps/exported
+          mkdir -p down
+          unzip deps.zip -d down
 
+      - name: Unzip actual vcpkg export
+        if: env.ARTIFACT_ID != ''
+        shell: bash
+        run: |
+          mkdir -p deps/exported
+          export_zip=$(find down -name 'vcpkg-export-*.zip' | head -n1)
+          if [ -n "$export_zip" ]; then
+            unzip "$export_zip" -d deps/exported
+          fi
       # - name: Download vcpkg dependencies artifact
       #   uses: actions/download-artifact@v4
       #   with:
