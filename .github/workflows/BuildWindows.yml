@@ -17,36 +17,36 @@ jobs:
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
 
-      - name: Clone vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          cd vcpkg
-          git checkout e140b1fde236eb682b0d47f905e65008a191800f
+      # - name: Clone vcpkg
+      #   run: |
+      #     git clone https://github.com/microsoft/vcpkg.git
+      #     cd vcpkg
+      #     git checkout e140b1fde236eb682b0d47f905e65008a191800f
 
-      - name: Create release-only triplet
-        run: |
-          echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_CRT_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
-          echo "set(VCPKG_BUILD_TYPE release)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+      # - name: Create release-only triplet
+      #   run: |
+      #     echo "set(VCPKG_TARGET_ARCHITECTURE x64)" > ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+      #     echo "set(VCPKG_CRT_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+      #     echo "set(VCPKG_LIBRARY_LINKAGE dynamic)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
+      #     echo "set(VCPKG_BUILD_TYPE release)" >> ${{ github.workspace }}/vcpkg/triplets/community/x64-windows-release.cmake
 
-      - name: Cache vcpkg installed packages
-        uses: actions/cache@v4
-        with:
-          path: vcpkg/installed
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+      # - name: Cache vcpkg installed packages
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: vcpkg/installed
+      #     key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
-      - name: Cache vcpkg downloads
-        uses: actions/cache@v4
-        with:
-          path: vcpkg/downloads
-          key: vcpkg-downloads-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+      # - name: Cache vcpkg downloads
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: vcpkg/downloads
+      #     key: vcpkg-downloads-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
-      - name: Bootstrap vcpkg
-        run: .\vcpkg\bootstrap-vcpkg.bat
+      # - name: Bootstrap vcpkg
+      #   run: .\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Install dependencies in custom directory for cache purposes
-        run: .\vcpkg\vcpkg.exe install --triplet x64-windows-release
+      # - name: Install dependencies in custom directory for cache purposes
+      #   run: .\vcpkg\vcpkg.exe install --triplet x64-windows-release
 
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.12.1
@@ -61,25 +61,43 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
-      - name: Create build directory
-        shell: bash
-        run: |
-          cmake --version
-          mkdir build
-          echo $VCPKG_ROOT/vcpkg list
-
       # - name: Run CMake with vcpkg.json manifest
       #   uses: lukka/run-cmake@v10
       #   with:
       #     configurePreset: msvc-sccache
       #     vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
 
-      - name: CMake Setup on Windows
+      - name: Download vcpkg dependencies artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vcpkg-dependencies
+          path: deps
+
+      - name: Unzip vcpkg dependencies
         shell: bash
-        working-directory: build
         run: |
-          export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release
+          unzip deps/*.zip -d deps/exported
+
+      - name: Create build directory
+        shell: bash
+        run: |
+          mkdir build
+
+      - name: Configure CMake to use exported vcpkg toolchain
+        shell: bash
+        run: |
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=deps/exported/scripts/buildsystems/vcpkg.cmake --preset ci-msvc
+
+      # - name: Build
+      #   run: |
+      #     cmake --build build
+
+      # - name: CMake Setup on Windows
+      #   shell: bash
+      #   working-directory: build
+      #   run: |
+      #     export UseMultiToolTask=true
+      #     cmake .. --preset ci-msvc -DVCPKG_TARGET_TRIPLET=x64-windows-release
 
       - name: Build
         shell: bash
