@@ -67,48 +67,48 @@ jobs:
       #     configurePreset: msvc-sccache
       #     vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
 
-      - name: List workflow run artifacts
-        id: artifact_list
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
-            > artifacts.json
-          ARTIFACT_ID=$(jq '.artifacts[] | select(.name == "vcpkg-dependencies") | .id' artifacts.json | head -n1)
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+      # - name: List workflow run artifacts
+      #   id: artifact_list
+      #   shell: bash
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+      #       -H "Accept: application/vnd.github+json" \
+      #       "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
+      #       > artifacts.json
+      #     ARTIFACT_ID=$(jq '.artifacts[] | select(.name == "vcpkg-dependencies") | .id' artifacts.json | head -n1)
+      #     echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
 
-      - name: Download vcpkg-dependencies artifact zip
-        if: env.ARTIFACT_ID != ''
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -o deps.zip \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_ID}/zip"
+      # - name: Download vcpkg-dependencies artifact zip
+      #   if: env.ARTIFACT_ID != ''
+      #   shell: bash
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
+      #       -H "Accept: application/vnd.github+json" \
+      #       -o deps.zip \
+      #       "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_ID}/zip"
 
-      - name: Unzip vcpkg-dependencies artifact
-        if: env.ARTIFACT_ID != ''
-        shell: bash
-        run: |
-          mkdir -p down
-          unzip deps.zip -d down
+      # - name: Unzip vcpkg-dependencies artifact
+      #   if: env.ARTIFACT_ID != ''
+      #   shell: bash
+      #   run: |
+      #     mkdir -p down
+      #     unzip deps.zip -d down
 
-      - name: Unzip actual vcpkg export
-        if: env.ARTIFACT_ID != ''
-        shell: bash
-        run: |
-          mkdir -p deps/exported
-          export_zip=$(find down -name 'vcpkg-export-*.zip' | head -n1)
-          if [ -n "$export_zip" ]; then
-            unzip "$export_zip" -d deps/exported
-          fi
-          mv deps/exported/vcpkg-export-*/* deps/exported/
-          touch deps/exported/.vcpkg-root
+      # - name: Unzip actual vcpkg export
+      #   if: env.ARTIFACT_ID != ''
+      #   shell: bash
+      #   run: |
+      #     mkdir -p deps/exported
+      #     export_zip=$(find down -name 'vcpkg-export-*.zip' | head -n1)
+      #     if [ -n "$export_zip" ]; then
+      #       unzip "$export_zip" -d deps/exported
+      #     fi
+      #     mv deps/exported/vcpkg-export-*/* deps/exported/
+      #     touch deps/exported/.vcpkg-root
       # - name: Download vcpkg dependencies artifact
       #   uses: actions/download-artifact@v4
       #   with:
@@ -125,8 +125,12 @@ jobs:
         run: |
           mkdir build
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - uses: ./.github/actions/download-vcpkg-artifact
+        with:
+          artifact_name: vcpkg-dependencies
+
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: Configure CMake to use exported vcpkg packages
         shell: bash
