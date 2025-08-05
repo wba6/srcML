@@ -251,27 +251,6 @@ EOF
   inherits = ["base"]
 }
 
-target "image" {
-  name = categoryTarget(dist, "image")
-  description = "srcML package image for ${dist.name}"
-  labels = {
-    "org.opencontainers.image.title" = "srcML ${dist.name} Package Image"
-    "org.opencontainers.image.description" = <<EOF
-The srcML package image for ${dist.name}.
-EOF
-  }
-  matrix = {
-    dist = distributions
-  }
-  dockerfile-inline = <<EOF
-${builderStage(dist)}
-${installerStage()}
-EOF
-  tags     = [categoryTagName(dist, "image")]
-  # output   = ["type=registry"]
-  inherits = ["base"]
-}
-
 # Test logs for all distributions
 # Output to host directory ${SRCML_BAKE_DESTINATION_DIR}
 target "log" {
@@ -296,6 +275,27 @@ EOF
   tags      = [categoryTagName(dist, "log")]
   output    = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
   inherits  = ["base"]
+}
+
+target "image" {
+  name = categoryTarget(dist, "image")
+  description = "srcML package image for ${dist.name}"
+  labels = {
+    "org.opencontainers.image.title" = "srcML ${dist.name} Package Image"
+    "org.opencontainers.image.description" = <<EOF
+The srcML package image for ${dist.name}.
+EOF
+  }
+  matrix = {
+    dist = distributions
+  }
+  dockerfile-inline = <<EOF
+${builderStage(dist)}
+${installerStage()}
+EOF
+  tags     = [categoryTagName(dist, "image")]
+  # output   = ["type=registry"]
+  inherits = ["base"]
 }
 
 # Target name
