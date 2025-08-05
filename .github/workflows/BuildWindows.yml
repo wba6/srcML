@@ -30,7 +30,7 @@ jobs:
           vcpkgGitCommitId: '3bdaa9b42070c241c1bdb02b4cf01f90de579738'
 
       - name: Setup devcmd to use cl.exe
-        uses: ilammy/msvc-dev-cmd@v1.13
+        uses: ilammy/msvc-dev-cmd@v1.13.0
 
       - name: Create build directory
         shell: bash
