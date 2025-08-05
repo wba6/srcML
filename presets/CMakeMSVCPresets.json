@@ -120,7 +120,7 @@
     },
     {
       "name": "ci-msvc",
-      "generators": [ "WIX", "INNOSETUP", "NuGet", "ZIP" ],
+      "generators": [ "INNOSETUP", "NuGet", "ZIP" ],
       "inherits": ["ci-msvc-only", "ci-base"]
     },
     {
