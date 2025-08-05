@@ -41,7 +41,8 @@ std::unordered_map<std::string_view, std::string_view> parseYAMLHeader(std::stri
 
         // current line
         const auto eol = header.find('\n');
-        if (eol <= 0)
+        // both checks should not be necessary, but a type comparison problem requires it
+        if (eol == -1 || eol <= 0)
             break;
         std::string_view line(&(*header.begin()), eol);
         lineSize = (int)line.size();
