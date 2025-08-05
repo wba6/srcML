@@ -22,9 +22,9 @@
 # In addition to the default build environment, there are specific targets for the following:
 #
 # * `build` - Build srcML and create the package installer
+# * `package` - Download the installer files to a host directory
+# * `log`  - Download the test logs to a host directory
 # * `image` - Create an image with only the installer files (no o.s.)
-# * `files` - Download the installer files to a host directory
-# * `logs`  - Download the test logs to a host directory
 
 # Override using the environment variable SRCML_BAKE_SRC. E.g.,
 #   SRCML_BAKE_SRC="."
@@ -230,13 +230,13 @@ EOF
 # Packages for all distributions
 # Output to host directory ${SRCML_BAKE_DESTINATION_DIR}
 # Create image whose only contents are the package
-target "files" {
-  name = categoryTarget(dist, "files")
+target "package" {
+  name = categoryTarget(dist, "package")
   description = "srcML package for ${dist.name}"
   labels = {
     "org.opencontainers.image.title" = "srcML ${dist.name} Package Files"
     "org.opencontainers.image.description" = <<EOF
-The srcML package files for ${dist.name}.
+The srcML package package for ${dist.name}.
 EOF
   }
   matrix = {
@@ -246,7 +246,7 @@ EOF
 ${builderStage(dist)}
 ${installerStage()}
 EOF
-  tags     = [categoryTagName(dist, "files")]
+  tags     = [categoryTagName(dist, "package")]
   output   = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
   inherits = ["base"]
 }
@@ -274,13 +274,13 @@ EOF
 
 # Test logs for all distributions
 # Output to host directory ${SRCML_BAKE_DESTINATION_DIR}
-target "logs" {
-  name = categoryTarget(dist, "logs")
-  description = "srcML package logs for ${dist.name}"
+target "log" {
+  name = categoryTarget(dist, "log")
+  description = "srcML package log for ${dist.name}"
   labels = {
     "org.opencontainers.image.title" = "srcML ${dist.name} Test Logs"
     "org.opencontainers.image.description" = <<EOF
-The srcML test logs for ${dist.name}.
+The srcML test log for ${dist.name}.
 EOF
   }
   matrix = {
@@ -293,7 +293,7 @@ COPY --from=test_client /src-build/dist/*.log /
 COPY --from=test_parser /src-build/dist/*.log /
 COPY --from=test_libsrcml /src-build/dist/*.log /
 EOF
-  tags      = [categoryTagName(dist, "logs")]
+  tags      = [categoryTagName(dist, "log")]
   output    = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
   inherits  = ["base"]
 }
