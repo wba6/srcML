@@ -413,7 +413,7 @@ schedule:
 
             // process a YAML header
             auto& buffer = prequest->buffer;
-            if (buffer.size() > 7 && buffer[0] == '-' && buffer[1] == '-' && buffer[2] == '-') {
+            if (buffer.size() > 7 && buffer[0] == '-' && buffer[1] == '-' && buffer[2] == '-' && buffer[3] == '\n') {
 
                 auto endpos = std::search(buffer.begin() + 3, buffer.end(), "---"sv.begin(), "---"sv.end());
                 if (endpos != buffer.end()) {
