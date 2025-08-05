@@ -42,6 +42,9 @@ public:
     language_extension_registry();
     ~language_extension_registry();
 
+    language_extension_registry(const language_extension_registry&) = default;
+    language_extension_registry& operator=(const language_extension_registry&) = default;
+
     bool register_user_ext(const char* ext, int language);
     bool register_user_ext(const char* ext, const char* language);
 
