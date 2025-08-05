@@ -52,12 +52,6 @@ jobs:
           export UseMultiToolTask=true
           cmake .. --preset ci-msvc
 
-      # - name: CMake Setup on Windows
-      #   uses: lukka/run-cmake@v10
-      #   with:
-      #     configurePreset: 'msvc-sccache'
-      #     # buildDirectory: '${{ github.workspace }}/build'
-
       - name: Build
         shell: bash
         working-directory: build
