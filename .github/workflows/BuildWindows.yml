@@ -305,7 +305,7 @@ jobs:
           cmake ../test/client
 
       - name: Windows Client Tests on Installed srcml
-        shell: msys2 {0}
+        shell: bash
         working-directory: build
         timeout-minutes: 10
         continue-on-error: true
