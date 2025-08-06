@@ -7,7 +7,7 @@
 # CMake files for client tests
 
 # add client tests
-file(GLOB CLIENT_TESTS *.sh)
+file(GLOB CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/*.sh")
 list(REMOVE_ITEM CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/framework_test.sh")
 
 foreach(CLIENT_TEST IN ITEMS ${CLIENT_TESTS})
