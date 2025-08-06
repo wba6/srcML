@@ -15,20 +15,15 @@ jobs:
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
 
-      - name: Cache vcpkg installed packages
-        uses: actions/cache@v4
+      - name: Setup vcpkg
+        uses: ./.github/actions/vcpkg
         with:
-          path: |
-            ${{ github.workspace }}/vcpkg/installed
-            ${{ github.workspace }}/vcpkg/downloads
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          vcpkg-ref: e140b1fde236eb682b0d47f905e65008a191800f
 
-      - name: Restore artifacts, or run vcpkg, build (and cache artifacts as post step)
-        uses: lukka/run-vcpkg@v11
-        id: runvcpkg
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
         with:
-          doNotCache: false
-          vcpkgGitCommitId: '3bdaa9b42070c241c1bdb02b4cf01f90de579738'
+          cmakeVersion: 4.0
 
       - name: Setup devcmd to use cl.exe
         uses: ilammy/msvc-dev-cmd@v1.13.0
@@ -38,13 +33,6 @@ jobs:
         run: |
           cmake --version
           mkdir build
-          echo $VCPKG_ROOT/vcpkg list
-
-      # - name: Run CMake with vcpkg.json manifest
-      #   uses: lukka/run-cmake@v10
-      #   with:
-      #     configurePreset: msvc-sccache
-      #     vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
 
       - name: CMake Setup on Windows
         shell: bash
