@@ -50,7 +50,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Package
-        # working-directory: build
+        working-directory: build
         continue-on-error: true
         run: |
           cpack -V --preset ci-msvc
