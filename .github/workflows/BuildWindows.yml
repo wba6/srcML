@@ -313,9 +313,6 @@ jobs:
           export SRCML_HOME="/c/Program Files/srcML/bin"
           ctest -C Release -VV
 
-      - name: Debug installer value
-        run: echo "Installer ${{ matrix.installer }}"
-
       - uses: actions/upload-artifact@v4
         with:
           name: ClientTest.${{ matrix.installer }}.windows-latest.log
