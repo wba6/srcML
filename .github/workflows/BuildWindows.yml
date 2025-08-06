@@ -166,6 +166,7 @@ jobs:
     needs: build
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         installer: [msi, inno, nuget]
 
