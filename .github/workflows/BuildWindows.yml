@@ -314,7 +314,7 @@ jobs:
           ctest -C Release -VV
 
       - name: Debug installer value
-        run: echo "Installer: ${{ matrix.installer }}"
+        run: echo "Installer ${{ matrix.installer }}"
 
       - uses: actions/upload-artifact@v4
         with:
