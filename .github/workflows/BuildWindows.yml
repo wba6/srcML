@@ -151,43 +151,6 @@ jobs:
           ./srcml_xpath.exe || echo $?
           ./srcml_xslt.exe || echo $?
 
-      - name: Run examples in powershell
-        shell: pwsh
-        working-directory: build2
-        continue-on-error: true
-        run: |
-          Get-ChildItem *.exe
-          foreach ($exe in @(
-            'srcml_copy_archive.exe',
-            'srcml_create_archive_fd.exe',
-            'srcml_create_archive_file.exe',
-            'srcml_create_archive_filename.exe',
-            'srcml_create_archive_full.exe',
-            'srcml_direct_language.exe',
-            'srcml_direct_language_list.exe',
-            'srcml_direct_language_xml.exe',
-            'srcml_direct_src2srcml.exe',
-            'srcml_direct_srcml2src.exe',
-            'srcml_list.exe',
-            'srcml_read_archive_fd.exe',
-            'srcml_read_archive_file.exe',
-            'srcml_read_archive_filename.exe',
-            'srcml_read_archive_full.exe',
-            'srcml_read_archive_memory.exe',
-            'srcml_relaxng.exe',
-            'srcml_sort_archive.exe',
-            'srcml_split_archive.exe',
-            'srcml_transform.exe',
-            'srcml_xpath.exe',
-            'srcml_xslt.exe'
-          )) {
-            try {
-              & .\$exe
-            } catch {
-              Write-Host $_.Exception.HResult
-            }
-          }
-
   test-installer:
     needs: build
     runs-on: windows-latest
