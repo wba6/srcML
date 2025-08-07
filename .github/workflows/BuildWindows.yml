@@ -241,3 +241,25 @@ jobs:
         with:
           name: ClientTest.${{ matrix.installer }}.windows-latest.log
           path: build/Testing/Temporary/LastTest.log
+
+      - name: Generate Parser Tests
+        shell: bash
+        working-directory: build
+        continue-on-error: true
+        run: |
+          export PATH=$PATH:"/c/Program Files/srcML/bin/"
+          ls -lh "/c/Program Files/srcML/bin/"
+          echo "C:\Program Files\srcML\bin" >> $GITHUB_PATH
+          cmake . -DBUILD_PARSER_TESTS=ON
+          cmake --build . --config Release --target gen_parser_tests
+
+      - name: Run Parser Tests
+        shell: bash
+        working-directory: build
+        continue-on-error: true
+        run: |
+          srcml --parser-test test/parser/testsuite | tee ParserTest.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ParserTest.${{ matrix.installer }}.windows-latest.log
+          path: build/ParserTest.log
