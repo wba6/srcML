@@ -54,7 +54,7 @@ jobs:
         continue-on-error: true
         run: |
           cpack -V
-          dir build/dist/*
+          dir dist/*
 
       - name: Upload all CPack config files
         uses: actions/upload-artifact@v4
