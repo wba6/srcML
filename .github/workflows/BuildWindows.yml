@@ -159,6 +159,11 @@ jobs:
           ./srcml_xpath.exe || echo $?
           ./srcml_xslt.exe || echo $?
 
+      - name: Set version as output
+        id: setver
+        run: |
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
   test-installer:
     needs: build
     runs-on: windows-latest
@@ -168,6 +173,12 @@ jobs:
         installer: [msi, inno, nuget]
 
     steps:
+
+      - name: Get VERSION from build job
+        run: |
+          echo "VERSION=${{ needs.build.outputs.version }}" >> $GITHUB_ENV
+          echo "VERSION is $VERSION"
+
       # Download the installer artifact
       - name: Download installer
         uses: actions/download-artifact@v4
