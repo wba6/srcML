@@ -73,3 +73,9 @@ jobs:
         shell: bash
         run: |
           ninja run_parser_tests
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers
+          path: build/dist/*.pkg
