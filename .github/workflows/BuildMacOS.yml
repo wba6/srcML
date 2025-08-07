@@ -44,7 +44,7 @@ jobs:
       - name: Find and add srcml to PATH
         shell: bash
         run: |
-          ls -lhR
+          ls -lh /Users/runner/bin/**/srcml*
           SRCPATH=$(find $HOME -type f -name srcml | head -n1 | xargs dirname)
           echo "$SRCPATH" >> $GITHUB_PATH
           echo "SRCPATH: $SRCPATH"
