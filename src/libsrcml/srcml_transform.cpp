@@ -350,7 +350,7 @@ static int file_read_callback(void* context, char* buffer, int len) {
     FILE* file = static_cast<FILE*>(context);
     if (!file || !buffer)
         return -1;
-    return static_cast<int>(fread(buffer, 1, len, file));
+    return static_cast<int>(fread(buffer, 1, (size_t) len, file));
 }
 
 /**
