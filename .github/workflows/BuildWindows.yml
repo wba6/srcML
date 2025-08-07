@@ -3,6 +3,9 @@ name: Build Windows
 
 on: workflow_dispatch
 
+env:
+  VERSION: 1.0.0
+
 jobs:
   build:
     runs-on: windows-latest
@@ -11,9 +14,6 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set srcml version
-        uses: ./.github/actions/version
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
@@ -154,11 +154,6 @@ jobs:
           ./srcml_xpath.exe || echo $?
           ./srcml_xslt.exe || echo $?
 
-      - name: Set version as output
-        id: setver
-        run: |
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
   test-installer:
     needs: build
     runs-on: windows-latest
@@ -168,11 +163,6 @@ jobs:
         installer: [msi, inno, nuget]
 
     steps:
-
-      - name: Get VERSION from build job
-        run: |
-          echo "VERSION=${{ needs.build.outputs.version }}" >> $GITHUB_ENV
-          echo "VERSION is $VERSION"
 
       # Download the installer artifact
       - name: Download installer
