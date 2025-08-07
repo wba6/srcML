@@ -48,19 +48,19 @@ jobs:
           srcml --text="int a;" -l C++
 
       - name: Test client
-        working_directory: ../srcML-build
+        working-directory: ../srcML-build
         shell: bash
         run: |
           ctest -R ^srcml
 
       - name: Test libsrcml
-        working_directory: ../srcML-build
+        working-directory: ../srcML-build
         shell: bash
         run: |
           ctest -R ^libsrcml
 
       - name: Test parser
-        working_directory: ../srcML-build
+        working-directory: ../srcML-build
         shell: bash
         run: |
           ninja run_parser_tests
