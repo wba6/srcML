@@ -1,0 +1,38 @@
+---
+name: Build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 4.0
+
+      - name: Create build directory
+        shell: bash
+        run: mkdir build
+
+      - name: Build and package
+        shell: bash
+        working-directory: build
+        run: |
+          cmake --preset ci-macos
+
+      - name: Run Installed srcml
+        shell: bash
+        working-directory: build
+        run: |
+          srcml --version
+          srcml --text="int a;" -l C++
