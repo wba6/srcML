@@ -53,6 +53,9 @@ jobs:
           srcml --version
           srcml --text="int a;" -l C++
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
       - name: Test client
         working-directory: ../srcML-build
         continue-on-error: true
