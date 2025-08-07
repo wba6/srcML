@@ -27,7 +27,7 @@ jobs:
       - name: Build and package
         shell: bash
         run: |
-          cmake --preset ci-macos
+          cmake --workflow --preset ci-macos
 
       - name: Run Installed srcml
         shell: bash
