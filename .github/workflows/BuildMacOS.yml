@@ -26,7 +26,6 @@ jobs:
 
       - name: Build and package
         shell: bash
-        working-directory: build
         run: |
           cmake --preset ci-macos
 
