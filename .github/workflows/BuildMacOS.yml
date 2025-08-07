@@ -27,7 +27,6 @@ jobs:
 
       - name: Run Installed srcml
         shell: bash
-        working-directory: build
         run: |
           srcml --version
           srcml --text="int a;" -l C++
