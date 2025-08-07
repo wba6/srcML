@@ -251,7 +251,7 @@ jobs:
           ls -lh "/c/Program Files/srcML/bin/"
           echo "C:\Program Files\srcML\bin" >> $GITHUB_PATH
           cmake . -DBUILD_PARSER_TESTS=ON
-          cmake . --target gen_parser_tests
+          cmake --build . --target gen_parser_tests
 
       - name: Run Parser Tests
         shell: bash
