@@ -1,5 +1,5 @@
 ---
-name: Build
+name: Build macOS
 
 on: workflow_dispatch
 
