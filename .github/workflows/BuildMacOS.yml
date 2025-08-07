@@ -39,7 +39,7 @@ jobs:
       - name: Install
         shell: bash
         run: |
-          cmake --build --target install_package
+          cmake --build ../srcML-build--target install_package
 
       - name: Run Installed srcml
         shell: bash
