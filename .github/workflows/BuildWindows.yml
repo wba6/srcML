@@ -122,7 +122,7 @@ jobs:
         working-directory: build2
         continue-on-error: true
         run: |
-          cmake "/c/Program Files/srcML/share/srcml/examples" -DsrcML_DIR="C:/Program Files/srcML/cmake" -G Ninja
+          cmake "/c/Program Files/srcML/share/srcml/libsrcml/examples" -DsrcML_DIR="C:/Program Files/srcML/cmake" -G Ninja
           ninja
 
       - name: Run examples
