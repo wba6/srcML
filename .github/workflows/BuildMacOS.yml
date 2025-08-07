@@ -42,7 +42,9 @@ jobs:
           cmake --build ../srcML-build --target install_package
 
       - name: Find and add srcml to PATH
+        shell: bash
         run: |
+          ls -lh hR
           SRCPATH=$(find $HOME -type f -name srcml | head -n1 | xargs dirname)
           echo "$SRCPATH" >> $GITHUB_PATH
           echo "SRCPATH: $SRCPATH"
