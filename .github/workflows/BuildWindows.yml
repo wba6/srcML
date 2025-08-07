@@ -15,11 +15,6 @@ jobs:
       - name: Set srcml version
         uses: ./.github/actions/version
 
-      - name: Get version from header
-        shell: bash
-        id: get_version
-        run: echo "VERSION=$(grep -Po '(?<=SRCML_CLIENT_VERSION_STRING = ")[^"]+' src/client/srcml.cpp)" >> $GITHUB_ENV
-
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1.3.1
 
