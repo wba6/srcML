@@ -81,7 +81,6 @@ jobs:
 
       - name: Set PATH for Windows
         shell: bash
-        working-directory: build
         continue-on-error: true
         run: |
           echo "/c/Program Files/srcML/bin" >> $GITHUB_PATH
@@ -92,7 +91,6 @@ jobs:
         continue-on-error: true
         run: |
           EOL="\r\n"
-          export PATH=$PATH:"/c/Program Files/srcML/bin"
           SRCML_HOME="/c/Program Files/srcML/bin"
           ls -lh "$SRCML_HOME"
           SRCML="$SRCML_HOME/srcml.exe"
@@ -234,7 +232,6 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
         run: |
-          export SRCML_HOME="/c/Program Files/srcML/bin"
           ctest -C Release -VV
 
       - uses: actions/upload-artifact@v4
@@ -247,9 +244,6 @@ jobs:
         working-directory: build
         continue-on-error: true
         run: |
-          export PATH=$PATH:"/c/Program Files/srcML/bin/"
-          ls -lh "/c/Program Files/srcML/bin/"
-          echo "C:\Program Files\srcML\bin" >> $GITHUB_PATH
           cmake . -DBUILD_PARSER_TESTS=ON
           cmake --build . --target gen_parser_tests
 
