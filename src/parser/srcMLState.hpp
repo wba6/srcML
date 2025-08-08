@@ -40,6 +40,12 @@ public:
         : flags(mode), flags_prev(prevmode), flags_all(transmode | mode), parencount(0), curlycount(0), typecount(0)
     {}
 
+    // copy constructor
+    srcMLState(const srcMLState&) = default;
+
+    // copy assignment
+    srcMLState& operator=(const srcMLState&) = default;
+
     /**
      * size
      *

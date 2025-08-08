@@ -1,0 +1,38 @@
+name: Setup vcpkg with cache
+
+description: |
+  Checks out vcpkg, bootstraps it, and sets up binary cache.
+
+inputs:
+  vcpkg-ref:
+    description: 'Git ref for vcpkg (commit, tag, or branch)'
+    required: false
+    default: 'e140b1fde236eb682b0d47f905e65008a191800f'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache vcpkg binary artifacts
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/vcpkg-cache
+        key: vcpkg-cache-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-cache-${{ runner.os }}-
+
+    - name: Set vcpkg binary source env
+      shell: bash
+      run: echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> $GITHUB_ENV
+
+    - name: Clone vcpkg
+      shell: bash
+      run: |
+        git config --global advice.detachedHead false
+        git clone https://github.com/microsoft/vcpkg.git
+        cd vcpkg
+        git checkout --quiet ${{ inputs.vcpkg-ref }}
+
+    - name: Bootstrap vcpkg
+      shell: bash
+      run: |
+        ./vcpkg/bootstrap-vcpkg.sh

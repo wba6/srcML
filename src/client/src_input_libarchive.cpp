@@ -41,7 +41,7 @@ std::unordered_map<std::string_view, std::string_view> parseYAMLHeader(std::stri
 
         // current line
         const auto eol = header.find('\n');
-        if (eol <= 0)
+        if (eol == std::string_view::npos)
             break;
         std::string_view line(&(*header.begin()), eol);
         lineSize = (int)line.size();
@@ -62,7 +62,7 @@ std::unordered_map<std::string_view, std::string_view> parseYAMLHeader(std::stri
                 startPos = endKey + 1;
         }
         const auto separator = line.find(':', startPos);
-        if ((int) separator != line.npos) {
+        if (separator != line.npos) {
 
             // split into rough key and value
             std::string_view key = line.substr(0, separator);
@@ -412,7 +412,7 @@ schedule:
 
             // process a YAML header
             auto& buffer = prequest->buffer;
-            if (buffer.size() > 7 && buffer[0] == '-' && buffer[1] == '-' && buffer[2] == '-') {
+            if (buffer.size() > 7 && buffer[0] == '-' && buffer[1] == '-' && buffer[2] == '-' && buffer[3] == '\n') {
 
                 auto endpos = std::search(buffer.begin() + 3, buffer.end(), "---"sv.begin(), "---"sv.end());
                 if (endpos != buffer.end()) {
