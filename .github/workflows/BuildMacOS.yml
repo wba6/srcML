@@ -1,5 +1,5 @@
 ---
-name: Build
+name: Build macOS
 
 on: workflow_dispatch
 
@@ -7,7 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: macos-latest
+        os: [macos-15]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -20,19 +20,60 @@ jobs:
         with:
           cmakeVersion: 4.0
 
-      - name: Create build directory
+      - name: Configure
         shell: bash
-        run: mkdir build
-
-      - name: Build and package
-        shell: bash
-        working-directory: build
         run: |
           cmake --preset ci-macos
 
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build --preset ci-macos
+
+      - name: Package
+        shell: bash
+        run: |
+          cd ../srcML-build
+          cpack
+
+      - name: Install package
+        shell: bash
+        working-directory: ../srcML-build/dist
+        run: |
+          sudo installer -dumplog -pkg srcml-1.0.0-macOS.pkg -target /
+
       - name: Run Installed srcml
         shell: bash
-        working-directory: build
         run: |
           srcml --version
           srcml --text="int a;" -l C++
+
+      - name: Test client
+        working-directory: ../srcML-build
+        continue-on-error: true
+        shell: bash
+        run: |
+          ctest -R ^srcml -VV
+
+      - name: Test libsrcml
+        working-directory: ../srcML-build
+        continue-on-error: true
+        shell: bash
+        run: |
+          ctest -R ^libsrcml -VV
+
+      - name: Test parser
+        working-directory: ../srcML-build
+        continue-on-error: true
+        shell: bash
+        run: |
+          ninja run_parser_tests
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers
+          path: |
+            /Users/runner/work/srcML/srcML-build/dist/*.pkg
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
