@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" revision="1.0.0" language="C++" url="alignas_cpp" filename="alignas_cpp">
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C++">
+<decl_stmt><decl><type><alignas>alignas<argument_list>()</argument_list></alignas></type></decl>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C++">
+<decl_stmt><decl><type><alignas>alignas<argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></alignas></type></decl>;</decl_stmt>
+</unit>
+
+<unit xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C++">
+<decl_stmt><decl><type><alignas>alignas<argument_list>(<argument><expr><name>int</name></expr></argument>)</argument_list></alignas></type></decl>;</decl_stmt>
+</unit>
+
+</unit>

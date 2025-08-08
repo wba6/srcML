@@ -68,6 +68,7 @@ LANGUAGE_C_ONLY for_c
 LANGUAGE_C_ONLY function_pointer_c
 LANGUAGE_C_ONLY function_decl_c
 LANGUAGE_C_ONLY operator_c
+LANGUAGE_C_ONLY alignas_c
 
 LANGUAGE_CXX friend
 LANGUAGE_CXX_FAMILY namespace
@@ -123,6 +124,7 @@ LANGUAGE_CXX macro_cpp
 LANGUAGE_CXX destructor_cpp
 LANGUAGE_CXX static_assert_cpp
 LANGUAGE_CXX if_cpp
+LANGUAGE_CXX alignas_cpp
 
 LANGUAGE_CXX c_cpp_mode_restrict
 LANGUAGE_CXX c_cpp_mode_mutable
