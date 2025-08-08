@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
         std::cout << "srcml: " << SRCML_CLIENT_VERSION_STRING << '\n'
                   << "libsrcml: " << srcml_libsrcml_version_string() << '\n';
 
-        std::cout << "markup: " << '\n';
+        std::cout << "markup:" << '\n';
 
         // output Python support first
         for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
