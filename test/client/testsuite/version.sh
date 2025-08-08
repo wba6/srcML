@@ -10,14 +10,15 @@ source $(dirname "$0")/framework_test.sh
 
 # test
 define output <<- 'STDOUT'
-	srcml client: 1.1.0
+	srcml: 1.1.0
 	libsrcml: 1.1.0
-	srcml C: 1.0.0
-	srcml C++: 1.0.0
-	srcml C#: 1.0.0
-	srcml Java: 1.0.0
-	srcml Python: 1.0.0
-	srcml Objective-C: 1.0.0
+	markup:
+	  Python: 1.0.0
+	  C: 1.0.0
+	  C++: 1.0.0
+	  C#: 1.0.0
+	  Java: 1.0.0
+	  Objective-C: 1.0.0
 STDOUT
 
 srcml -V
