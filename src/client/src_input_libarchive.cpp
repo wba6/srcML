@@ -62,7 +62,7 @@ std::unordered_map<std::string_view, std::string_view> parseYAMLHeader(std::stri
                 startPos = endKey + 1;
         }
         const auto separator = line.find(':', startPos);
-        if ((int) separator != line.npos) {
+        if (separator != line.npos) {
 
             // split into rough key and value
             std::string_view key = line.substr(0, separator);

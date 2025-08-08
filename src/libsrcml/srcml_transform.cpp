@@ -346,6 +346,13 @@ int srcml_append_transform_xslt_memory(srcml_archive* archive, const char* xslt_
     return srcml_append_transform_xslt_internal(archive, std::move(doc));
 }
 
+static int file_read_callback(void* context, char* buffer, int len) {
+    FILE* file = static_cast<FILE*>(context);
+    if (!file || !buffer)
+        return -1;
+    return static_cast<int>(fread(buffer, 1, (size_t) len, file));
+}
+
 /**
  * srcml_append_transform_xslt_FILE
  * @param archive a srcml_archive
@@ -362,7 +369,7 @@ int srcml_append_transform_xslt_FILE(srcml_archive* archive, FILE* xslt_file) {
         return SRCML_STATUS_INVALID_ARGUMENT;
 
     xmlRegisterDefaultInputCallbacks();
-    std::unique_ptr<xmlDoc> doc(xmlReadIO(xmlFileRead, 0, xslt_file, 0, 0, 0));
+    std::unique_ptr<xmlDoc> doc(xmlReadIO(file_read_callback, 0, xslt_file, 0, 0, 0));
     if (doc == nullptr)
         return SRCML_STATUS_INVALID_ARGUMENT;
 
@@ -472,7 +479,7 @@ int srcml_append_transform_relaxng_FILE(srcml_archive* archive, FILE* relaxng_fi
         return SRCML_STATUS_INVALID_ARGUMENT;
 
     xmlRegisterDefaultInputCallbacks();
-    std::unique_ptr<xmlDoc> doc(xmlReadIO(xmlFileRead, 0, relaxng_file, 0, 0, 0));
+    std::unique_ptr<xmlDoc> doc(xmlReadIO(file_read_callback, 0, relaxng_file, 0, 0, 0));
     if (doc == nullptr)
         return SRCML_STATUS_INVALID_ARGUMENT;
 
