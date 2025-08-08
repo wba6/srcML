@@ -224,7 +224,7 @@ jobs:
         continue-on-error: true
         run: |
           export UseMultiToolTask=true
-          cmake .. -DSRCML_TEST_INSTALLED=ON
+          cmake ../test -DSRCML_TEST_INSTALLED=ON -G Ninja
 
       - name: Windows Client Tests on Installed srcml
         shell: bash
@@ -251,7 +251,7 @@ jobs:
         working-directory: build
         continue-on-error: true
         run: |
-          srcml --parser-test test/parser/testsuite | tee ParserTest.log
+          cmake --build . --target run_parser_tests | tee ParserTest.log
       - uses: actions/upload-artifact@v4
         with:
           name: ParserTest.${{ matrix.installer }}.windows-latest.log
