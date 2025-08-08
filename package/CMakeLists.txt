@@ -120,7 +120,6 @@ message(STATUS "CPack generators: ${CPACK_GENERATOR}")
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL "LOCAL")
 
-message(STATUS "CPACK_PACKAGE_NAME: ${CPACK_PACKAGE_NAME}")
 message(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")
 
 # needs to be last so not overwritten
