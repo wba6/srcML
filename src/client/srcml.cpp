@@ -24,11 +24,14 @@
 #include <TraceLog.hpp>
 #include <stdin_libarchive.hpp>
 #include <input_archive.hpp>
+#include <string_view>
 
 #ifndef _MSC_VER
 #include <sys/uio.h>
 #include <unistd.h>
 #endif
+
+using namespace ::std::literals::string_view_literals;
 
 namespace {
     // decide if a step is needed
@@ -60,9 +63,23 @@ int main(int argc, char* argv[]) {
 
         std::cout << "markup: " << '\n';
 
-        // output the supported srcML source-code languages
+        // output Python support first
         for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
-            std::cout << "  " << srcml_get_language_list(i) << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
+            std::string_view language = srcml_get_language_list(i);
+            if (language != "Python"sv)
+                continue;
+
+            std::cout << "  " << language << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
+            break;
+        }
+
+        // output other languages support
+        for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
+            std::string_view language = srcml_get_language_list(i);
+            if (language == "Python"sv)
+                continue;
+
+            std::cout << "  " << language << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
         }
 
         return 0;
