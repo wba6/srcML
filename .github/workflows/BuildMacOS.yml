@@ -73,4 +73,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installers
-          path: ../srcML-build/dist/*.pkg
+          path: ${{ github.workspace }}/srcML-build/dist/*.pkg
