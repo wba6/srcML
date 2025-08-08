@@ -196,9 +196,8 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-          echo "/c/Program Files/srcML/bin" >> $GITHUB_PATH
-          echo "/c/Program Files/srcml.1.0.0/bin" >> $GITHUB_PATH
-          echo "/c/Program Files (x86)/srcML/bin" >> $GITHUB_PATH
+          echo "C:\\Program Files\\srcML\\bin" >> "$GITHUB_PATH"
+          ls -lh "/c/Program Files/srcML/bin"
 
       - name: Run Installed srcml
         shell: bash
