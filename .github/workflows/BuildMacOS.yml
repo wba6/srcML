@@ -73,4 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installers
-          path: /Users/runner/work/srcML/srcML-build/dist/*.{pkg,gz,bz2}
+          path: |
+            /Users/runner/work/srcML/srcML-build/dist/*.pkg
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
