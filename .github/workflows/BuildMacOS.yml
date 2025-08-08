@@ -38,7 +38,7 @@ jobs:
 
       - name: Install package
         shell: bash
-        working-directory: ../srcML-build
+        working-directory: ../srcML-build/dist
         run: |
           sudo installer -dumplog -pkg srcml-1.0.0-macOS.pkg -target /
 
