@@ -319,3 +319,48 @@ check projectRootOutput.xml
 
 cat projectRoot.txt | srcml
 check projectRootOutput.xml
+
+defineXML notHeaderOutputXML <<- 'STDOUT'
+	<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+STDOUT
+createfile notHeaderOutput.xml "$notHeaderOutputXML"
+
+define file1NotHeader <<-'EOF'
+	-----BEGIN PRIVATE KEY-----
+	ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+=
+	-----END PRIVATE KEY-----
+	-----BEGIN CERTIFICATE-----
+	ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+=
+	-----END CERTIFICATE-----
+EOF
+
+define file2NotHeader <<-'EOF'
+	------------------------------------------------------------------------
+	-- example.decTest -- example                                         --
+	-- Copyright (c) ...                                                  --
+	------------------------------------------------------------------------
+	-- Example1                                                           --
+	--                                                                    --
+	-- "Example2"                                                         --
+	--                                                                    --
+	-- 'Example3'                                                         --
+	------------------------------------------------------------------------
+	version: XX.YY.ZZ
+
+	-- Example4
+
+	a: 0
+	b: example_five
+	c: 10
+	d: -10
+
+	'1' -> '1'
+EOF
+
+echo -n "$file1NotHeader" > file1NotHeader.pem
+srcml file1NotHeader.pem -o file1NotHeader.pem.xml
+diff notHeaderOutput.xml file1NotHeader.pem.xml
+
+echo -n "$file2NotHeader" > file2NotHeader.decTest
+srcml file2NotHeader.decTest -o file2NotHeader.decTest.xml
+diff notHeaderOutput.xml file2NotHeader.decTest.xml
