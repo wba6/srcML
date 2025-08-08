@@ -36,10 +36,11 @@ jobs:
           cd ../srcML-build
           cpack
 
-      - name: Install
+      - name: Install package
         shell: bash
+        working-directory: ../srcML-build
         run: |
-          cmake --build ../srcML-build --target install_package
+          sudo installer -dumplog -pkg srcml-1.0.0-macOS.pkg -target /
 
       - name: Run Installed srcml
         shell: bash
