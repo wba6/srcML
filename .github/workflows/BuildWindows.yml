@@ -167,20 +167,29 @@ jobs:
 
       - name: Install package Wix msi
         if: ${{ matrix.installer == 'msi' }}
-        run: msiexec /i srcml-1.0.0-windows-x86_64.msi /quiet /norestart /L*vx .\msi.log
+        run: |
+          msiexec /i srcml-1.0.0-windows-x86_64.msi /quiet /norestart /L*vx .\msi.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msi.windows-latest.log
+          path: msi.log
 
       - name: Install package Inno Setup
         if: ${{ matrix.installer == 'inno' }}
         run: |
           dir
-          D:\a\srcML\srcML\srcml-1.0.0-windows-x86_64.exe /VERYSILENT
+          D:\a\srcML\srcML\srcml-1.0.0-windows-x86_64.exe /VERYSILENT /LOG="$GITHUB_WORKSPACE/inno.log"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inno.windows-latest.log
+          path: inno.log
 
       - name: Install package Nuget
         if: ${{ matrix.installer == 'nuget' }}
         run: |
           mkdir LocalNuGetFeed
-          nuget add srcml.1.0.0.nupkg -Source LocalNuGetFeed
-          nuget install srcml -Source D:\a\srcML\srcML\LocalNuGetFeed -OutputDirectory "C:\Program Files"
+          nuget add srcml.1.0.0.nupkg -Source LocalNuGetFeed -Verbosity detailed -NonInteractive
+          nuget install srcml -Source D:\a\srcML\srcML\LocalNuGetFeed -OutputDirectory "C:\Program Files" -Verbosity detailed -NonInteractive
           mv "C:\Program Files\srcml.1.0.0" "C:\Program Files\srcML"
 
       - name: Set PATH for Windows
