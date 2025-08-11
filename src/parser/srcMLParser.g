@@ -15849,7 +15849,7 @@ comprehension_if_py[] { bool multiple_ifs = false; size_t lparen_types_size = 0;
                 break;
             } |
 
-            { getParen() == 0 }?
+            { lparen_types_py.size() == lparen_types_size }?
             start_comprehension_if_py[multiple_ifs]
             {
                 multiple_ifs = true;
