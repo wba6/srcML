@@ -61,8 +61,30 @@ antlr::RefToken OffSideRule::nextToken() {
  * Operates under the assumption `token` is an INDENT token.
  */
 void OffSideRule::handleBlocks(antlr::RefToken token) {
+    int numTokensAfterIndent = 0;  // restricted to 0-2 (inclusive)
+    bool stopCounting = false;
+
     while (true) {
         const auto& nextToken = input.nextToken();  // reads in a token
+
+        // incrementing to detect the first and second token after the INDENT
+        if (!stopCounting)
+            ++numTokensAfterIndent;
+
+        // the backslash does NOT indicate a one-line statement
+        if (numTokensAfterIndent < 3 && nextToken->getType() == srcMLParser::EOL_BACKSLASH) {
+            indentBuffer.emplace_back(nextToken);
+            isOneLineStatement = false;
+            checkOneLineStatement = false;
+            stopCounting = true;  // do not need to count after the second token
+
+            continue;
+        }
+
+        // do not need to count after the second token
+        if (!stopCounting && numTokensAfterIndent > 2)
+            stopCounting = true;
+
         int startingIndents = numIndents;
         bool addNextToken = true;  // Ensure nextToken was not already added to the indent buffer
 

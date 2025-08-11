@@ -1135,4 +1135,19 @@ ligula a lectus maximus mollis."</literal></expr></expr_stmt>
 </block_content></block></function>
 </unit>
 
+<unit revision="1.0.0" language="Python">
+<function>def <name>a</name><parameter_list>()</parameter_list><block>:<block_content> \
+    <comment type="line"># b</comment>
+    <pass>pass</pass>
+</block_content></block></function>
+</unit>
+
+<unit revision="1.0.0" language="Python">
+<function>def <name>a</name><parameter_list>()</parameter_list><block>:<block_content> \
+    \
+  <comment type="line"># b</comment>
+    <pass>pass</pass>
+</block_content></block></function>
+</unit>
+
 </unit>
