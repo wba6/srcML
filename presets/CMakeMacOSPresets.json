@@ -18,14 +18,11 @@
       "inherits": ["ci-macos-only", "ci-clang", "ci-sibling-build"],
       "generator": "Ninja",
       "cacheVariables": {
-        // srcml client searches for libsrcml in current directory, sibling lib/ directory, or /usr/local/lib
         "CMAKE_INSTALL_RPATH": "@loader_path;@loader_path/../lib;/usr/local/lib",
         "CMAKE_INSTALL_RPATH_USE_LINK_PATH": "TRUE",
-        // Making the exported_symbols_list an empty file reduces size of executable, as strip does not work
         "SRCML_CLIENT_LINK_FLAGS": "-exported_symbols_list /dev/null",
         "SRCML_ANTLR_COMPILE_FLAGS": "-Wno-system-headers;-Wno-deprecated-declarations;-Wno-format",
         "CMAKE_BUILD_TYPE": "Release",
-        // Build for both x86 and arm64
         "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "10.15",
         "BUILD_LIBSRCML_TESTS": "ON",
@@ -42,7 +39,6 @@
       "hidden": true,
       "cacheVariables": {
         "CPACK_GENERATOR": "productbuild;TGZ;TBZ2",
-        // Making the exported_symbols_list an empty file reduces size of executable, as strip does not work
         "SRCML_CLIENT_LINK_FLAGS": "-exported_symbols_list /dev/null",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
