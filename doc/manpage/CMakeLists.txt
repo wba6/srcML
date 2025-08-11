@@ -30,7 +30,7 @@ add_custom_target(publish_manpage COMMAND rsync --inplace ${CMAKE_BINARY_DIR}/sr
 find_program(PANDOC_EXE REQUIRED NAMES pandoc pandoc.exe)
 
 # Configure file properties used to configure the file srcml.cfg
-set(CLIENT_VERSION "1.0.0")
+set(CLIENT_VERSION "1.1.0")
 set(HELP_FLAG_LONG "help")
 set(HELP_FLAG_SHORT "h")
 set(VERSION_FLAG_LONG "version")
