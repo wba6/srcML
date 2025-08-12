@@ -32,35 +32,35 @@
 #   SRCML_BAKE_SRC="https://github.com/srcML/srcML.git"
 #   SRCML_BAKE_SRC="https://github.com/srcML/srcML.git#develop"
 variable "SRCML_BAKE_SRC" {
-  # description = "Location of the source code"
+  description = "Location of the source code"
   default = "https://github.com/srcML/srcML.git#v1.1.0-beta"
 }
 
 # Override using the environment variable SRCML_BAKE_PRESET_SUFFIX
 # E.g., SRCML_BAKE_PRESET_SUFFIX="-fast"
 variable "SRCML_BAKE_PRESET_SUFFIX" {
-  # description = "Suffix for the workflow preset"
+  description = "Suffix for the workflow preset"
   default = ""
 }
 
 # Override using the environment variable SRCML_BAKE_ARCHITECTURE
 # E.g., SRCML_BAKE_ARCHITECTURE="linux/arm64"
 variable "SRCML_BAKE_ARCHITECTURE" {
-  # description = "Architectures to build on"
+  description = "Architectures to build on"
   default = "linux/amd64,linux/arm64"
 }
 
 # Override using the environment variable SRCML_BAKE_DESTINATION_DIR
 # E.g., SRCML_BAKE_DESTINATION_DIR="../dists"
 variable "SRCML_BAKE_DESTINATION_DIR" {
-  # description = "Local directory for export of packages"
+  description = "Local directory for export of packages"
   default = "./dist_packages"
 }
 
 # Override using the environment variable SRCML_BAKE_CONTEXT_DIR
 # E.g., SRCML_BAKE_CONTEXT_DIR="~/srcML/docker"
 variable "SRCML_BAKE_CONTEXT_DIR" {
-  # description = "Directory of context files"
+  description = "Directory of context files"
   default = "./docker"
 }
 
@@ -68,7 +68,7 @@ variable "SRCML_BAKE_CONTEXT_DIR" {
 #   SRCML_BAKE_REGISTRY=""         docker buildx bake # Docker Hub
 #   SRCML_BAKE_REGISTRY="ghcr.io"  docker buildx bake # GitHub Container Registry
 variable "SRCML_BAKE_REGISTRY" {
-  # description = "Registry domain for default build environments"
+  description = "Registry domain for default build environments"
   default = ""
 }
 
@@ -76,19 +76,19 @@ variable "SRCML_BAKE_REGISTRY" {
 #   SRCML_BAKE_PACKAGE_REGISTRY=""         docker buildx bake # Docker Hub
 #   SRCML_BAKE_PACKAGE_REGISTRY="ghcr.io"  docker buildx bake # GitHub Container Registry
 variable "SRCML_BAKE_PACKAGE_REGISTRY" {
-  # description = "Registry domain for the package targets, package and log"
+  description = "Registry domain for the package targets, package and log"
   default = "ghcr.io"
 }
 
 # Placeholder to redefine in docker-bake.override.hcl
 variable "SRCML_BAKE_SRCML_VERSION" {
-  # description = "srcML version to embed in image data"
+  description = "srcML version to embed in image data"
   default = ""
 }
 
 # Placeholder to redefine in docker-bake.override.hcl
 variable "SRCML_BAKE_CMAKE_VERSION" {
-  # description = "CMake version"
+  description = "CMake version"
   default = ""
 }
 
@@ -96,7 +96,7 @@ variable "SRCML_BAKE_CMAKE_VERSION" {
 # E.g., SRCML_BAKE_CACHE=type=local,src=bake_cache,dest=bake_cache
 # E.g., SRCML_BAKE_CACHE=""
 variable "SRCML_BAKE_CACHE" {
-  # description = "Cache for build layers"
+  description = "Cache for build layers"
   default = ""
 }
 

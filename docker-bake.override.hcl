@@ -21,7 +21,7 @@
 # All supported Linux distributions
 # NOTE: Any distributions added or deleted must be reflected in the services in compose.yml
 variable "distributions" {
-  # description = "Table of supported Linux distributions (see docker-bake.override.hcl)"
+  description = "Table of supported Linux distributions"
   default = [
     { id = "ubuntu",   version_id = "25.04",  java_version_id="22.04", name = "Ubuntu 25.04", workflow = "ubuntu", java = "latest", tag = "latest" },
     { id = "ubuntu",   version_id = "24.10",  java_version_id="22.04", name = "Ubuntu 24.10", workflow = "ubuntu", java = "latest"},
@@ -48,14 +48,14 @@ variable "distributions" {
 # Override using the environment variable SRCML_BAKE_CMAKE_VERSION
 # E.g., SRCML_BAKE_CMAKE_VERSION="3.31.6"
 variable "SRCML_BAKE_CMAKE_VERSION" {
-  # description = "CMake version"
+  description = "CMake version"
   default = "4.0.0"
 }
 
 # Override using the environment variable SRCML_BAKE_SRCML_VERSION
 # E.g., SRCML_BAKE_SRCML_VERSION="1.1.0"
 variable "SRCML_BAKE_SRCML_VERSION" {
-  # description = "srcML version to embed in image data"
+  description = "srcML version to embed in image data"
   default = "1.1.0"
 }
 
