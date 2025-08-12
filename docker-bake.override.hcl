@@ -7,7 +7,7 @@
 #
 # The main target groups are `default` (image for the srcML build environment) and `build` (build
 # and package srcML). The rest of the groups are to extract the srcML installer packages: `image`,
-# `files`, and `logs`. See docker-bake.hcl for details.
+# `package`, and `log`. See docker-bake.hcl for details.
 #
 # In addition to these targets for all distributions, there are targets to narrow the focus down to
 # specific distributions, specific versions of those distributions, and specific target groups:
@@ -91,13 +91,13 @@ group "ubuntu_build" { targets = categoryDistributionTarget("ubuntu", "build") }
 # Example target name: ubuntu_24_04_package Example tag: srcml/ubuntu_image:24.04
 group "ubuntu_image" { targets = categoryDistributionTarget("ubuntu", "image") }
 
-# Ubuntu package files
-# Example target name: ubuntu_24_04_files Example tag: srcml/ubuntu_files:24.04
-group "ubuntu_files" { targets = categoryDistributionTarget("ubuntu", "files") }
+# Ubuntu package package
+# Example target name: ubuntu_24_04_package Example tag: srcml/ubuntu_package:24.04
+group "ubuntu_package" { targets = categoryDistributionTarget("ubuntu", "package") }
 
-# Ubuntu logs images
-# Example target name: ubuntu_24_04_logs Example tag: srcml/ubuntu_logs:24.04
-group "ubuntu_logs" { targets = categoryDistributionTarget("ubuntu", "logs") }
+# Ubuntu log images
+# Example target name: ubuntu_24_04_log Example tag: srcml/ubuntu_log:24.04
+group "ubuntu_log" { targets = categoryDistributionTarget("ubuntu", "log") }
 
 # Fedora build images
 # Example target name: fedora_build_42 Example tag: srcml/_buildfedora:42
@@ -117,14 +117,14 @@ group "fedora_image" { targets = categoryDistributionTarget("fedora", "image") }
 # Tumbleweed target name: opensuse_tumbleweed Tumbleweed tag: srcml/opensuse:tumbleweed
 group "opensuse_image" { targets = categoryDistributionTarget("opensuse", "image") }
 
-# Fedora logs images
-# Example target name: fedora_logs_42 Example tag: srcml/_logsfedora:42
-group "fedora_logs" { targets = categoryDistributionTarget("fedora", "logs") }
+# Fedora log images
+# Example target name: fedora_log_42 Example tag: srcml/_logfedora:42
+group "fedora_log" { targets = categoryDistributionTarget("fedora", "log") }
 
-# OpenSUSE logs images
-# Example target name: opensuse_logs_15_6 Example tag: srcml/_logsopensuse:15.6
+# OpenSUSE log images
+# Example target name: opensuse_log_15_6 Example tag: srcml/_logopensuse:15.6
 # Tumbleweed target name: opensuse_tumbleweed Tumbleweed tag: srcml/opensuse:tumbleweed
-group "opensuse_logs" { targets = categoryDistributionTarget("opensuse", "logs") }
+group "opensuse_log" { targets = categoryDistributionTarget("opensuse", "log") }
 
 # Specific distribution with category
 function "distributionTarget" {
