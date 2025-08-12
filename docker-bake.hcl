@@ -164,32 +164,6 @@ EOF
   # cache-to   = ["type=local,dest=./.docker-build-cache/${targetName(dist)},mode=max"]
 }
 
-# Dockerfile to build the package
-# The overall workflow preset is separated into the various stages. That way if the cache
-# for a layer is invalidated, it is not the entire workflow. The three testing stages all
-# are from the result of the package and install, and can be done in parallel.
-# The use of multiple stages allows for fine-grained cache invalidation
-function "builderStage" {
-  params = [dist]
-  result = <<EOF
-FROM ${tagName(dist)} AS builder
-WORKDIR /src
-ADD --link ["${SRCML_BAKE_SRC}", "."]
-# RUN cmake --workflow --preset ${workflowPreset(dist)}
-RUN cmake --preset ${workflowPreset(dist)}
-RUN cmake --build --preset ${workflowPreset(dist)}
-FROM builder AS packager
-RUN cpack --preset ${workflowPreset(dist)}
-RUN cmake --build --preset ci-install-package-${dist.workflow}
-FROM packager AS test_client
-RUN cmake --build --preset ci-test-client-${dist.workflow}
-FROM packager AS test_libsrcml
-RUN cmake --build --preset ci-test-libsrcml-${dist.workflow}
-FROM packager AS test_parser
-RUN cmake --build --preset ci-test-parser-${dist.workflow}
-EOF
-}
-
 # Packages for all distributions
 # Output to host directory ${SRCML_BAKE_DESTINATION_DIR}
 # Create image whose only contents are the package
@@ -207,24 +181,20 @@ EOF
   matrix = {
     dist = distributions
   }
-  dockerfile-inline = builderStage(dist)
+  dockerfile-inline = <<EOF
+FROM ${tagName(dist)} AS builder
+WORKDIR /src
+ADD --link ["${SRCML_BAKE_SRC}", "."]
+# RUN cmake --workflow --preset ${workflowPreset(dist)}
+RUN cmake --preset ${workflowPreset(dist)}
+RUN cmake --build --preset ${workflowPreset(dist)}
+FROM builder AS packager
+RUN cpack --preset ${workflowPreset(dist)}
+RUN cmake --build --preset ci-install-package-${dist.workflow}
+EOF
   tags     = [categoryTagName(dist, "build")]
   # output   = ["type=docker"]
   inherits = ["base"]
-}
-
-# Extract the installers
-function "installerStage" {
-  params = []
-  result = <<EOF
-FROM scratch AS dist
-COPY --from="packager" \
-  /src-build/dist/*.rpm \
-  /src-build/dist/*.deb \
-  /src-build/dist/*.tar.gz \
-  /src-build/dist/*.bz2 \
-  /
-EOF
 }
 
 # Packages for all distributions
@@ -233,6 +203,12 @@ EOF
 target "package" {
   name = categoryTarget(dist, "package")
   description = "srcML package for ${dist.name}"
+  contexts = {
+    build = "target:${categoryTarget(dist, "build")}"
+  }
+  depends-on = [
+    categoryTarget(dist, "build"),
+  ]
   labels = {
     "org.opencontainers.image.title" = "srcML ${dist.name} Package Files"
     "org.opencontainers.image.description" = <<EOF
@@ -243,11 +219,90 @@ EOF
     dist = distributions
   }
   dockerfile-inline = <<EOF
-${builderStage(dist)}
-${installerStage()}
+FROM scratch AS dist
+COPY --from="build" \
+  /src-build/dist/*.rpm \
+  /src-build/dist/*.deb \
+  /src-build/dist/*.tar.gz \
+  /src-build/dist/*.bz2 \
+  /
 EOF
   tags     = [categoryTagName(dist, "package")]
   output   = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
+  no-cache = true
+  inherits = ["base"]
+}
+
+# Individual test targets
+target "test-client" {
+  name = categoryTarget(dist, "test-client")
+  description = "srcML client test for ${dist.name}"
+  labels = {
+    "org.opencontainers.image.title" = "srcML ${dist.name} Client Test"
+    "org.opencontainers.image.description" = <<EOF
+The srcML client test for ${dist.name}.
+EOF
+  }
+  matrix = {
+    dist = distributions
+  }
+  depends_on = [categoryTarget(dist, "build")]
+  contexts = {
+    packager = "target:${categoryTarget(dist, "build")}"
+  }
+  dockerfile-inline = <<EOF
+FROM packager AS test_client
+RUN cmake --build --preset ci-test-client-${dist.workflow}
+EOF
+  tags     = [categoryTagName(dist, "test-client")]
+  inherits = ["base"]
+}
+
+target "test-libsrcml" {
+  name = categoryTarget(dist, "test-libsrcml")
+  description = "srcML libsrcml test for ${dist.name}"
+  labels = {
+    "org.opencontainers.image.title" = "srcML ${dist.name} libsrcml Test"
+    "org.opencontainers.image.description" = <<EOF
+The srcML libsrcml test for ${dist.name}.
+EOF
+  }
+  matrix = {
+    dist = distributions
+  }
+  depends_on = [categoryTarget(dist, "build")]
+  contexts = {
+    packager = "target:${categoryTarget(dist, "build")}"
+  }
+  dockerfile-inline = <<EOF
+FROM packager AS test_libsrcml
+RUN cmake --build --preset ci-test-libsrcml-${dist.workflow}
+EOF
+  tags     = [categoryTagName(dist, "test-libsrcml")]
+  inherits = ["base"]
+}
+
+target "test-parser" {
+  name = categoryTarget(dist, "test-parser")
+  description = "srcML parser test for ${dist.name}"
+  labels = {
+    "org.opencontainers.image.title" = "srcML ${dist.name} Parser Test"
+    "org.opencontainers.image.description" = <<EOF
+The srcML parser test for ${dist.name}.
+EOF
+  }
+  matrix = {
+    dist = distributions
+  }
+  depends_on = [categoryTarget(dist, "build")]
+  contexts = {
+    packager = "target:${categoryTarget(dist, "build")}"
+  }
+  dockerfile-inline = <<EOF
+FROM packager AS test_parser
+RUN cmake --build --preset ci-test-parser-${dist.workflow}
+EOF
+  tags     = [categoryTagName(dist, "test-parser")]
   inherits = ["base"]
 }
 
@@ -255,26 +310,28 @@ EOF
 # Output to host directory ${SRCML_BAKE_DESTINATION_DIR}
 target "log" {
   name = categoryTarget(dist, "log")
-  description = "srcML package log for ${dist.name}"
-  labels = {
-    "org.opencontainers.image.title" = "srcML ${dist.name} Test Logs"
-    "org.opencontainers.image.description" = <<EOF
-The srcML test log for ${dist.name}.
-EOF
+  matrix = { dist = distributions }
+  contexts = {
+    # Reference specific stages from the build target
+    test-client = "target:${categoryTarget(dist, "test-client")}"
+    test-parser = "target:${categoryTarget(dist, "test-parser")}"
+    test-libsrcml = "target:${categoryTarget(dist, "test-libsrcml")}"
   }
-  matrix = {
-    dist = distributions
-  }
+  depends-on = [
+    categoryTarget(dist, "test-client"),
+    categoryTarget(dist, "test-parser"),
+    categoryTarget(dist, "test-libsrcml")
+  ]
   dockerfile-inline = <<EOF
-${builderStage(dist)}
 FROM scratch AS dist
-COPY --from=test_client /src-build/dist/*.log /
-COPY --from=test_parser /src-build/dist/*.log /
-COPY --from=test_libsrcml /src-build/dist/*.log /
+COPY --from=test-client /src-build/dist/*.log /
+COPY --from=test-parser /src-build/dist/*.log /
+COPY --from=test-libsrcml /src-build/dist/*.log /
 EOF
-  tags      = [categoryTagName(dist, "log")]
-  output    = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
-  inherits  = ["base"]
+  tags = [categoryTagName(dist, "log")]
+  output = ["type=local,dest=${SRCML_BAKE_DESTINATION_DIR}"]
+  no-cache = true
+  inherits = ["base"]
 }
 
 target "image" {
@@ -289,9 +346,20 @@ EOF
   matrix = {
     dist = distributions
   }
+  contexts = {
+    build = "target:${categoryTarget(dist, "build")}"
+  }
+  depends-on = [
+    categoryTarget(dist, "build"),
+  ]
   dockerfile-inline = <<EOF
-${builderStage(dist)}
-${installerStage()}
+FROM scratch AS dist
+COPY --from="build" \
+  /src-build/dist/*.rpm \
+  /src-build/dist/*.deb \
+  /src-build/dist/*.tar.gz \
+  /src-build/dist/*.bz2 \
+  /
 EOF
   tags     = [categoryTagName(dist, "image")]
   # output   = ["type=registry"]
