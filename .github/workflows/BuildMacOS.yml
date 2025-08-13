@@ -23,13 +23,13 @@ jobs:
         if: matrix.architecture == 'Universal'
         shell: bash
         run: |
-          cmake --preset ci-macos
+          cmake -B build --preset ci-macos
 
       - name: Configure cmake for single architecture binary
         if: matrix.architecture != 'Universal'
         shell: bash
         run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=${{ matrix.architecture }}
+          cmake -B build --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=${{ matrix.architecture }}
 
       - name: Build
         shell: bash
@@ -37,14 +37,13 @@ jobs:
           cmake --build --preset ci-macos
 
       - name: Package
+        working-directory: build
         shell: bash
         run: |
-          cd ../srcML-build
           cpack
 
       - name: Install package
         shell: bash
-        working-directory: ../srcML-build/dist
         run: |
           sudo installer -dumplog -pkg srcml-*-macOS*.pkg -target /
 
@@ -57,19 +56,16 @@ jobs:
       - name: Test client
         uses: ./.github/actions/test-client
         with:
-          working-directory: ../srcML-build
           prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test libsrcml
         uses: ./.github/actions/test-libsrcml
         with:
-          working-directory: ../srcML-build
           prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test parser
         uses: ./.github/actions/test-parser
         with:
-          working-directory: ../srcML-build
           prefix: ${{ matrix.architecture }}.${{ matrix.os }}
 
       - name: Upload installer
