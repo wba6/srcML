@@ -69,6 +69,12 @@ jobs:
         run: |
           ninja run_parser_tests
 
+      - name: Clean
+        working-directory: ../srcML-build
+        shell: bash
+        run: |
+          ninja clean
+
       - name: Build
         shell: bash
         run: |
@@ -80,6 +86,12 @@ jobs:
         shell: bash
         run: |
           cpack
+
+      - name: Clean
+        working-directory: ../srcML-build
+        shell: bash
+        run: |
+          ninja clean
 
       - name: Build
         shell: bash
