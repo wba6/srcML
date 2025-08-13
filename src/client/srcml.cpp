@@ -59,7 +59,8 @@ int main(int argc, char* argv[]) {
 
         // output the client and libsrcml versions
         std::cout << "srcml: " << SRCML_CLIENT_VERSION_STRING << '\n'
-                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n';
+                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n'
+                  << "srcql: " << "1.0.0" << '\n';
 
         std::cout << "markup:" << '\n';
 
