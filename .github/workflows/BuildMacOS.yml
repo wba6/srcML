@@ -67,7 +67,7 @@ jobs:
       - name: Test parser
         uses: ./.github/actions/test-parser
         with:
-          prefix: ${{ matrix.architecture }}.${{ matrix.os }}
+          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
