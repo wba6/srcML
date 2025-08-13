@@ -70,36 +70,34 @@ jobs:
           ninja run_parser_tests
 
       - name: Clean
-        working-directory: ../srcML-build
         shell: bash
         run: |
-          ninja clean
+          rm -fR ../srcML-build
 
-      - name: Build
+      - name: Build x86_64
         shell: bash
         run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64 -U CMAKE_OSX_ARCHITECTURES
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
           cmake --build --preset ci-macos
 
-      - name: Package
+      - name: Package x86_64
         working-directory: ../srcML-build
         shell: bash
         run: |
           cpack
 
       - name: Clean
-        working-directory: ../srcML-build
         shell: bash
         run: |
-          ninja clean
+          rm -fR ../srcML-build
 
-      - name: Build
+      - name: Build arm64
         shell: bash
         run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64 -U CMAKE_OSX_ARCHITECTURES
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
           cmake --build --preset ci-macos
 
-      - name: Package
+      - name: Package arm64
         working-directory: ../srcML-build
         shell: bash
         run: |
