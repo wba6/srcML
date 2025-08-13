@@ -74,6 +74,6 @@ jobs:
         with:
           name: macOS ${{ matrix.architecture }} Package
           path: |
-            /Users/runner/work/srcML/srcML-build/dist/*.pkg
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
+            build/dist/*.pkg
+            build/dist/*.tar.gz
+            build/dist/*.tar.bz2
