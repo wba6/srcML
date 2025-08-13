@@ -43,6 +43,7 @@ jobs:
           cpack
 
       - name: Install package
+        working-directory: build/dist
         shell: bash
         run: |
           sudo installer -dumplog -pkg srcml-*-macOS*.pkg -target /
