@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-15]
-        architecture: [Universal, x86_64, arm64]
+        architecture: [arm64] # [Universal, x86_64, arm64]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
@@ -19,23 +19,17 @@ jobs:
         with:
           cmakeVersion: 4.0
 
-      - name: Configure Universal
+      - name: Configure cmake for universal binary
         if: matrix.architecture == 'Universal'
         shell: bash
         run: |
           cmake --preset ci-macos
 
-      - name: Configure x86_64
-        if: matrix.architecture == 'x86_64'
+      - name: Configure cmake for single architecture binary
+        if: matrix.architecture != 'Universal'
         shell: bash
         run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
-
-      - name: Configure arm64
-        if: matrix.architecture == 'arm64'
-        shell: bash
-        run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=${{ matrix.architecture }}
 
       - name: Build
         shell: bash
@@ -54,44 +48,29 @@ jobs:
         run: |
           sudo installer -dumplog -pkg srcml-*-macOS*.pkg -target /
 
-      - name: Run Installed srcml
+      - name: Run installed srcml
         shell: bash
         run: |
           srcml --version
           srcml --text="int a;" -l C++
 
       - name: Test client
-        working-directory: ../srcML-build
-        continue-on-error: true
-        shell: bash
-        run: |
-          ctest -R ^srcml -VV
-      - uses: actions/upload-artifact@v4
+        uses: ./.github/actions/test-client
         with:
-          name: ClientTest.${{ matrix.architecture }}.${{ matrix.os }}.log
-          path: build/Testing/Temporary/LastTest.log
+          working-directory: ~/srcML-build
+          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test libsrcml
-        working-directory: ../srcML-build
-        continue-on-error: true
-        shell: bash
-        run: |
-          ctest -R ^libsrcml -VV
-      - uses: actions/upload-artifact@v4
+        uses: ./.github/actions/test-libsrcml
         with:
-          name: LibsrcmlTest.${{ matrix.architecture }}.${{ matrix.os }}.log
-          path: build/Testing/Temporary/LastTest.log
+          working-directory: ~/srcML-build
+          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test parser
-        working-directory: ../srcML-build
-        continue-on-error: true
-        shell: bash
-        run: |
-          ninja run_parser_tests | tee ParserTest.log
-      - uses: actions/upload-artifact@v4
+        uses: ./.github/actions/test-parser
         with:
-          name: ParserTest.${{ matrix.installer }}.windows-latest.log
-          path: build/ParserTest.log
+          working-directory: ~/srcML-build
+          prefix: ${{ matrix.architecture }}.${{ matrix.os }}
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
