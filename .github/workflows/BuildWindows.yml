@@ -66,7 +66,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: installers
+          name: Windows Packages
           path: |
             build/dist/*.msi
             build/dist/*.zip
@@ -234,33 +234,17 @@ jobs:
           export UseMultiToolTask=true
           cmake ../test -DSRCML_TEST_INSTALLED=ON -G Ninja
 
-      - name: Windows Client Tests on Installed srcml
-        shell: bash
-        working-directory: build
-        timeout-minutes: 10
-        continue-on-error: true
-        run: |
-          ctest -C Release -VV -R ^srcml
-
-      - uses: actions/upload-artifact@v4
+      - name: Test client
+        uses: ./.github/actions/test-client
         with:
-          name: ClientTest.${{ matrix.installer }}.windows-latest.log
-          path: build/Testing/Temporary/LastTest.log
+          prefix: "Windows ${{ matrix.installer }}"
 
-      - name: Generate Parser Tests
-        shell: bash
-        working-directory: build
-        continue-on-error: true
-        run: |
-          cmake --build . --target gen_parser_tests
-
-      - name: Run Parser Tests
-        shell: bash
-        working-directory: build
-        continue-on-error: true
-        run: |
-          cmake --build . --target run_parser_tests | tee ParserTest.log
-      - uses: actions/upload-artifact@v4
+      - name: Test libsrcml
+        uses: ./.github/actions/test-libsrcml
         with:
-          name: ParserTest.${{ matrix.installer }}.windows-latest.log
-          path: build/ParserTest.log
+          prefix: "Windows ${{ matrix.installer }}"
+
+      - name: Test parser
+        uses: ./.github/actions/test-parser
+        with:
+          prefix: "Windows ${{ matrix.installer }}"
