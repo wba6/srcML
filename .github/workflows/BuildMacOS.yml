@@ -72,7 +72,8 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake --build --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64 -U CMAKE_OSX_ARCHITECTURES
+          cmake --build --preset ci-macos
 
       - name: Package
         working-directory: ../srcML-build
@@ -83,7 +84,8 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake --build --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64 -U CMAKE_OSX_ARCHITECTURES
+          cmake --build --preset ci-macos
 
       - name: Package
         working-directory: ../srcML-build
