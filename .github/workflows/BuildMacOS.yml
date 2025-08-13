@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-15]
-        architecture: [arm64] #[Universal, x86_64, arm64]
+        architecture: [Universal, x86_64, arm64]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
