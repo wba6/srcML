@@ -69,6 +69,28 @@ jobs:
         run: |
           ninja run_parser_tests
 
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
+
+      - name: Package
+        working-directory: ../srcML-build
+        shell: bash
+        run: |
+          cpack
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
+
+      - name: Package
+        working-directory: ../srcML-build
+        shell: bash
+        run: |
+          cpack
+
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
