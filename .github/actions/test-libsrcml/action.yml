@@ -21,6 +21,7 @@ runs:
     
     - name: Upload LastTest.log
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       if: ${{ hashFiles('Testing/Temporary/LastTest.log') != '' }}
       with:
         name: ${{ inputs.prefix }}-libsrcml_last_test.log
@@ -30,5 +31,5 @@ runs:
       uses: actions/upload-artifact@v4
       continue-on-error: true
       with:
-        name: ${{ inputs.prefix }}-libsrcml.log
+        name: "${{ inputs.prefix }} Libsrcml Test Log"
         path: ${{ inputs.working-directory }}/dist/*-libsrcml.log

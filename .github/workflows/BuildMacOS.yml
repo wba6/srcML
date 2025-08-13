@@ -57,17 +57,17 @@ jobs:
       - name: Test client
         uses: ./.github/actions/test-client
         with:
-          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
+          prefix: "macOS ${{ matrix.architecture }}"
 
       - name: Test libsrcml
         uses: ./.github/actions/test-libsrcml
         with:
-          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
+          prefix: "macOS ${{ matrix.architecture }}"
 
       - name: Test parser
         uses: ./.github/actions/test-parser
         with:
-          prefix: ${{ matrix.os }}.${{ matrix.architecture }}
+          prefix: "macOS ${{ matrix.architecture }}"
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
