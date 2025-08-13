@@ -1,15 +1,14 @@
 ---
 name: Build macOS
-
 on: workflow_dispatch
-
 jobs:
   build:
     strategy:
       matrix:
         os: [macos-15]
+        architecture: [Universal, x86_64, arm64]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
 
       - name: Checkout Repository
@@ -20,10 +19,23 @@ jobs:
         with:
           cmakeVersion: 4.0
 
-      - name: Configure
+      - name: Configure Universal
+        if: matrix.architecture == 'Universal'
         shell: bash
         run: |
           cmake --preset ci-macos
+
+      - name: Configure x86_64
+        if: matrix.architecture == 'x86_64'
+        shell: bash
+        run: |
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
+
+      - name: Configure arm64
+        if: matrix.architecture == 'arm64'
+        shell: bash
+        run: |
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
 
       - name: Build
         shell: bash
@@ -54,6 +66,10 @@ jobs:
         shell: bash
         run: |
           ctest -R ^srcml -VV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClientTest.${{ matrix.architecture }}.${{ matrix.os }}.log
+          path: build/Testing/Temporary/LastTest.log
 
       - name: Test libsrcml
         working-directory: ../srcML-build
@@ -61,70 +77,26 @@ jobs:
         shell: bash
         run: |
           ctest -R ^libsrcml -VV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LibsrcmlTest.${{ matrix.architecture }}.${{ matrix.os }}.log
+          path: build/Testing/Temporary/LastTest.log
 
       - name: Test parser
         working-directory: ../srcML-build
         continue-on-error: true
         shell: bash
         run: |
-          ninja run_parser_tests
+          ninja run_parser_tests | tee ParserTest.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ParserTest.${{ matrix.installer }}.windows-latest.log
+          path: build/ParserTest.log
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: macOS Universal Package
-          path: |
-            /Users/runner/work/srcML/srcML-build/dist/*.pkg
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
-
-      - name: Clean
-        shell: bash
-        run: |
-          rm -fR ../srcML-build
-
-      - name: Build x86_64
-        shell: bash
-        run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64
-          cmake --build --preset ci-macos
-
-      - name: Package x86_64
-        working-directory: ../srcML-build
-        shell: bash
-        run: |
-          cpack
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS x86_64 Package
-          path: |
-            /Users/runner/work/srcML/srcML-build/dist/*.pkg
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
-            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
-
-      - name: Clean
-        shell: bash
-        run: |
-          rm -fR ../srcML-build
-
-      - name: Build arm64
-        shell: bash
-        run: |
-          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=arm64
-          cmake --build --preset ci-macos
-
-      - name: Package arm64
-        working-directory: ../srcML-build
-        shell: bash
-        run: |
-          cpack
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: macOS arm64 Package
+          name: macOS ${{ matrix.architecture }} Package
           path: |
             /Users/runner/work/srcML/srcML-build/dist/*.pkg
             /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
