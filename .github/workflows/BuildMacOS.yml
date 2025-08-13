@@ -57,19 +57,19 @@ jobs:
       - name: Test client
         uses: ./.github/actions/test-client
         with:
-          working-directory: ~/srcML-build
+          working-directory: ../srcML-build
           prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test libsrcml
         uses: ./.github/actions/test-libsrcml
         with:
-          working-directory: ~/srcML-build
+          working-directory: ../srcML-build
           prefix: ${{ matrix.os }}.${{ matrix.architecture }}
 
       - name: Test parser
         uses: ./.github/actions/test-parser
         with:
-          working-directory: ~/srcML-build
+          working-directory: ../srcML-build
           prefix: ${{ matrix.architecture }}.${{ matrix.os }}
 
       - name: Upload installer
