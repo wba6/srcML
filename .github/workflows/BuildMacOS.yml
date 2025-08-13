@@ -69,6 +69,15 @@ jobs:
         run: |
           ninja run_parser_tests
 
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS Universal Package
+          path: |
+            /Users/runner/work/srcML/srcML-build/dist/*.pkg
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
+
       - name: Clean
         shell: bash
         run: |
@@ -85,6 +94,15 @@ jobs:
         shell: bash
         run: |
           cpack
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS x86_64 Package
+          path: |
+            /Users/runner/work/srcML/srcML-build/dist/*.pkg
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
+            /Users/runner/work/srcML/srcML-build/dist/*.tar.bz2
 
       - name: Clean
         shell: bash
@@ -106,7 +124,7 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: installers
+          name: macOS arm64 Package
           path: |
             /Users/runner/work/srcML/srcML-build/dist/*.pkg
             /Users/runner/work/srcML/srcML-build/dist/*.tar.gz
