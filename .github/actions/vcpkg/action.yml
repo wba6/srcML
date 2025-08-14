@@ -45,7 +45,11 @@ runs:
         # Configure binary sources based on whether R2 credentials are provided
         if [ -n "${{ inputs.r2-access-key }}" ] && [ -n "${{ inputs.r2-secret-key }}" ]; then
           echo "Setting up R2 remote cache + local fallback"
-          echo "VCPKG_BINARY_SOURCES=clear;s3,${{ inputs.r2-endpoint }},${{ inputs.r2-bucket }}/vcpkg-cache,readwrite,,,${{ inputs.r2-access-key }},${{ inputs.r2-secret-key }};files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+          echo "VCPKG_BINARY_SOURCES=clear;x-aws,${{ inputs.r2-bucket }}/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+          echo "AWS_ACCESS_KEY_ID=${{ inputs.r2-access-key }}" >> "$GITHUB_ENV"
+          echo "AWS_SECRET_ACCESS_KEY=${{ inputs.r2-secret-key }}" >> "$GITHUB_ENV"
+          echo "AWS_DEFAULT_REGION=auto" >> "$GITHUB_ENV"
+          echo "AWS_ENDPOINT_URL=${{ inputs.r2-endpoint }}" >> "$GITHUB_ENV"
         else
           echo "Using local cache only"
           echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
