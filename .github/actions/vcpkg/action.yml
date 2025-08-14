@@ -1,7 +1,7 @@
 name: Setup vcpkg with cache
 
 description: |
-  Checks out vcpkg, bootstraps it, and sets up binary cache.
+  Checks out vcpkg, bootstraps it, and sets up binary cache with optional R2 remote cache.
 
 inputs:
   vcpkg-ref:
@@ -12,6 +12,22 @@ inputs:
     description: 'vcpkg triplet (used only for cache partitioning)'
     required: false
     default: 'x64-windows'
+  r2-access-key:
+    description: 'Cloudflare R2 access key (optional - enables remote cache)'
+    required: false
+    default: ''
+  r2-secret-key:
+    description: 'Cloudflare R2 secret key (optional - enables remote cache)'
+    required: false
+    default: ''
+  r2-bucket:
+    description: 'R2 bucket name for vcpkg cache (optional)'
+    required: false
+    default: ''
+  r2-endpoint:
+    description: 'R2 endpoint URL (optional)'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -21,26 +37,32 @@ runs:
       run: |
         echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> "$GITHUB_ENV"
         echo "VCPKG_CACHE_DIR=$GITHUB_WORKSPACE/vcpkg-cache" >> "$GITHUB_ENV"
-        echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        echo "VCPKG_DEFAULT_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
+        echo "VCPKG_DEFAULT_HOST_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
+        echo "VCPKG_BUILD_TYPE=release" >> "$GITHUB_ENV"
         mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
+
+        # Configure binary sources based on whether R2 credentials are provided
+        if [ -n "${{ inputs.r2-access-key }}" ] && [ -n "${{ inputs.r2-secret-key }}" ]; then
+          echo "Setting up R2 remote cache + local fallback"
+          echo "VCPKG_BINARY_SOURCES=clear;x-aws,s3://${{ inputs.r2-bucket }}/vcpkg-cache,readwrite;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+          echo "AWS_ACCESS_KEY_ID=${{ inputs.r2-access-key }}" >> "$GITHUB_ENV"
+          echo "AWS_SECRET_ACCESS_KEY=${{ inputs.r2-secret-key }}" >> "$GITHUB_ENV"
+          echo "AWS_DEFAULT_REGION=auto" >> "$GITHUB_ENV"
+          echo "AWS_ENDPOINT_URL=${{ inputs.r2-endpoint }}" >> "$GITHUB_ENV"
+        else
+          echo "Using local cache only"
+          echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        fi
 
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
       with:
         path: ${{ env.VCPKG_CACHE_DIR }}
-        key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
+        key: vcpkg-bin-release-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
         restore-keys: |
-          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-
-          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
-          vcpkg-bin-v1-${{ runner.os }}-
-
-    # - name: Cache vcpkg downloads (optional)
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: C:\Users\runneradmin\AppData\Local\vcpkg\downloads
-    #     key: vcpkg-dl-v1-${{ runner.os }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
-    #     restore-keys: |
-    #       vcpkg-dl-v1-${{ runner.os }}-
+          vcpkg-bin-release-v1-${{ runner.os }}-${{ inputs.triplet }}-
+          vcpkg-bin-release-v1-${{ runner.os }}-
 
     - name: Clone vcpkg
       shell: bash

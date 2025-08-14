@@ -7,6 +7,7 @@ jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 30
+    environment: build
     steps:
 
       - name: Checkout Repository
@@ -19,6 +20,10 @@ jobs:
         uses: ./.github/actions/vcpkg
         with:
           vcpkg-ref: e140b1fde236eb682b0d47f905e65008a191800f
+          r2-access-key: ${{ secrets.R2_ACCESS_KEY }}
+          r2-secret-key: ${{ secrets.R2_SECRET_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          r2-endpoint: ${{ secrets.R2_ENDPOINT }}
 
       - name: Set up CMake
         uses: lukka/get-cmake@latest
@@ -39,7 +44,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -DVCPKG_INSTALL_OPTIONS="--debug"
+          cmake .. --preset ci-msvc
 
       - name: Build
         shell: bash
@@ -119,6 +124,18 @@ jobs:
         run: |
           cmake "/c/Program Files/srcML/share/srcml/examples/libsrcml" -DsrcML_DIR="C:/Program Files/srcML/cmake" -G Ninja
           ninja
+
+      - name: Run examples in PowerShell (see loader errors)
+        shell: pwsh
+        working-directory: build2
+        continue-on-error: true
+        run: |
+          Get-ChildItem *.exe
+          foreach ($e in Get-ChildItem *.exe) {
+            Write-Host "== $($e.Name) =="
+            & .\${e.Name}
+            if ($LASTEXITCODE) { Write-Host "rc=$LASTEXITCODE" }
+          }
 
       - name: Run examples
         shell: bash
