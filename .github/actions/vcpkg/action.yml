@@ -8,21 +8,39 @@ inputs:
     description: 'Git ref for vcpkg (commit, tag, or branch)'
     required: false
     default: 'e140b1fde236eb682b0d47f905e65008a191800f'
+  triplet:
+    description: 'vcpkg triplet (used only for cache partitioning)'
+    required: false
+    default: 'x64-windows'
 
 runs:
   using: "composite"
   steps:
+    - name: Set vcpkg cache env
+      shell: bash
+      run: |
+        echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> "$GITHUB_ENV"
+        echo "VCPKG_CACHE_DIR=$GITHUB_WORKSPACE/vcpkg-cache" >> "$GITHUB_ENV"
+        echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
+
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
       with:
-        path: ${{ github.workspace }}/vcpkg-cache
-        key: vcpkg-cache-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        path: ${{ env.VCPKG_CACHE_DIR }}
+        key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
         restore-keys: |
-          vcpkg-cache-${{ runner.os }}-
+          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-
+          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
+          vcpkg-bin-v1-${{ runner.os }}-
 
-    - name: Set vcpkg binary source env
-      shell: bash
-      run: echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> $GITHUB_ENV
+    # - name: Cache vcpkg downloads (optional)
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: C:\Users\runneradmin\AppData\Local\vcpkg\downloads
+    #     key: vcpkg-dl-v1-${{ runner.os }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
+    #     restore-keys: |
+    #       vcpkg-dl-v1-${{ runner.os }}-
 
     - name: Clone vcpkg
       shell: bash
