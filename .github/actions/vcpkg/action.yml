@@ -41,8 +41,7 @@ runs:
         key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
         restore-keys: |
           vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
-          # Legacy scheme (per-branch/per-ref)
-          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-
+          vcpkg-bin-v1-Windows-x64-windows-e140b1fde236eb682b0d47f905e65008a191800f-
           vcpkg-bin-v1-${{ runner.os }}-
 
     # - name: Cache vcpkg downloads (optional)
