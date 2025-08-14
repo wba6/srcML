@@ -55,6 +55,13 @@ runs:
           echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
         fi
 
+    - name: Debug vcpkg env
+      shell: bash
+      run: |
+        echo "VCPKG_BINARY_SOURCES=$VCPKG_BINARY_SOURCES"
+        echo "AWS_ENDPOINT_URL=$AWS_ENDPOINT_URL"
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
       with:
