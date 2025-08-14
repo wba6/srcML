@@ -1,7 +1,7 @@
 name: Setup vcpkg with cache
 
 description: |
-  Checks out vcpkg, bootstraps it, and sets up binary cache.
+  Checks out vcpkg, bootstraps it, and sets up binary cache for Release builds only.
 
 inputs:
   vcpkg-ref:
@@ -22,24 +22,18 @@ runs:
         echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> "$GITHUB_ENV"
         echo "VCPKG_CACHE_DIR=$GITHUB_WORKSPACE/vcpkg-cache" >> "$GITHUB_ENV"
         echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        echo "VCPKG_DEFAULT_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
+        echo "VCPKG_DEFAULT_HOST_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
         mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
 
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
       with:
         path: ${{ env.VCPKG_CACHE_DIR }}
-        key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
+        key: vcpkg-bin-release-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
         restore-keys: |
-          vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
-          vcpkg-bin-v1-${{ runner.os }}-
-
-    # - name: Cache vcpkg downloads (optional)
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: C:\Users\runneradmin\AppData\Local\vcpkg\downloads
-    #     key: vcpkg-dl-v1-${{ runner.os }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
-    #     restore-keys: |
-    #       vcpkg-dl-v1-${{ runner.os }}-
+          vcpkg-bin-release-v1-${{ runner.os }}-${{ inputs.triplet }}-
+          vcpkg-bin-release-v1-${{ runner.os }}-
 
     - name: Clone vcpkg
       shell: bash

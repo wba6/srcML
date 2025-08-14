@@ -39,7 +39,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake .. --preset ci-msvc -DVCPKG_INSTALL_OPTIONS="--debug"
+          cmake .. --preset ci-msvc -DCMAKE_BUILD_TYPE=Release -DVCPKG_INSTALL_OPTIONS="--only-downloads"
 
       - name: Build
         shell: bash
