@@ -120,6 +120,18 @@ jobs:
           cmake "/c/Program Files/srcML/share/srcml/examples/libsrcml" -DsrcML_DIR="C:/Program Files/srcML/cmake" -G Ninja
           ninja
 
+      - name: Run examples in PowerShell (see loader errors)
+        shell: pwsh
+        working-directory: build2
+        continue-on-error: true
+        run: |
+          Get-ChildItem *.exe
+          foreach ($e in Get-ChildItem *.exe) {
+            Write-Host "== $($e.Name) =="
+            & .\${e.Name}
+            if ($LASTEXITCODE) { Write-Host "rc=$LASTEXITCODE" }
+          }
+
       - name: Run examples
         shell: bash
         working-directory: build2
