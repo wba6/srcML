@@ -24,6 +24,7 @@ runs:
         echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
         echo "VCPKG_DEFAULT_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
         echo "VCPKG_DEFAULT_HOST_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
+        echo "VCPKG_BUILD_TYPE=release" >> "$GITHUB_ENV"
         mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
 
     - name: Cache vcpkg binary artifacts
