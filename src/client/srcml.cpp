@@ -24,11 +24,14 @@
 #include <TraceLog.hpp>
 #include <stdin_libarchive.hpp>
 #include <input_archive.hpp>
+#include <string_view>
 
 #ifndef _MSC_VER
 #include <sys/uio.h>
 #include <unistd.h>
 #endif
+
+using namespace ::std::literals::string_view_literals;
 
 namespace {
     // decide if a step is needed
@@ -38,8 +41,8 @@ namespace {
     bool request_create_src        (const srcml_request_t&);
 }
 
-const int SRCML_CLIENT_VERSION_NUMBER = 10000;
-const char* SRCML_CLIENT_VERSION_STRING = "1.0.0";
+const char* SRCML_CLIENT_VERSION_STRING = "1.1.0";
+const int SRCML_CLIENT_VERSION_NUMBER = 10100;
 
 int main(int argc, char* argv[]) {
 
@@ -54,13 +57,32 @@ int main(int argc, char* argv[]) {
     // version
     if (option(SRCML_COMMAND_VERSION)) {
 
-        // output the supported srcML source-code languages
+        // output the client and libsrcml versions
+        std::cout << "srcml: " << SRCML_CLIENT_VERSION_STRING << '\n'
+                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n'
+                  << "srcql: " << "1.0.0" << '\n';
+
+        std::cout << "markup:" << '\n';
+
+        // output Python support first
         for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
-            std::cout << "srcml " << srcml_get_language_list(i) << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
+            std::string_view language = srcml_get_language_list(i);
+            if (language != "Python"sv)
+                continue;
+
+            std::cout << "  " << language << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
+            break;
         }
 
-        std::cout << "srcml client: " << SRCML_CLIENT_VERSION_STRING << '\n'
-                  << "libsrcml: " << srcml_libsrcml_version_string() << '\n';
+        // output other languages support
+        for (size_t i = 0; i < srcml_get_language_list_size(); ++i) {
+            std::string_view language = srcml_get_language_list(i);
+            if (language == "Python"sv)
+                continue;
+
+            std::cout << "  " << language << ": " << srcml_markup_version_string(srcml_get_language_list(i)) << '\n';
+        }
+
         return 0;
     }
 

@@ -18,6 +18,4 @@ foreach(CLIENT_TEST IN ITEMS ${CLIENT_TESTS})
     #set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
 
     set_tests_properties(srcml.${TEST_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
-    message(STATUS "Adding test: ${CLIENT_TEST}")
 endforeach()

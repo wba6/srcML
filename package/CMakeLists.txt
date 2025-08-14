@@ -90,13 +90,13 @@ function(add_workflow_test_targets binary_dir output_directory package_file_name
     # Target for test_client
     add_custom_target(test_client
         WORKING_DIRECTORY ${binary_dir}
-        COMMAND ${CMAKE_CTEST_COMMAND} -R ^srcml --timeout ${SRCML_TEST_TIMEOUT} --output-log ${output_directory}/${package_file_name}-client.log || true
+        COMMAND ${CMAKE_CTEST_COMMAND} -VV -R ^srcml --timeout ${SRCML_TEST_TIMEOUT} --output-log ${output_directory}/${package_file_name}-client.log || true
     )
 
     # Target for test_libsrcml
     add_custom_target(test_libsrcml
         WORKING_DIRECTORY ${binary_dir}
-        COMMAND ${CMAKE_CTEST_COMMAND} -R ^libsrcml --timeout ${SRCML_TEST_TIMEOUT} --output-log ${output_directory}/${package_file_name}-libsrcml.log || true
+        COMMAND ${CMAKE_CTEST_COMMAND} -VV -R ^libsrcml --timeout ${SRCML_TEST_TIMEOUT} --output-log ${output_directory}/${package_file_name}-libsrcml.log || true
     )
 
     # Target for test_parser
@@ -120,7 +120,6 @@ message(STATUS "CPack generators: ${CPACK_GENERATOR}")
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL "LOCAL")
 
-message(STATUS "CPACK_PACKAGE_NAME: ${CPACK_PACKAGE_NAME}")
 message(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")
 
 # needs to be last so not overwritten
