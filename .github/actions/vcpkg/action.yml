@@ -1,7 +1,7 @@
 name: Setup vcpkg with cache
 
 description: |
-  Checks out vcpkg, bootstraps it, and sets up binary cache for Release builds only.
+  Checks out vcpkg, bootstraps it, and sets up binary cache with optional R2 remote cache.
 
 inputs:
   vcpkg-ref:
@@ -12,6 +12,22 @@ inputs:
     description: 'vcpkg triplet (used only for cache partitioning)'
     required: false
     default: 'x64-windows'
+  r2-access-key:
+    description: 'Cloudflare R2 access key (optional - enables remote cache)'
+    required: false
+    default: ''
+  r2-secret-key:
+    description: 'Cloudflare R2 secret key (optional - enables remote cache)'
+    required: false
+    default: ''
+  r2-bucket:
+    description: 'R2 bucket name for vcpkg cache (optional)'
+    required: false
+    default: ''
+  r2-endpoint:
+    description: 'R2 endpoint URL (optional)'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -21,11 +37,19 @@ runs:
       run: |
         echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> "$GITHUB_ENV"
         echo "VCPKG_CACHE_DIR=$GITHUB_WORKSPACE/vcpkg-cache" >> "$GITHUB_ENV"
-        echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
         echo "VCPKG_DEFAULT_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
         echo "VCPKG_DEFAULT_HOST_TRIPLET=${{ inputs.triplet }}" >> "$GITHUB_ENV"
         echo "VCPKG_BUILD_TYPE=release" >> "$GITHUB_ENV"
         mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
+
+        # Configure binary sources based on whether R2 credentials are provided
+        if [ -n "${{ inputs.r2-access-key }}" ] && [ -n "${{ inputs.r2-secret-key }}" ]; then
+          echo "Setting up R2 remote cache + local fallback"
+          echo "VCPKG_BINARY_SOURCES=clear;s3,${{ inputs.r2-endpoint }},${{ inputs.r2-bucket }}/vcpkg-cache,readwrite,,,${{ inputs.r2-access-key }},${{ inputs.r2-secret-key }};files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        else
+          echo "Using local cache only"
+          echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
+        fi
 
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
