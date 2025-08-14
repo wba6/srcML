@@ -24,16 +24,6 @@ runs:
         echo "VCPKG_BINARY_SOURCES=clear;files,$GITHUB_WORKSPACE/vcpkg-cache,readwrite" >> "$GITHUB_ENV"
         mkdir -p "$GITHUB_WORKSPACE/vcpkg-cache"
 
-    # - name: Cache vcpkg binary artifacts
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ${{ env.VCPKG_CACHE_DIR }}
-    #     key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
-    #     restore-keys: |
-    #       vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ inputs.vcpkg-ref }}-
-    #       vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
-    #       vcpkg-bin-v1-${{ runner.os }}-
-
     - name: Cache vcpkg binary artifacts
       uses: actions/cache@v4
       with:
@@ -41,7 +31,6 @@ runs:
         key: vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-${{ hashFiles('**/vcpkg.json', '**/vcpkg-configuration.json') }}
         restore-keys: |
           vcpkg-bin-v1-${{ runner.os }}-${{ inputs.triplet }}-
-          vcpkg-bin-v1-Windows-x64-windows-e140b1fde236eb682b0d47f905e65008a191800f-1ef434285e3631aa465128c90367d72ee2f5d8dd9ff7cc12998ab449a23eef74
           vcpkg-bin-v1-${{ runner.os }}-
 
     # - name: Cache vcpkg downloads (optional)
