@@ -23,7 +23,8 @@
         "SRCML_LIBSRCML_STATIC_LINK_FLAGS_RELEASE": "/LTCG:OFF",
         "SRCML_CLIENT_COMPILE_FLAGS": "/wd4355;/wd5204",
         "SRCML_CLIENT_LINK_FLAGS": "",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
       }
     }
   ],
