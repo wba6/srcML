@@ -126,3 +126,6 @@ const srcMLState::MODE_TYPE ModeStack::MODE_YIELD_PY                   (bit(__CO
 const srcMLState::MODE_TYPE ModeStack::MODE_CASE_PY                    (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_FROM_PY                    (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_SET_PY                     (bit(__COUNTER__));
+
+// CMake modes
+const srcMLState::MODE_TYPE ModeStack::MODE_PAREN_ENDS_STATEMENT_CMAKE (bit(__COUNTER__));

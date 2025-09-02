@@ -325,4 +325,7 @@ const static srcMLState::MODE_TYPE MODE_FROM_PY;
 
 const static srcMLState::MODE_TYPE MODE_SET_PY;
 
+// CMake modes
+const static srcMLState::MODE_TYPE MODE_PAREN_ENDS_STATEMENT_CMAKE;
+
 #endif

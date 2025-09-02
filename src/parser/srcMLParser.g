@@ -785,6 +785,7 @@ public:
     static const antlr::BitSet right_bracket_py_token_set;
     static const antlr::BitSet comment_py_token_set;
     static const antlr::BitSet multiline_literals_py_token_set;
+    static const antlr::BitSet triplex_keyword_set;
 
     // constructor
     srcMLParser(antlr::TokenStream& lexer, int lang, const OPTION_TYPE& options);
@@ -947,15 +948,27 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<Rule, SIZE> getCMakeRules() {
+    constexpr const std::array<int, SIZE * SIZE> getTriplexKeywords(const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR) {
+        std::array<int, SIZE * SIZE> temp_array{};
+        temp_array[BREAK + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_BREAK_PAREN_PAIR;
+        temp_array[CONTINUE + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_CONTINUE_PAREN_PAIR;
+
+        return temp_array;
+    }
+
+    template <size_t SIZE>
+    constexpr const std::array<Rule, SIZE> getCMakeRules(const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR) {
         std::array<Rule, SIZE> temp_array;
 
         /* GENERIC STATEMENTS */
-        temp_array[BREAK]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
-        temp_array[CONTINUE]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+        temp_array[WHILE] = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
 
         /* CMAKE STATEMENTS */
         /* ... */
+
+        /* TRIPLEX KEYWORDS */
+        temp_array[CMAKE_BREAK_PAREN_PAIR]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_statement_paren_pair };  // consume LPAREN and RPAREN
+        temp_array[CMAKE_CONTINUE_PAREN_PAIR]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_statement_paren_pair };  // consume LPAREN and RPAREN
 
         return temp_array;
     }
@@ -1336,18 +1349,34 @@ start_cmake[] {
         */
 
         // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
-        const size_t TOKEN_TYPES_SIZE = 700;
+        const size_t TRIPLEX_RULES_SIZE = 700;
 
-        // The CMake rule size must start at a value 100 greater than the token types size directly above
-        const size_t CMAKE_RULES_SIZE = TOKEN_TYPES_SIZE + 100;
+        // The triplex keyword values must start at a value 100 greater than the triplex rule size directly above
+        // Increment each new triplex keyword token by an additional one (except the first)
+        const int CMAKE_BREAK_PAREN_PAIR = TRIPLEX_RULES_SIZE + 100;
+        const int CMAKE_CONTINUE_PAREN_PAIR = TRIPLEX_RULES_SIZE + 101;
+
+        // The CMake rule size must be 200 greater than the triplex rule size
+        // If there are ever more than 100 triplex keywords, this has to change
+        const size_t CMAKE_RULES_SIZE = TRIPLEX_RULES_SIZE + 200;
+
+        // A triplex keyword is a pair of adjacent keywords
+        static const std::array<int, TRIPLEX_RULES_SIZE * TRIPLEX_RULES_SIZE> triplexKeywords = getTriplexKeywords<TRIPLEX_RULES_SIZE>(CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR);
 
         // CMake rules adhere to the following form:
         // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
-        static const std::array<Rule, CMAKE_RULES_SIZE> cmake_rules = getCMakeRules<CMAKE_RULES_SIZE>();
+        static const std::array<Rule, CMAKE_RULES_SIZE> cmake_rules = getCMakeRules<CMAKE_RULES_SIZE>(CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR);
 
-        // invoke the table to handle keywords
+        // invoke the table to handle keywords and triplex keywords
         if (inMode(MODE_STATEMENT)) {
             auto token = LA(1);
+
+            if (triplex_keyword_set.member((unsigned int) LA(1))) {
+                const auto lookup = triplexKeywords[token + (next_token() << 8) + (next_token_two() << 8)];
+                if (lookup)
+                    token = lookup;
+            }
+
             const auto& rule = cmake_rules[token];
             if (rule.elementToken && processRule(rule)) {
                 return;
@@ -17784,6 +17813,22 @@ control_tuple_no_paren_py[] { size_t lparen_types_size = 0; ENTRY_DEBUG } :
             if (inTransparentMode(MODE_TUPLE_NO_PAREN_PY)) {
                 endDownToMode(MODE_TUPLE_NO_PAREN_PY);
                 endMode(MODE_TUPLE_NO_PAREN_PY);
+            }
+        }
+;
+
+/*
+  cmake_statement_paren_pair
+
+  Consumes parentheses that occur after a CMake keyword (e.g., "break()").
+*/
+cmake_statement_paren_pair[] { ENTRY_DEBUG }:
+        paren_pair
+
+        {
+            if (inTransparentMode(MODE_PAREN_ENDS_STATEMENT_CMAKE)) {
+                endDownToMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
+                endMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
             }
         }
 ;
