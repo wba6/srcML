@@ -1379,14 +1379,14 @@ catch[...] {
 */
 keyword_statements[] { ENTRY_DEBUG } :
         // conditional statements
-        // Python if/elif/else are handled in start_py
-        { !inLanguage(LANGUAGE_PYTHON) }?
+        // Python and CMake if/elif/else constructs are handled in their respective "start" rule
+        { !inLanguage(LANGUAGE_PYTHON) && !inLanguage(LANGUAGE_CMAKE) }?
         if_statement |
 
-        { !inLanguage(LANGUAGE_PYTHON) && next_token() == IF }?
+        { !inLanguage(LANGUAGE_PYTHON) && !inLanguage(LANGUAGE_CMAKE) && next_token() == IF }?
         elseif_statement |
 
-        { !inLanguage(LANGUAGE_PYTHON) }?
+        { !inLanguage(LANGUAGE_PYTHON) && !inLanguage(LANGUAGE_CMAKE) }?
         else_statement |
 
         switch_statement | switch_case | switch_default |
@@ -1450,8 +1450,8 @@ pattern_statements[] {
         STMT_TYPE stmt_type = NONE;
         CALL_TYPE type = NOCALL;
 
-        // detect the declaration/definition type for non-Python languages
-        if (!inLanguage(LANGUAGE_PYTHON))
+        // detect the declaration/definition type for non-Python, non-CMake languages
+        if (!inLanguage(LANGUAGE_PYTHON) || !inLanguage(LANGUAGE_CMAKE))
             pattern_check(stmt_type, secondtoken, type_count, after_token);
 
         ENTRY_DEBUG
@@ -8645,8 +8645,8 @@ compound_name_inner[bool index] {
             { inLanguage(LANGUAGE_C) }?
             compound_name_c[iscompound] |
 
-            // Python uses the same C++ logic for names
-            { inLanguage(LANGUAGE_CXX) || inLanguage(LANGUAGE_PYTHON) }?
+            // Python and CMake use the same logic as C++ for names
+            { inLanguage(LANGUAGE_CXX) || inLanguage(LANGUAGE_PYTHON) || inLanguage(LANGUAGE_CMAKE) }?
             compound_name_cpp[iscompound] |
 
             macro_type_name_call
@@ -8687,7 +8687,7 @@ multops_star[] { ENTRY_DEBUG } :
 /*
   compound_name_cpp
 
-  Handles a compound name (C++ and Python).
+  Handles a compound name (C++, Python, and CMake).
 */
 compound_name_cpp[bool& iscompound] { namestack.fill(""); bool iscolon = false; ENTRY_DEBUG } :
         (options { greedy = true; } :
