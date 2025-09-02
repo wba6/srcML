@@ -20,30 +20,31 @@ using namespace ::std::literals::string_view_literals;
 */
 language_extension_registry::language_extension_registry() : registered_languages({
 
-    { "c",    Language::LANGUAGE_C },
-    { "h",    Language::LANGUAGE_C },
-    { "i",    Language::LANGUAGE_C },
-    { "cpp",  Language::LANGUAGE_CXX },
-    { "CPP",  Language::LANGUAGE_CXX },
-    { "cp",   Language::LANGUAGE_CXX },
-    { "hpp",  Language::LANGUAGE_CXX },
-    { "cxx",  Language::LANGUAGE_CXX },
-    { "hxx",  Language::LANGUAGE_CXX },
-    { "cc",   Language::LANGUAGE_CXX },
-    { "hh",   Language::LANGUAGE_CXX },
-    { "c++",  Language::LANGUAGE_CXX },
-    { "h++",  Language::LANGUAGE_CXX },
-    { "C",    Language::LANGUAGE_CXX },
-    { "H",    Language::LANGUAGE_CXX },
-    { "tcc",  Language::LANGUAGE_CXX },
-    { "ii",   Language::LANGUAGE_CXX },
-    { "java", Language::LANGUAGE_JAVA },
-    { "aj",   Language::LANGUAGE_JAVA },
-    { "cs",   Language::LANGUAGE_CSHARP },
-    { "py",   Language::LANGUAGE_PYTHON },
-    { "pyi",  Language::LANGUAGE_PYTHON },
-    { "pyw",  Language::LANGUAGE_PYTHON },
-    { "pyz",  Language::LANGUAGE_PYTHON },
+    { "c",     Language::LANGUAGE_C },
+    { "h",     Language::LANGUAGE_C },
+    { "i",     Language::LANGUAGE_C },
+    { "cpp",   Language::LANGUAGE_CXX },
+    { "CPP",   Language::LANGUAGE_CXX },
+    { "cp",    Language::LANGUAGE_CXX },
+    { "hpp",   Language::LANGUAGE_CXX },
+    { "cxx",   Language::LANGUAGE_CXX },
+    { "hxx",   Language::LANGUAGE_CXX },
+    { "cc",    Language::LANGUAGE_CXX },
+    { "hh",    Language::LANGUAGE_CXX },
+    { "c++",   Language::LANGUAGE_CXX },
+    { "h++",   Language::LANGUAGE_CXX },
+    { "C",     Language::LANGUAGE_CXX },
+    { "H",     Language::LANGUAGE_CXX },
+    { "tcc",   Language::LANGUAGE_CXX },
+    { "ii",    Language::LANGUAGE_CXX },
+    { "java",  Language::LANGUAGE_JAVA },
+    { "aj",    Language::LANGUAGE_JAVA },
+    { "cs",    Language::LANGUAGE_CSHARP },
+    { "py",    Language::LANGUAGE_PYTHON },
+    { "pyi",   Language::LANGUAGE_PYTHON },
+    { "pyw",   Language::LANGUAGE_PYTHON },
+    { "pyz",   Language::LANGUAGE_PYTHON },
+    { "cmake", Language::LANGUAGE_CMAKE },
     /* { "m",    Language::LANGUAGE_OBJECTIVE_C | Language::LANGUAGE_C } */ }), use_cpp_for_c(false)
     {}
 
@@ -161,34 +162,36 @@ int language_extension_registry::get_language_from_filename(const char* const pa
  */
 void language_extension_registry::register_standard_file_extensions() {
 
-    register_user_ext("c",    Language::LANGUAGE_C);
-    register_user_ext("h",    Language::LANGUAGE_C);
-    register_user_ext("i",    Language::LANGUAGE_C);
+    register_user_ext("c",     Language::LANGUAGE_C);
+    register_user_ext("h",     Language::LANGUAGE_C);
+    register_user_ext("i",     Language::LANGUAGE_C);
 
-    register_user_ext("cpp",  Language::LANGUAGE_CXX);
-    register_user_ext("CPP",  Language::LANGUAGE_CXX);
-    register_user_ext("cp",   Language::LANGUAGE_CXX);
-    register_user_ext("hpp",  Language::LANGUAGE_CXX);
-    register_user_ext("cxx",  Language::LANGUAGE_CXX);
-    register_user_ext("hxx",  Language::LANGUAGE_CXX);
-    register_user_ext("cc",   Language::LANGUAGE_CXX);
-    register_user_ext("hh",   Language::LANGUAGE_CXX);
-    register_user_ext("c++",  Language::LANGUAGE_CXX);
-    register_user_ext("h++",  Language::LANGUAGE_CXX);
-    register_user_ext("C",    Language::LANGUAGE_CXX);
-    register_user_ext("H",    Language::LANGUAGE_CXX);
-    register_user_ext("tcc",  Language::LANGUAGE_CXX);
-    register_user_ext("ii",   Language::LANGUAGE_CXX);
+    register_user_ext("cpp",   Language::LANGUAGE_CXX);
+    register_user_ext("CPP",   Language::LANGUAGE_CXX);
+    register_user_ext("cp",    Language::LANGUAGE_CXX);
+    register_user_ext("hpp",   Language::LANGUAGE_CXX);
+    register_user_ext("cxx",   Language::LANGUAGE_CXX);
+    register_user_ext("hxx",   Language::LANGUAGE_CXX);
+    register_user_ext("cc",    Language::LANGUAGE_CXX);
+    register_user_ext("hh",    Language::LANGUAGE_CXX);
+    register_user_ext("c++",   Language::LANGUAGE_CXX);
+    register_user_ext("h++",   Language::LANGUAGE_CXX);
+    register_user_ext("C",     Language::LANGUAGE_CXX);
+    register_user_ext("H",     Language::LANGUAGE_CXX);
+    register_user_ext("tcc",   Language::LANGUAGE_CXX);
+    register_user_ext("ii",    Language::LANGUAGE_CXX);
 
-    register_user_ext("java", Language::LANGUAGE_JAVA);
-    register_user_ext("aj",   Language::LANGUAGE_JAVA);
+    register_user_ext("java",  Language::LANGUAGE_JAVA);
+    register_user_ext("aj",    Language::LANGUAGE_JAVA);
 
-    register_user_ext("cs",   Language::LANGUAGE_CSHARP);
+    register_user_ext("cs",    Language::LANGUAGE_CSHARP);
 
-    register_user_ext("py",   Language::LANGUAGE_PYTHON);
-    register_user_ext("pyi",  Language::LANGUAGE_PYTHON);
-    register_user_ext("pyw",  Language::LANGUAGE_PYTHON);
-    register_user_ext("pyz",  Language::LANGUAGE_PYTHON);
+    register_user_ext("py",    Language::LANGUAGE_PYTHON);
+    register_user_ext("pyi",   Language::LANGUAGE_PYTHON);
+    register_user_ext("pyw",   Language::LANGUAGE_PYTHON);
+    register_user_ext("pyz",   Language::LANGUAGE_PYTHON);
+
+    register_user_ext("cmake", Language::LANGUAGE_CMAKE);
 }
 
 /**

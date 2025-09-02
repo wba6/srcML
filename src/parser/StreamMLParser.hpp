@@ -193,6 +193,10 @@ private:
 
             // more partial parsing to do
             switch (getLanguage()) {
+            case LANGUAGE_CMAKE:
+                srcMLParser::start_cmake();
+                break;
+
             case LANGUAGE_PYTHON:
                 srcMLParser::start_python();
                 break;

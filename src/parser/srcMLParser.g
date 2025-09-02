@@ -945,6 +945,20 @@ public:
 
         return temp_array;
     }
+
+    template <size_t SIZE>
+    constexpr const std::array<Rule, SIZE> getCMakeRules() {
+        std::array<Rule, SIZE> temp_array;
+
+        /* GENERIC STATEMENTS */
+        temp_array[BREAK]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+        temp_array[CONTINUE]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT, 0, nullptr, nullptr };
+
+        /* CMAKE STATEMENTS */
+        /* ... */
+
+        return temp_array;
+    }
 }
 
 /*
@@ -1289,6 +1303,60 @@ start_python[] {
         // looking for a keyword or operator that does not belong to a statement
         alias_py | function_annotation_py |
 
+        // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
+        start
+;
+exception
+catch[...] {
+        CATCH_DEBUG
+
+        // need to consume the token. If we got here because
+        // of an error with EOF token, then call EOF directly
+        if (LA(1) == 1)
+            eof();
+        else
+            consume();
+}
+
+/*
+  start_cmake
+
+  Invokes a table-based approach to detecting and handling tokens.
+
+  Whitespace tokens are handled elsewhere and are automagically included
+  in the output stream.
+
+  Order of evaluation is important.
+*/
+start_cmake[] {
+        ++start_count;
+
+        /*
+          May need to increase these constants in the future as more tokens are added
+        */
+
+        // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
+        const size_t TOKEN_TYPES_SIZE = 700;
+
+        // The CMake rule size must start at a value 100 greater than the token types size directly above
+        const size_t CMAKE_RULES_SIZE = TOKEN_TYPES_SIZE + 100;
+
+        // CMake rules adhere to the following form:
+        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
+        static const std::array<Rule, CMAKE_RULES_SIZE> cmake_rules = getCMakeRules<CMAKE_RULES_SIZE>();
+
+        // invoke the table to handle keywords
+        if (inMode(MODE_STATEMENT)) {
+            auto token = LA(1);
+            const auto& rule = cmake_rules[token];
+            if (rule.elementToken && processRule(rule)) {
+                return;
+            }
+        }
+
+        ENTRY_DEBUG_START
+        ENTRY_DEBUG
+} :
         // invoke start to handle unprocessed tokens (e.g., EOF, literals, operators, etc.)
         start
 ;

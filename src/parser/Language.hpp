@@ -49,6 +49,9 @@ namespace LanguageName {
 
     /** String constant for Python language */
     const char* const LANGUAGE_PYTHON = "Python";
+
+    /** String constant for CMake language */
+    const char* const LANGUAGE_CMAKE = "CMake";
 }
 
 /**
@@ -90,8 +93,11 @@ public:
         /** Python language */
         LANGUAGE_PYTHON = 32,
 
+        /** CMake language */
+        LANGUAGE_CMAKE = 64,
+
         /** C++ family i.e. C++/C#  */
-        LANGUAGE_CXX_FAMILY = LANGUAGE_CXX | LANGUAGE_CSHARP | LANGUAGE_PYTHON,
+        LANGUAGE_CXX_FAMILY = LANGUAGE_CXX | LANGUAGE_CSHARP | LANGUAGE_PYTHON | LANGUAGE_CMAKE,
 
         /** C family i.e. C/C++/C# */
         LANGUAGE_C_FAMILY = LANGUAGE_C | LANGUAGE_CXX_FAMILY | LANGUAGE_OBJECTIVE_C,
