@@ -948,27 +948,36 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<int, SIZE * SIZE> getTriplexKeywords(const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR) {
+    constexpr const std::array<int, SIZE * SIZE> getTriplexKeywords(
+        const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR, const size_t CMAKE_ELSE_PAREN_PAIR, const size_t CMAKE_ENDIF_PAREN_PAIR
+    ) {
         std::array<int, SIZE * SIZE> temp_array{};
         temp_array[BREAK + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_BREAK_PAREN_PAIR;
         temp_array[CONTINUE + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_CONTINUE_PAREN_PAIR;
+        temp_array[ELSE + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_ELSE_PAREN_PAIR;
+        temp_array[ENDIF + (LPAREN << 8) + (RPAREN << 8)] = CMAKE_ENDIF_PAREN_PAIR;
 
         return temp_array;
     }
 
     template <size_t SIZE>
-    constexpr const std::array<Rule, SIZE> getCMakeRules(const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR) {
+    constexpr const std::array<Rule, SIZE> getCMakeRules(
+        const size_t CMAKE_BREAK_PAREN_PAIR, const size_t CMAKE_CONTINUE_PAREN_PAIR, const size_t CMAKE_ELSE_PAREN_PAIR, const size_t CMAKE_ENDIF_PAREN_PAIR
+    ) {
         std::array<Rule, SIZE> temp_array;
 
         /* GENERIC STATEMENTS */
-        temp_array[WHILE] = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+        // temp_array[WHILE] = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
+        temp_array[IF] = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start_cmake, nullptr };
 
         /* CMAKE STATEMENTS */
         /* ... */
 
         /* TRIPLEX KEYWORDS */
-        temp_array[CMAKE_BREAK_PAREN_PAIR]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_statement_paren_pair };  // consume LPAREN and RPAREN
-        temp_array[CMAKE_CONTINUE_PAREN_PAIR]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_statement_paren_pair };  // consume LPAREN and RPAREN
+        temp_array[CMAKE_BREAK_PAREN_PAIR]       = { SBREAK_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };  // consume LPAREN and RPAREN
+        temp_array[CMAKE_CONTINUE_PAREN_PAIR]    = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };  // consume LPAREN and RPAREN
+        temp_array[CMAKE_ELSE_PAREN_PAIR]        = { SELSE, 0, MODE_STATEMENT | MODE_NEST, 0, &srcMLParser::if_statement_start_cmake, &srcMLParser::cmake_paren_pair_begin_statement };  // consume LPAREN and RPAREN
+        temp_array[CMAKE_ENDIF_PAREN_PAIR]       = { SNOP, MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, 0, &srcMLParser::if_statement_end_cmake, &srcMLParser::cmake_paren_pair_end_statement };  // consume LPAREN and RPAREN
 
         return temp_array;
     }
@@ -1355,17 +1364,23 @@ start_cmake[] {
         // Increment each new triplex keyword token by an additional one (except the first)
         const int CMAKE_BREAK_PAREN_PAIR = TRIPLEX_RULES_SIZE + 100;
         const int CMAKE_CONTINUE_PAREN_PAIR = TRIPLEX_RULES_SIZE + 101;
+        const int CMAKE_ELSE_PAREN_PAIR = TRIPLEX_RULES_SIZE + 102;
+        const int CMAKE_ENDIF_PAREN_PAIR = TRIPLEX_RULES_SIZE + 103;
 
         // The CMake rule size must be 200 greater than the triplex rule size
         // If there are ever more than 100 triplex keywords, this has to change
         const size_t CMAKE_RULES_SIZE = TRIPLEX_RULES_SIZE + 200;
 
         // A triplex keyword is a pair of adjacent keywords
-        static const std::array<int, TRIPLEX_RULES_SIZE * TRIPLEX_RULES_SIZE> triplexKeywords = getTriplexKeywords<TRIPLEX_RULES_SIZE>(CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR);
+        static const std::array<int, TRIPLEX_RULES_SIZE * TRIPLEX_RULES_SIZE> triplexKeywords = getTriplexKeywords<TRIPLEX_RULES_SIZE>(
+            CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR, CMAKE_ELSE_PAREN_PAIR, CMAKE_ENDIF_PAREN_PAIR
+        );
 
         // CMake rules adhere to the following form:
         // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
-        static const std::array<Rule, CMAKE_RULES_SIZE> cmake_rules = getCMakeRules<CMAKE_RULES_SIZE>(CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR);
+        static const std::array<Rule, CMAKE_RULES_SIZE> cmake_rules = getCMakeRules<CMAKE_RULES_SIZE>(
+            CMAKE_BREAK_PAREN_PAIR, CMAKE_CONTINUE_PAREN_PAIR, CMAKE_ELSE_PAREN_PAIR, CMAKE_ENDIF_PAREN_PAIR
+        );
 
         // invoke the table to handle keywords and triplex keywords
         if (inMode(MODE_STATEMENT)) {
@@ -11778,6 +11793,21 @@ rparen[bool markup = true, bool end_control_incr = false] {
 
         {
             if (isempty) {
+                // special handling for the end of a condition in an if statement (CMake)
+                if (inLanguage(LANGUAGE_CMAKE) && inMode(MODE_CONDITION) && inPrevMode(MODE_IF)) {
+                    // end the condition
+                    endMode(MODE_CONDITION);
+
+                    startNewMode(MODE_BLOCK);
+                    startNoSkipElement(SBLOCK);
+
+                    startNewMode(MODE_BLOCK_CONTENT);
+                    startNoSkipElement(SCONTENT);
+
+                    // allow statements to appear in the block
+                    startNewMode(MODE_STATEMENT | MODE_NEST);
+                }
+
                 // special handling for the then part of an if statement; only accessed when in the condition of an if statement
                 if (inMode(MODE_CONDITION) && inPrevMode(MODE_IF)) {
                     // end the condition
@@ -12101,6 +12131,10 @@ expression_part[CALL_TYPE type = NOCALL, int call_count = 1] {
             tuple_no_paren_py();
             return;
         }
+
+        // found a keyword that should be handled by the table in start_cmake
+        if (triplex_keyword_set.member((unsigned int) LA(1)))
+            start_cmake();
 
         ENTRY_DEBUG
 } :
@@ -17818,11 +17852,32 @@ control_tuple_no_paren_py[] { size_t lparen_types_size = 0; ENTRY_DEBUG } :
 ;
 
 /*
-  cmake_statement_paren_pair
+  cmake_paren_pair_begin_statement
 
-  Consumes parentheses that occur after a CMake keyword (e.g., "break()").
+  Consumes parentheses that occur after a CMake keyword, then begins the statement (e.g., "else()").
 */
-cmake_statement_paren_pair[] { ENTRY_DEBUG }:
+cmake_paren_pair_begin_statement[] { ENTRY_DEBUG }:
+        paren_pair
+
+        {
+            // start the block tag
+            startNewMode(MODE_BLOCK);
+            startNoSkipElement(SBLOCK);
+
+            // start the block content tag
+            startNewMode(MODE_BLOCK_CONTENT);
+            startNoSkipElement(SCONTENT);
+
+            setMode(MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_LIST);
+        }
+;
+
+/*
+  cmake_paren_pair_end_statement
+
+  Consumes parentheses that occur after a CMake keyword, then ends the statement (e.g., "break()").
+*/
+cmake_paren_pair_end_statement[] { ENTRY_DEBUG }:
         paren_pair
 
         {
@@ -17830,5 +17885,47 @@ cmake_statement_paren_pair[] { ENTRY_DEBUG }:
                 endDownToMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
                 endMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
             }
+        }
+;
+
+/*
+  if_statement_start_cmake
+
+  Starts a CMake "if" statement (if/else if/else). Wraps the entire "if...else" statement in an if statement tag.
+  Wraps lone "if", "else", or "else if" blocks in an if statement tag to match existing functionality.
+*/
+if_statement_start_cmake[] { ENTRY_DEBUG } :
+        {
+            // assumes this was called from the triplex keyword table, so "else" is really "else()"
+            if (LA(1) == ELSE && inTransparentMode(MODE_IF_STATEMENT)) {
+                // flush any whitespace tokens since sections should end at the last possible place
+                flushSkip();
+
+                endDownToMode(MODE_IF_STATEMENT);
+            }
+
+            if (!inMode(MODE_IF_STATEMENT)) {
+                // statement with nested statement; detection of else
+                startNewMode(MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_IF_STATEMENT);
+
+                // start if sequence container
+                startElement(SIF_STATEMENT);
+
+                ++ifcount;
+            }
+        }
+;
+
+/*
+  if_statement_end_cmake
+
+  Helper rule to end an if/else if/else statement in CMake.
+*/
+if_statement_end_cmake[] { ENTRY_DEBUG } :
+        {
+            // flush any whitespace tokens since sections should end at the last possible place
+            flushSkip();
+
+            endDownToMode(MODE_IF_STATEMENT);
         }
 ;
