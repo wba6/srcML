@@ -351,6 +351,9 @@ tokens {
     PY_TYPE;
     PY_WITH;
     PY_YIELD;
+
+    // CMake
+    CMAKE_ELSEIF;
 }
 
 {
@@ -803,6 +806,9 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "type"         , PY_TYPE           , LANGUAGE_PYTHON },
         { "with"         , PY_WITH           , LANGUAGE_PYTHON },
         { "yield"        , PY_YIELD          , LANGUAGE_PYTHON },
+
+        // CMake
+        { "elseif"       , CMAKE_ELSEIF      , LANGUAGE_CMAKE },
    };
 
     // fill up the literals for the language that we are parsing
