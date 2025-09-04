@@ -373,6 +373,23 @@ tokens {
     QASM_VERSION;
 
     QASM_ARROW;
+
+    QASM_QUBIT_TYPE;
+    QASM_QREG_TYPE;
+    QASM_INT_TYPE;
+    QASM_UNIT_TYPE;
+    QASM_FLOAT_TYPE;
+    QASM_BIT_TYPE;
+    QASM_CREG_TYPE;
+    QASM_BOOL_TYPE;
+    QASM_ANGLE_TYPE;
+    QASM_COMPLEX_TYPE;
+    QASM_DURATION_TYPE;
+    QASM_ARRAY_TYPE;
+    QASM_STRETCH_TYPE;
+    QASM_WAVEFORM_TYPE;
+    QASM_PORT_TYPE;
+    QASM_FRAME_TYPE;
 }
 
 {
@@ -845,6 +862,22 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
         { "pragma"       , QASM_PRAGMA        , LANGUAGE_OPENQASM },
         { "reset"        , QASM_RESET         , LANGUAGE_OPENQASM },
         { "->"           , QASM_ARROW         , LANGUAGE_OPENQASM },
+        { "qubit"        , QASM_QUBIT_TYPE    , LANGUAGE_OPENQASM },
+        { "qreg"         , QASM_QREG_TYPE     , LANGUAGE_OPENQASM },
+        { "int"          , QASM_INT_TYPE      , LANGUAGE_OPENQASM },
+        { "uint"         , QASM_UNIT_TYPE     , LANGUAGE_OPENQASM },
+        { "float"        , QASM_FLOAT_TYPE    , LANGUAGE_OPENQASM },
+        { "bit"          , QASM_BIT_TYPE      , LANGUAGE_OPENQASM },
+        { "creg"         , QASM_CREG_TYPE     , LANGUAGE_OPENQASM },
+        { "bool"         , QASM_BOOL_TYPE     , LANGUAGE_OPENQASM },
+        { "angle"        , QASM_ANGLE_TYPE    , LANGUAGE_OPENQASM },
+        { "complex"      , QASM_COMPLEX_TYPE  , LANGUAGE_OPENQASM },
+        { "duration"     , QASM_DURATION_TYPE , LANGUAGE_OPENQASM },
+        { "array"        , QASM_ARRAY_TYPE    , LANGUAGE_OPENQASM },
+        { "stretch"      , QASM_STRETCH_TYPE  , LANGUAGE_OPENQASM },
+        { "waveform"     , QASM_WAVEFORM_TYPE , LANGUAGE_OPENQASM },
+        { "port"         , QASM_PORT_TYPE     , LANGUAGE_OPENQASM },
+        { "frame"        , QASM_FRAME_TYPE    , LANGUAGE_OPENQASM },
    };
 
     // fill up the literals for the language that we are parsing

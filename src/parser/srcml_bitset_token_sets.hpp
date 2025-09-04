@@ -217,4 +217,16 @@ token_set(srcMLParser, multiline_literals_py_token_set,
     srcMLParser::SQUOTE_DOCSTRING_END, srcMLParser::SQUOTE_DOXYGEN_END
 )
 
+token_set(srcMLParser, types_openqasm_token_set,
+    // OpenQASM type names
+    srcMLParser::QASM_QUBIT_TYPE, srcMLParser::QASM_QREG_TYPE,
+    srcMLParser::QASM_INT_TYPE, srcMLParser::QASM_UNIT_TYPE,
+    srcMLParser::QASM_FLOAT_TYPE, srcMLParser::QASM_BIT_TYPE,
+    srcMLParser::QASM_CREG_TYPE, srcMLParser::QASM_BOOL_TYPE,
+    srcMLParser::QASM_ANGLE_TYPE, srcMLParser::QASM_COMPLEX_TYPE,
+    srcMLParser::QASM_DURATION_TYPE, srcMLParser::QASM_ARRAY_TYPE,
+    srcMLParser::QASM_STRETCH_TYPE, srcMLParser::QASM_WAVEFORM_TYPE,
+    srcMLParser::QASM_PORT_TYPE, srcMLParser::QASM_FRAME_TYPE
+)
+
 #endif

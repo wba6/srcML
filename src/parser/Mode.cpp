@@ -137,4 +137,6 @@ const srcMLState::MODE_TYPE ModeStack::MODE_QUANTUM_ARGUMENT_QASM              (
 const srcMLState::MODE_TYPE ModeStack::MODE_MEASURE_QASM                       (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_FOR_LOOP_QASM                      (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_FOR_CONTROL_QASM                   (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_DECL_QASM                          (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_DECL_TYPE_QASM                     (bit(__COUNTER__));
 

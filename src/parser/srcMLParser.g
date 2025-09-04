@@ -804,6 +804,7 @@ public:
     static const antlr::BitSet right_bracket_py_token_set;
     static const antlr::BitSet comment_py_token_set;
     static const antlr::BitSet multiline_literals_py_token_set;
+    static const antlr::BitSet types_openqasm_token_set;
 
     // constructor
     srcMLParser(antlr::TokenStream& lexer, int lang, const OPTION_TYPE& options);
@@ -1388,6 +1389,12 @@ start_openqasm[] {
 }:
 
 
+
+        { inMode(MODE_DECL_QASM) }?
+        qasm_decl |
+
+
+
         // range-based "in" only occurs in for-loops
         { inTransparentMode(MODE_FOR_CONTROL_QASM) }?
         range_in_qasm |
@@ -1412,6 +1419,7 @@ start_openqasm[] {
 
         // Get the type of a function when -> is encountered
         function_type_qasm |
+
         start
 ;
 exception
@@ -5592,6 +5600,10 @@ statement_part[] {
         terminate_post
         keyword_statements |
 
+        // If in OpenQASM for loop, { means end the control and start block, not expression block.
+        { inMode(MODE_EXPRESSION) && inTransparentMode(MODE_FOR_LOOP_QASM) }?
+        lcurly |
+
         // already in an expression
         { inMode(MODE_EXPRESSION) }?
         expression_part_plus_linq |
@@ -8531,7 +8543,10 @@ identifier_list[] { ENTRY_DEBUG } :
         EMIT | FOREACH | SIGNAL | FOREVER |
 
         // Python
-        PY_2_EXEC | PY_2_PRINT | PY_ASYNC | PY_CASE | PY_MATCH | PY_TYPE
+        PY_2_EXEC | PY_2_PRINT | PY_ASYNC | PY_CASE | PY_MATCH | PY_TYPE |
+
+        // OpenQASM
+        qasm_type_set
 ;
 
 /*
@@ -17962,7 +17977,6 @@ complete_openqasm_quantum_argument[] { ENTRY_DEBUG; } :
         {
             startNewMode(MODE_QUANTUM_ARGUMENT_QASM);
 
-            //startNewMode(MODE_EXPRESSION | MODE_EXPECT);
         }
 
         (
@@ -18000,66 +18014,54 @@ measure_result_qasm[] { ENTRY_DEBUG } :
 control_initialization_qasm[] { ENTRY_DEBUG } :
         {
 
+            startNewMode(MODE_DECL_QASM | MODE_EXPECT);
+
             startElement(SINIT);
-
-            startElement(STYPE);
-
-            startElement(SDECLARATION);
-
-            startNewMode(MODE_DECL | MODE_EXPECT);
-
         }
-
-        // {
-        //     assertMode(MODE_CONTROL_INITIALIZATION | MODE_EXPECT);
-
-        //     // setup next stage for condition in the control group mode
-        //     replaceMode(MODE_CONTROL_INITIALIZATION, MODE_CONTROL_CONDITION);
-
-        //     // Python control groups contain one or more name tags (not an expression)
-        //     startNewMode(MODE_VARIABLE_NAME | MODE_STATEMENT | MODE_LIST);
-        // }
-
-        // (options { greedy = true; } :
-        //     { LA(1) == PY_IN }?
-        //     {
-        //         if (inTransparentMode(MODE_EXPRESSION)) {
-        //             endDownToMode(MODE_EXPRESSION);
-        //             endMode(MODE_EXPRESSION);
-        //         }
-
-        //         break;
-        //     } |
-
-        //     // ensure compound calls are marked correctly (e.g., "a(b)(c)")
-        //     { inMode(MODE_FUNCTION_CALL) && last_consumed == RPAREN && LA(1) == LPAREN }?
-        //     call_argument_list |
-
-        //     { inMode(MODE_ARGUMENT) }?
-        //     argument |
-
-        //     // special non-parenthesized tuple logic outside of 'expression'
-        //     { perform_tuple_check_no_paren_py() }?
-        //     control_tuple_no_paren_py |
-
-        //     {
-        //         if (!inMode(MODE_EXPRESSION))
-        //             startNewMode(MODE_EXPRESSION | MODE_EXPECT);
-        //     }
-        //     expression |
-
-        //     comma
-        // )*
 ;
 
 range_in_qasm[] { ENTRY_DEBUG } :
         {
-            endMode(MODE_DECL);
-
             startNewMode(MODE_EXPRESSION | MODE_EXPECT);
 
             startElement(SRANGE_IN);
         }
 
-        PY_IN
+        QASM_IN
+;
+
+
+
+qasm_decl[] { CompleteElement element(this); ENTRY_DEBUG } :
+        {
+            startNewMode(MODE_DECL_QASM);
+
+            startElement(SDECLARATION);
+
+            startNewMode(MODE_DECL_TYPE_QASM);
+
+            startElement(STYPE);
+
+            startNewMode(MODE_VARIABLE_NAME);
+
+            startElement(SNAME);
+        }
+
+        qasm_type_set
+
+        {
+            endDownToMode(MODE_DECL_QASM);
+        }
+
+        compound_name
+;
+
+qasm_type_set[] { ENTRY_DEBUG } :
+
+        QASM_QUBIT_TYPE | QASM_QREG_TYPE | QASM_INT_TYPE |
+        QASM_UNIT_TYPE | QASM_FLOAT_TYPE | QASM_BIT_TYPE |
+        QASM_CREG_TYPE | QASM_BOOL_TYPE | QASM_ANGLE_TYPE |
+        QASM_COMPLEX_TYPE | QASM_DURATION_TYPE | QASM_ARRAY_TYPE |
+        QASM_STRETCH_TYPE | QASM_WAVEFORM_TYPE | QASM_PORT_TYPE |
+        QASM_FRAME_TYPE
 ;

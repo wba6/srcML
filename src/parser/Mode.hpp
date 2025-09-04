@@ -345,4 +345,8 @@ const static srcMLState::MODE_TYPE MODE_FOR_LOOP_QASM;
 
 const static srcMLState::MODE_TYPE MODE_FOR_CONTROL_QASM;
 
+const static srcMLState::MODE_TYPE MODE_DECL_QASM;
+
+const static srcMLState::MODE_TYPE MODE_DECL_TYPE_QASM;
+
 #endif
