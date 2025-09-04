@@ -217,12 +217,4 @@ token_set(srcMLParser, multiline_literals_py_token_set,
     srcMLParser::SQUOTE_DOCSTRING_END, srcMLParser::SQUOTE_DOXYGEN_END
 )
 
-token_set(srcMLParser, triplex_keyword_set,
-    // CMake
-    srcMLParser::BREAK,
-    srcMLParser::CONTINUE,
-    srcMLParser::ELSE,
-    srcMLParser::ENDIF
-)
-
 #endif
