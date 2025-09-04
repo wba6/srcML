@@ -56,7 +56,7 @@ int main(int, char* argv[]) {
     */
 
     {
-        dassert(srcml_get_language_list_size(), 6);
+        dassert(srcml_get_language_list_size(), 7);
     }
 
     /*
@@ -84,11 +84,15 @@ int main(int, char* argv[]) {
     }
 
     {
-        dassert(srcml_get_language_list(5), std::string("Objective-C"));
+        dassert(srcml_get_language_list(5), std::string("OpenQASM"));
     }
 
     {
-        dassert(srcml_get_language_list(6), 0);
+        dassert(srcml_get_language_list(6), std::string("Objective-C"));
+    }
+
+    {
+        dassert(srcml_get_language_list(7), 0);
     }
 
     /*

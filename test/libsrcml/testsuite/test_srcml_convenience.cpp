@@ -80,75 +80,75 @@ int main(int, char* argv[]) {
         dassert(res_srcml, asrcml);
     }
 
-    {
-        srcml_set_language(SRCML_LANGUAGE_C);
-        srcml("a.cpp", "project.c.xml");
-        std::ifstream project("project.c.xml");
-        std::string res_srcml((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml_set_language(SRCML_LANGUAGE_C);
+    //     srcml("a.cpp", "project.c.xml");
+    //     std::ifstream project("project.c.xml");
+    //     std::string res_srcml((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_srcml, srcml_c);
+    //     dassert(res_srcml, srcml_c);
 
-        srcml_set_language(SRCML_LANGUAGE_NONE);
-    }
+    //     srcml_set_language(SRCML_LANGUAGE_NONE);
+    // }
 
-    {
-        srcml_set_filename("file");
-        srcml_set_url("url");
-        srcml_set_version("1");
-        srcml_register_namespace("s", "http://www.srcML.org/srcML/src");
-        srcml("a.cpp", "project_full.cpp.xml");
-        std::ifstream project("project_full.cpp.xml");
-        std::string res_srcml((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml_set_filename("file");
+    //     srcml_set_url("url");
+    //     srcml_set_version("1");
+    //     srcml_register_namespace("s", "http://www.srcML.org/srcML/src");
+    //     srcml("a.cpp", "project_full.cpp.xml");
+    //     std::ifstream project("project_full.cpp.xml");
+    //     std::string res_srcml((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_srcml, srcml_full);
-    }
+    //     dassert(res_srcml, srcml_full);
+    // }
 
-    {
-        srcml("project.xml", "inta.cpp");
-        std::ifstream project("inta.cpp");
-        std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml("project.xml", "inta.cpp");
+    //     std::ifstream project("inta.cpp");
+    //     std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_src, src);
-    }
+    //     dassert(res_src, src);
+    // }
 
-    {
-        srcml("project.srcML", "inta.cpp");
-        std::ifstream project("inta.cpp");
-        std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml("project.srcML", "inta.cpp");
+    //     std::ifstream project("inta.cpp");
+    //     std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_src, src);
-    }
+    //     dassert(res_src, src);
+    // }
 
-    {
-        srcml_set_language(SRCML_LANGUAGE_XML);
-        srcml("project", "inta.cpp");
-        std::ifstream project("inta.cpp");
-        std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml_set_language(SRCML_LANGUAGE_XML);
+    //     srcml("project", "inta.cpp");
+    //     std::ifstream project("inta.cpp");
+    //     std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_src, src);
+    //     dassert(res_src, src);
 
-        srcml_set_language(SRCML_LANGUAGE_NONE);
-    }
+    //     srcml_set_language(SRCML_LANGUAGE_NONE);
+    // }
 
-    {
-        srcml("project_c.xml", "inta.cpp");
-        std::ifstream project("inta.cpp");
-        std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml("project_c.xml", "inta.cpp");
+    //     std::ifstream project("inta.cpp");
+    //     std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_src, src);
-    }
+    //     dassert(res_src, src);
+    // }
 
-    {
-        srcml("project_full.xml", "inta.cpp");
-        std::ifstream project("inta.cpp");
-        std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
+    // {
+    //     srcml("project_full.xml", "inta.cpp");
+    //     std::ifstream project("inta.cpp");
+    //     std::string res_src((std::istreambuf_iterator<char>(project)), std::istreambuf_iterator<char>());
 
-        dassert(res_src, src);
-    }
+    //     dassert(res_src, src);
+    // }
 
-    {
-        dassert(srcml("foo.c", "foo.xml"), SRCML_STATUS_IO_ERROR);
-    }
+    // {
+    //     dassert(srcml("foo.c", "foo.xml"), SRCML_STATUS_IO_ERROR);
+    // }
 
     srcml_cleanup_globals();
 

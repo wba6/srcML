@@ -325,4 +325,24 @@ const static srcMLState::MODE_TYPE MODE_FROM_PY;
 
 const static srcMLState::MODE_TYPE MODE_SET_PY;
 
+
+// OpenQASM Modes
+const static srcMLState::MODE_TYPE MODE_GATE_QUANTUM_PARAMETER_LIST_QASM;
+
+const static srcMLState::MODE_TYPE MODE_GATE_CLASSICAL_PARAMETER_LIST_QASM;
+
+const static srcMLState::MODE_TYPE MODE_GATE_PARAMETER_QASM;
+
+const static srcMLState::MODE_TYPE MODE_FUNCTION_TYPE_QASM;
+
+const static srcMLState::MODE_TYPE MODE_QUANTUM_ARGUMENT_LIST_QASM;
+
+const static srcMLState::MODE_TYPE MODE_QUANTUM_ARGUMENT_QASM;
+
+const static srcMLState::MODE_TYPE MODE_MEASURE_QASM;
+
+const static srcMLState::MODE_TYPE MODE_FOR_LOOP_QASM;
+
+const static srcMLState::MODE_TYPE MODE_FOR_CONTROL_QASM;
+
 #endif

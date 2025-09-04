@@ -126,3 +126,15 @@ const srcMLState::MODE_TYPE ModeStack::MODE_YIELD_PY                   (bit(__CO
 const srcMLState::MODE_TYPE ModeStack::MODE_CASE_PY                    (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_FROM_PY                    (bit(__COUNTER__));
 const srcMLState::MODE_TYPE ModeStack::MODE_SET_PY                     (bit(__COUNTER__));
+
+// OpenQASM modes
+const srcMLState::MODE_TYPE ModeStack::MODE_GATE_QUANTUM_PARAMETER_LIST_QASM   (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_GATE_CLASSICAL_PARAMETER_LIST_QASM (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_GATE_PARAMETER_QASM                (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_FUNCTION_TYPE_QASM                 (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_QUANTUM_ARGUMENT_LIST_QASM         (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_QUANTUM_ARGUMENT_QASM              (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_MEASURE_QASM                       (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_FOR_LOOP_QASM                      (bit(__COUNTER__));
+const srcMLState::MODE_TYPE ModeStack::MODE_FOR_CONTROL_QASM                   (bit(__COUNTER__));
+

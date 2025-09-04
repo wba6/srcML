@@ -122,7 +122,7 @@ OPERATORS options { testLiterals = true; } {
     '-' ('-' | '=' | '>' ('*')? )? |
 
     // *, *=, ** (Python), **= (Python)
-    '*' ({ inLanguage(LANGUAGE_PYTHON) }? '*')? ('=')? |
+    '*' ({ inLanguage(LANGUAGE_PYTHON) || inLanguage(LANGUAGE_OPENQASM) }? '*')? ('=')? |
 
     '%' ('=')? |
     '^' ('=')? |
