@@ -11765,11 +11765,9 @@ rparen[bool markup = true, bool end_control_incr = false] {
                     // end the condition
                     endMode(MODE_CONDITION);
 
+                    // start the block
                     startNewMode(MODE_BLOCK);
                     startNoSkipElement(SBLOCK);
-
-                    startNewMode(MODE_BLOCK_CONTENT);
-                    startNoSkipElement(SCONTENT);
 
                     // allow statements to appear in the block
                     startNewMode(MODE_STATEMENT | MODE_NEST);
@@ -17833,10 +17831,6 @@ cmake_paren_pair_begin_statement[] { ENTRY_DEBUG }:
             // start the block tag
             startNewMode(MODE_BLOCK);
             startNoSkipElement(SBLOCK);
-
-            // start the block content tag
-            startNewMode(MODE_BLOCK_CONTENT);
-            startNoSkipElement(SCONTENT);
 
             setMode(MODE_TOP | MODE_STATEMENT | MODE_NEST | MODE_LIST);
         }
