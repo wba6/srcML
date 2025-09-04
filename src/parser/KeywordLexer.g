@@ -354,6 +354,7 @@ tokens {
 
     // CMake
     CMAKE_ELSEIF;
+    CMAKE_ENDWHILE;
 }
 
 {
@@ -809,6 +810,7 @@ KeywordLexer(UTF8CharBuffer* pinput, int language, OPTION_TYPE & options,
 
         // CMake
         { "elseif"       , CMAKE_ELSEIF      , LANGUAGE_CMAKE },
+        { "endwhile"     , CMAKE_ENDWHILE    , LANGUAGE_CMAKE },
    };
 
     // fill up the literals for the language that we are parsing

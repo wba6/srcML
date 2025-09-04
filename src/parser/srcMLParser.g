@@ -951,14 +951,16 @@ public:
         std::array<Rule, SIZE> temp_array;
 
         /* GENERIC STATEMENTS */
-        temp_array[BREAK]        = { SBREAK_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };
-        temp_array[CONTINUE]     = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };
-        temp_array[ELSE]         = { SELSE, 0, MODE_STATEMENT | MODE_NEST, 0, &srcMLParser::if_statement_start_cmake, &srcMLParser::cmake_paren_pair_begin_statement };
-        temp_array[ENDIF]        = { SNOP, MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, 0, &srcMLParser::if_statement_end_cmake, &srcMLParser::cmake_paren_pair_end_statement };
-        temp_array[IF]           = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start_cmake, nullptr };
+        temp_array[BREAK]    = { SBREAK_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };
+        temp_array[CONTINUE] = { SCONTINUE_STATEMENT, 0, MODE_STATEMENT | MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, nullptr, &srcMLParser::cmake_paren_pair_end_statement };
+        temp_array[ELSE]     = { SELSE, 0, MODE_STATEMENT | MODE_NEST, 0, &srcMLParser::if_statement_start_cmake, &srcMLParser::cmake_paren_pair_begin_statement };
+        temp_array[ENDIF]    = { SNOP, MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, 0, &srcMLParser::if_statement_end_cmake, &srcMLParser::cmake_paren_pair_end_statement };
+        temp_array[IF]       = { SIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start_cmake, nullptr };
+        temp_array[WHILE]    = { SWHILE_STATEMENT, 0, MODE_STATEMENT | MODE_NEST | MODE_WHILE_LOOP_CMAKE, MODE_CONDITION | MODE_EXPECT, nullptr, nullptr };
 
         /* CMAKE STATEMENTS */
-        temp_array[CMAKE_ELSEIF] = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start_cmake, nullptr };
+        temp_array[CMAKE_ELSEIF]   = { SELSEIF, 0, MODE_STATEMENT | MODE_NEST | MODE_IF | MODE_ELSE, MODE_CONDITION | MODE_EXPECT, &srcMLParser::if_statement_start_cmake, nullptr };
+        temp_array[CMAKE_ENDWHILE] = { SNOP, MODE_PAREN_ENDS_STATEMENT_CMAKE, 0, 0, &srcMLParser::while_statement_end_cmake, &srcMLParser::cmake_paren_pair_end_statement };
 
         return temp_array;
     }
@@ -11760,8 +11762,12 @@ rparen[bool markup = true, bool end_control_incr = false] {
 
         {
             if (isempty) {
-                // special handling for the end of a condition in an if statement (CMake)
-                if (inLanguage(LANGUAGE_CMAKE) && inMode(MODE_CONDITION) && inPrevMode(MODE_IF)) {
+                // special handling for the end of a condition in an if or while statement (CMake)
+                if (
+                    inLanguage(LANGUAGE_CMAKE)
+                    && inMode(MODE_CONDITION)
+                    && (inPrevMode(MODE_IF) || inPrevMode(MODE_WHILE_LOOP_CMAKE))
+                ) {
                     // end the condition
                     endMode(MODE_CONDITION);
 
@@ -17849,6 +17855,9 @@ cmake_paren_pair_end_statement[] { ENTRY_DEBUG }:
                 endDownToMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
                 endMode(MODE_PAREN_ENDS_STATEMENT_CMAKE);
             }
+
+            if (inMode(MODE_IF_STATEMENT) || inMode(MODE_WHILE_LOOP_CMAKE))
+                endMode();
         }
 ;
 
@@ -17891,5 +17900,19 @@ if_statement_end_cmake[] { ENTRY_DEBUG } :
             flushSkip();
 
             endDownToMode(MODE_IF_STATEMENT);
+        }
+;
+
+/*
+  while_statement_end_cmake
+
+  Helper rule to end a while loop in CMake.
+*/
+while_statement_end_cmake[] { ENTRY_DEBUG } :
+        {
+            // flush any whitespace tokens since sections should end at the last possible place
+            flushSkip();
+
+            endDownToMode(MODE_WHILE_LOOP_CMAKE);
         }
 ;
