@@ -11051,7 +11051,9 @@ expression_statement[CALL_TYPE type = NOCALL, int call_count = 1] { ENTRY_DEBUG 
         expression_statement_process
 
         {
-            pauseStream();
+            // force expression statements in CMake
+            if (!inLanguage(LANGUAGE_CMAKE))
+                pauseStream();
         }
 
         expression[type, call_count]
@@ -11729,6 +11731,10 @@ rparen[bool markup = true, bool end_control_incr = false] {
                 }
             }
 
+            // found CMake rparen that ends a call
+            if (inLanguage(LANGUAGE_CMAKE) && inMode(MODE_ARGUMENT))
+                wascall = true;
+
             if (isempty) {
                 // additional right parentheses indicates end of non-list modes
                 endDownToModeSet(MODE_LIST | MODE_PREPROC | MODE_END_ONLY_AT_RPAREN | MODE_ONLY_END_TERMINATE);
@@ -11863,6 +11869,13 @@ rparen[bool markup = true, bool end_control_incr = false] {
                 if (inMode(MODE_LIST))
                     endMode(MODE_LIST);
                 }
+            }
+
+            // special case for a CMake right parenthesis that acts as a terminate
+            if (inLanguage(LANGUAGE_CMAKE) && wascall && inTransparentMode(MODE_STATEMENT)) {
+                terminate_pre();
+                wait_terminate_post = true;
+                terminate_post();
             }
 
             // special case for a Python assert message that directly follows a call
