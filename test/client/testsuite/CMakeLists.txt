@@ -10,17 +10,29 @@
 file(GLOB CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/*.sh")
 list(REMOVE_ITEM CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/framework_test.sh")
 
-# use Git Bash to run tests on Windowa
+# use Bash to run tests on Windows
 set(BASH bash)
 if (WIN32)
-    find_program(GIT_BASH "git-bash" PATHS 
-        "C:/Program Files/Git"
-        "C:/Program Files/Git/usr"
-        "C:/Program Files (x86)/Git/usr"
-        "C:/Program Files (x86)/Git"
-    NO_DEFAULT_PATH)
-    if (GIT_BASH)
-        set(BASH ${GIT_BASH})
+    # Try to find bash.exe first (preferred for no window creation)
+    find_program(BASH_EXE "bash.exe" PATHS 
+        "C:/Program Files/Git/bin"
+        "C:/Program Files (x86)/Git/bin"
+        "C:/msys64/usr/bin"
+        "C:/msys32/usr/bin"
+        NO_DEFAULT_PATH)
+    
+    # If bash.exe not found, try git-bash.exe with no-window flags
+    if (NOT BASH_EXE)
+        find_program(GIT_BASH_EXE "git-bash.exe" PATHS 
+            "C:/Program Files/Git"
+            "C:/Program Files (x86)/Git"
+            NO_DEFAULT_PATH)
+        if (GIT_BASH_EXE)
+            # Use git-bash.exe with flags to prevent window creation
+            set(BASH ${GIT_BASH_EXE} --no-cd --hide)
+        endif()
+    else()
+        set(BASH ${BASH_EXE})
     endif()
 endif()
 
