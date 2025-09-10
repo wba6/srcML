@@ -13,14 +13,14 @@ list(REMOVE_ITEM CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/framework_test.sh")
 # use Git Bash to run tests on Windowa
 set(BASH bash)
 if (WIN32)
-    find_program(GIT_BASH "git-bash" PATHS 
+    find_program(GIT_BASH "git-bash" PATHS
         "C:/Program Files/Git"
         "C:/Program Files/Git/usr"
         "C:/Program Files (x86)/Git/usr"
         "C:/Program Files (x86)/Git"
     NO_DEFAULT_PATH)
     if (GIT_BASH)
-        set(BASH ${GIT_BASH})
+        set(BASH ${GIT_BASH} --hide)
     endif()
 endif()
 
