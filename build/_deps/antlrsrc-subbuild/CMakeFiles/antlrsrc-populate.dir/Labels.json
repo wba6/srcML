@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/CMakeFiles/antlrsrc-populate"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/CMakeFiles/antlrsrc-populate.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/CMakeFiles/antlrsrc-populate-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-test.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/antlrsrc-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"antlrsrc-populate"
+		],
+		"name" : "antlrsrc-populate"
+	}
+}
