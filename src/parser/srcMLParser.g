@@ -786,6 +786,12 @@ public:
     static const antlr::BitSet comment_py_token_set;
     static const antlr::BitSet multiline_literals_py_token_set;
 
+    // Python parsing static arrays (moved outside start_python() to avoid stack overflow on Windows)
+    static constexpr size_t DUPLEX_RULES_SIZE = 700;
+    static constexpr size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
+    static constexpr int PY_EXCEPT_MULTOPS = DUPLEX_RULES_SIZE + 100;
+    static constexpr int PY_YIELD_PY_FROM = DUPLEX_RULES_SIZE + 101;
+
     // constructor
     srcMLParser(antlr::TokenStream& lexer, int lang, const OPTION_TYPE& options);
 
@@ -944,6 +950,17 @@ public:
         temp_array[PY_YIELD_PY_FROM]  = { SYIELD_FROM_STATEMENT, 0, MODE_STATEMENT, MODE_EXPRESSION | MODE_EXPECT, nullptr, &srcMLParser::consume };  // extra consume() for `from`
 
         return temp_array;
+    }
+
+    // Initialize Python parsing static arrays (moved outside start_python() to avoid stack overflow on Windows)
+    inline const std::array<int, srcMLParser::DUPLEX_RULES_SIZE * srcMLParser::DUPLEX_RULES_SIZE>& getPythonDuplexKeywords() {
+        static const auto duplexKeywords = getDuplexKeywords<srcMLParser::DUPLEX_RULES_SIZE>(srcMLParser::PY_EXCEPT_MULTOPS, srcMLParser::PY_YIELD_PY_FROM);
+        return duplexKeywords;
+    }
+
+    inline const std::array<srcMLParser::Rule, srcMLParser::PYTHON_RULES_SIZE>& getPythonRulesArray() {
+        static const auto python_rules = getPythonRules<srcMLParser::PYTHON_RULES_SIZE>(srcMLParser::PY_EXCEPT_MULTOPS, srcMLParser::PY_YIELD_PY_FROM);
+        return python_rules;
     }
 }
 
@@ -1143,28 +1160,9 @@ catch[...] {
 start_python[] {
         ++start_count;
 
-        /*
-          May need to increase these constants in the future as more tokens are added
-        */
-
-        // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
-        const size_t DUPLEX_RULES_SIZE = 700;
-
-        // The duplex keyword values must start at a value 100 greater than the duplex rule size directly above
-        // Increment each new duplex keyword token by an additional one (except the first)
-        const int PY_EXCEPT_MULTOPS = DUPLEX_RULES_SIZE + 100;
-        const int PY_YIELD_PY_FROM = DUPLEX_RULES_SIZE + 101;
-
-        // The Python rule size must be 200 greater than the duplex rule size
-        // If there are ever more than 100 duplex keywords, this has to change
-        const size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
-
-        // A duplex keyword is a pair of adjacent keywords
-        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = getDuplexKeywords<DUPLEX_RULES_SIZE>(PY_EXCEPT_MULTOPS, PY_YIELD_PY_FROM);
-
-        // Python rules adhere to the following form:
-        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
-        static const std::array<Rule, PYTHON_RULES_SIZE> python_rules = getPythonRules<PYTHON_RULES_SIZE>(PY_EXCEPT_MULTOPS, PY_YIELD_PY_FROM);
+        // Get references to the static arrays (defined at file scope to avoid stack overflow on Windows)
+        const auto& duplexKeywords = getPythonDuplexKeywords();
+        const auto& python_rules = getPythonRulesArray();
 
         // ensure the lparen deque never starts empty by adding a dummy entry
         if (lparen_types_py.empty())
