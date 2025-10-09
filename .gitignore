@@ -5,3 +5,7 @@ CMakeUserPresets.json
 .\#*
 *.pyc
 .DS_Store
+
+# Build directories
+/build/
+*-build/
