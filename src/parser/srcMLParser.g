@@ -919,7 +919,7 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<int, SIZE * SIZE> getDuplexKeywords(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
+    static constexpr std::array<int, SIZE * SIZE> getDuplexKeywords(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
         std::array<int, SIZE * SIZE> temp_array{};
         temp_array[PY_EXCEPT + (MULTOPS << 8)] = PY_EXCEPT_MULTOPS;
         temp_array[PY_YIELD + (PY_FROM << 8)] = PY_YIELD_PY_FROM;
@@ -927,7 +927,7 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<Rule, SIZE> getPythonRules(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
+    static constexpr std::array<Rule, SIZE> getPythonRules(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
         std::array<Rule, SIZE> temp_array;
 
         /* GENERIC STATEMENTS */
