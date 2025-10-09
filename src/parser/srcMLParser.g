@@ -844,6 +844,28 @@ public:
         void (srcMLParser::*post)() = nullptr;
     };
 
+    // Static constants for Python parser table sizes
+    // Upper bounds for arrays (safe upper limits)
+    static constexpr size_t DUPLEX_RULES_SIZE = 700;
+    static constexpr size_t PYTHON_RULES_SIZE = 900;
+
+    // Reserve two dedicated indices (last two entries) for duplex-combined pseudo tokens
+    static constexpr size_t PY_EXCEPT_MULTOPS_INDEX = PYTHON_RULES_SIZE - 2;
+    static constexpr size_t PY_YIELD_PY_FROM_INDEX  = PYTHON_RULES_SIZE - 1;
+
+    // Static getters that materialize the arrays once in static storage
+    static inline const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE>& getStaticDuplexKeywords() {
+        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords =
+            getDuplexKeywords<DUPLEX_RULES_SIZE>(PY_EXCEPT_MULTOPS_INDEX, PY_YIELD_PY_FROM_INDEX);
+        return duplexKeywords;
+    }
+
+    static inline const std::array<Rule, PYTHON_RULES_SIZE>& getStaticPythonRules() {
+        static const std::array<Rule, PYTHON_RULES_SIZE> python_rules =
+            getPythonRules<PYTHON_RULES_SIZE>(PY_EXCEPT_MULTOPS_INDEX, PY_YIELD_PY_FROM_INDEX);
+        return python_rules;
+    }
+
     bool processRule(const Rule& rule) {
         if (rule.notInMode != 0 && inMode(rule.notInMode))
             return false;
@@ -897,7 +919,7 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<int, SIZE * SIZE> getDuplexKeywords(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
+    static constexpr std::array<int, SIZE * SIZE> getDuplexKeywords(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
         std::array<int, SIZE * SIZE> temp_array{};
         temp_array[PY_EXCEPT + (MULTOPS << 8)] = PY_EXCEPT_MULTOPS;
         temp_array[PY_YIELD + (PY_FROM << 8)] = PY_YIELD_PY_FROM;
@@ -905,7 +927,7 @@ public:
     }
 
     template <size_t SIZE>
-    constexpr const std::array<Rule, SIZE> getPythonRules(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
+    static constexpr std::array<Rule, SIZE> getPythonRules(const size_t PY_EXCEPT_MULTOPS, const size_t PY_YIELD_PY_FROM) {
         std::array<Rule, SIZE> temp_array;
 
         /* GENERIC STATEMENTS */
@@ -1147,24 +1169,9 @@ start_python[] {
           May need to increase these constants in the future as more tokens are added
         */
 
-        // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
-        const size_t DUPLEX_RULES_SIZE = 700;
-
-        // The duplex keyword values must start at a value 100 greater than the duplex rule size directly above
-        // Increment each new duplex keyword token by an additional one (except the first)
-        const int PY_EXCEPT_MULTOPS = DUPLEX_RULES_SIZE + 100;
-        const int PY_YIELD_PY_FROM = DUPLEX_RULES_SIZE + 101;
-
-        // The Python rule size must be 200 greater than the duplex rule size
-        // If there are ever more than 100 duplex keywords, this has to change
-        const size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
-
-        // A duplex keyword is a pair of adjacent keywords
-        static const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE> duplexKeywords = getDuplexKeywords<DUPLEX_RULES_SIZE>(PY_EXCEPT_MULTOPS, PY_YIELD_PY_FROM);
-
-        // Python rules adhere to the following form:
-        // START_TOKEN, MODE_NOT_IN, MODE_TO_START, MODE_FOLLOWING_KEYWORD, pre(), post()
-        static const std::array<Rule, PYTHON_RULES_SIZE> python_rules = getPythonRules<PYTHON_RULES_SIZE>(PY_EXCEPT_MULTOPS, PY_YIELD_PY_FROM);
+        // Get const references to the static arrays (no stack allocation)
+        const auto& duplexKeywords = getStaticDuplexKeywords();
+        const auto& python_rules = getStaticPythonRules();
 
         // ensure the lparen deque never starts empty by adding a dummy entry
         if (lparen_types_py.empty())
