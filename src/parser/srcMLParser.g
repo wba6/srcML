@@ -844,14 +844,17 @@ public:
         void (srcMLParser::*post)() = nullptr;
     };
 
-    // Static constants for Python parser table sizes
-    // Upper bounds for arrays (safe upper limits)
-    static constexpr size_t DUPLEX_RULES_SIZE = 700;
-    static constexpr size_t PYTHON_RULES_SIZE = 900;
+     // The number of tokens is the next highest "hundred" in `srcMLParserTokenTypes.txt` in the build directory
+     const size_t DUPLEX_RULES_SIZE = 700;
 
-    // Reserve two dedicated indices (last two entries) for duplex-combined pseudo tokens
-    static constexpr size_t PY_EXCEPT_MULTOPS_INDEX = PYTHON_RULES_SIZE - 2;
-    static constexpr size_t PY_YIELD_PY_FROM_INDEX  = PYTHON_RULES_SIZE - 1;
+     // The duplex keyword values must start at a value 100 greater than the duplex rule size directly above
+     // Increment each new duplex keyword token by an additional one (except the first)
+     const int PY_EXCEPT_MULTOPS = DUPLEX_RULES_SIZE + 100;
+     const int PY_YIELD_PY_FROM = DUPLEX_RULES_SIZE + 10
+
+     // The Python rule size must be 200 greater than the duplex rule size
+     // If there are ever more than 100 duplex keywords, this has to change
+     const size_t PYTHON_RULES_SIZE = DUPLEX_RULES_SIZE + 200;
 
     // Static getters that materialize the arrays once in static storage
     static inline const std::array<int, DUPLEX_RULES_SIZE * DUPLEX_RULES_SIZE>& getStaticDuplexKeywords() {
