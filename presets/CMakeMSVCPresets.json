@@ -9,7 +9,6 @@
       "displayName": "MSVC",
       "description": "Default build options for MSVC",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
-      "binaryDir": "${sourceDir}/cmake-build-ci-msvc",
       "toolchainFile": "toolchain-msvc.cmake",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "cl",
