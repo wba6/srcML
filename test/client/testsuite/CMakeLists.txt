@@ -10,7 +10,7 @@
 file(GLOB CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/*.sh")
 list(REMOVE_ITEM CLIENT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/framework_test.sh")
 
-# use Git Bash to run tests on Windowa
+# use Git Bash to run tests on Windows
 set(BASH bash)
 if (WIN32)
     find_program(GIT_BASH "git-bash" PATHS
