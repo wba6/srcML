@@ -44,27 +44,37 @@ jobs:
         uses: microsoft/setup-msbuild@v1
         if: ${{ matrix.os == 'windows-latest' }}
 
-      - name: Create build directory
+      - name: Configure on Windows
         shell: bash
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: mkdir build
-
-      - name: Build on Windows
-        shell: bash
-        if: ${{ matrix.os == 'windows-latest' }}
-        working-directory: build
+        if: ${{ matrix.os == 'windows-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           export UseMultiToolTask=true
-          cmake ..
-          cmake --build . --config Release --target install
+          cmake --preset ci-msvc -B build
 
-      - name: Build on Ubuntu/macOS
+      - name: Configure on Ubuntu
+        shell: bash
+        if: ${{ matrix.os == 'ubuntu-latest' && !steps.cache.outputs.cache-hit }}
+        run: |
+          cmake --preset ci-ubuntu -B build
+
+      - name: Configure on macOS
+        shell: bash
+        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+        run: |
+          cmake --preset ci-macos -B build
+
+      - name: Build and Install on Windows
+        shell: bash
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          export UseMultiToolTask=true
+          cmake --build build --config Release --target install
+
+      - name: Build and Install on Ubuntu/macOS
         shell: bash
         if: ${{ matrix.os != 'windows-latest' }}
-        working-directory: build
         run: |
-          cmake .. -G Ninja
-          sudo cmake --build . --config Release --target install
+          sudo cmake --build build --config Release --target install
 
       - name: Finish install for Ubuntu
         shell: bash
