@@ -44,12 +44,10 @@ jobs:
         uses: microsoft/setup-msbuild@v1
         if: ${{ matrix.os == 'windows-latest' }}
 
-      - name: Configure on Windows
+      - name: Create build directory
         shell: bash
-        if: ${{ matrix.os == 'windows-latest' && !steps.cache.outputs.cache-hit }}
-        run: |
-          export UseMultiToolTask=true
-          cmake --preset ci-msvc -B build
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        run: mkdir build
 
       - name: Configure on Ubuntu
         shell: bash
@@ -63,12 +61,14 @@ jobs:
         run: |
           cmake --preset ci-macos -B build
 
-      - name: Build and Install on Windows
+      - name: Build on Windows
         shell: bash
         if: ${{ matrix.os == 'windows-latest' }}
+        working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake --build build --config Release --target install
+          cmake ..
+          cmake --build . --config Release --target install
 
       - name: Build and Install on Ubuntu/macOS
         shell: bash
