@@ -37,7 +37,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-15' }}
         run: |
-          brew install ninja antlr2
+          brew install ninja antlr
 
 
       - name: Setup Windows
