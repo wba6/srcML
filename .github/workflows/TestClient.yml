@@ -61,7 +61,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          cmake --preset ci-macos -B build
+          cmake --preset ci-macos -DCMAKE_OSX_ARCHITECTURES=x86_64 -B build
 
       - name: Build and Install on Windows
         shell: bash
