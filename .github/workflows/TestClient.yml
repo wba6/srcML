@@ -65,13 +65,31 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          # clone vcpkg
-          git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
-          & C:\vcpkg\bootstrap-vcpkg.bat
-          # install libraries required by the project for x64 Windows
-          & C:\vcpkg\vcpkg.exe install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
-          # expose VCPKG_ROOT for subsequent steps
-          echo "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
+          # Clone vcpkg only if it doesn't already exist
+          if (-not (Test-Path 'C:\vcpkg')) {
+            git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+          } else {
+            Write-Host "C:\vcpkg already exists, skipping git clone."
+          }
+
+          # Bootstrap vcpkg (download vcpkg.exe if necessary).
+          if (-not (Test-Path 'C:\vcpkg\vcpkg.exe')) {
+            & 'C:\vcpkg\bootstrap-vcpkg.bat'
+          } else {
+            Write-Host "vcpkg.exe present, skipping bootstrap."
+          }
+
+          # Expose VCPKG_ROOT for later steps
+          "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
+
+          # Do not pass individual package names in manifest mode.
+          if (Test-Path "$PWD\vcpkg.json") {
+            Write-Host "vcpkg.json detected in repo — using manifest mode. Installing triplet..."
+            & 'C:\vcpkg\vcpkg.exe' install --triplet x64-windows
+          } else {
+            Write-Host "No vcpkg.json found — installing specific ports."
+            & 'C:\vcpkg\vcpkg.exe' install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
+          }
 
       - name: Build on Windows
         shell: bash
