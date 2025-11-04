@@ -66,8 +66,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         working-directory: build
         run: |
-          export UseMultiToolTask=true
-          cmake .. --preset ci-msvc
+          # export UseMultiToolTask=true
+          cmake ../ --preset ci-msvc
           cmake --build . --config Release --target install
 
       - name: Build and Install on Ubuntu/macOS
