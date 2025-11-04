@@ -58,25 +58,18 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          # Clear inherited include env vars that can force wrong include ordering
           export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH=
-
-          # Force Xcode developer dir and SDK so only one SDK is used during compile.
           XCODE_DEVELOPER_DIR="$(xcode-select -p)"
           SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
-
-          echo "Using DEVELOPER_DIR=${XCODE_DEVELOPER_DIR}"
-          echo "Using SDKROOT=${SDK_PATH}"
-
           export DEVELOPER_DIR="${XCODE_DEVELOPER_DIR}"
           export SDKROOT="${SDK_PATH}"
-
-          # Use the SDK's libc++ without pulling in Homebrew headers first.
           export CFLAGS="-isysroot ${SDKROOT}"
           export CXXFLAGS="-isysroot ${SDKROOT} -stdlib=libc++"
 
           cmake --preset ci-macos -B build \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_C_FLAGS_INIT="${CFLAGS}" \
             -DCMAKE_CXX_FLAGS_INIT="${CXXFLAGS}" \
             -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON
