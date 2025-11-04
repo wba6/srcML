@@ -71,10 +71,9 @@ jobs:
           export DEVELOPER_DIR="${XCODE_DEVELOPER_DIR}"
           export SDKROOT="${SDK_PATH}"
 
-          # Put -isysroot and libc++ early so CMake uses them before adding other -isystem flags.
-          # Mark Homebrew includes as system to avoid shadowing libc++ C headers.
-          export CFLAGS="-isysroot ${SDKROOT} -isystem /opt/homebrew/include"
-          export CXXFLAGS="-isysroot ${SDKROOT} -isystem /opt/homebrew/include -stdlib=libc++"
+          # Use the SDK's libc++ without pulling in Homebrew headers first.
+          export CFLAGS="-isysroot ${SDKROOT}"
+          export CXXFLAGS="-isysroot ${SDKROOT} -stdlib=libc++"
 
           cmake --preset ci-macos -B build \
             -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
