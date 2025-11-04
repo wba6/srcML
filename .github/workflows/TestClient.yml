@@ -67,7 +67,7 @@ jobs:
         working-directory: build
         run: |
           export UseMultiToolTask=true
-          cmake ..
+          cmake .. --preset ci-msvc
           cmake --build . --config Release --target install
 
       - name: Build and Install on Ubuntu/macOS
