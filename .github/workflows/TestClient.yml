@@ -56,17 +56,31 @@ jobs:
 
       - name: Configure on macOS
         shell: bash
-        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+        if: ${{ matrix.os == 'macos-15' && !steps.cache.outputs.cache-hit }}
         run: |
           # Clear inherited include env vars that can force wrong include ordering
           export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH=
+
+          # Force Xcode developer dir and SDK so only one SDK is used during compile.
+          XCODE_DEVELOPER_DIR="$(xcode-select -p)"
           SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
-          # Force use of the Xcode SDK sysroot and libc++ and ensure Homebrew includes
-          # are treated as system includes so they don't shadow libc++ headers.
+
+          echo "Using DEVELOPER_DIR=${XCODE_DEVELOPER_DIR}"
+          echo "Using SDKROOT=${SDK_PATH}"
+
+          export DEVELOPER_DIR="${XCODE_DEVELOPER_DIR}"
+          export SDKROOT="${SDK_PATH}"
+
+          # Put -isysroot and libc++ early so CMake uses them before adding other -isystem flags.
+          # Mark Homebrew includes as system to avoid shadowing libc++ C headers.
+          export CFLAGS="-isysroot ${SDKROOT} -isystem /opt/homebrew/include"
+          export CXXFLAGS="-isysroot ${SDKROOT} -isystem /opt/homebrew/include -stdlib=libc++"
+
           cmake --preset ci-macos -B build \
-            -DCMAKE_OSX_SYSROOT="${SDK_PATH}" \
-            -DCMAKE_C_FLAGS="-isysroot ${SDK_PATH} -isystem /opt/homebrew/include" \
-            -DCMAKE_CXX_FLAGS="-isysroot ${SDK_PATH} -isystem /opt/homebrew/include -stdlib=libc++"
+            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
+            -DCMAKE_C_FLAGS_INIT="${CFLAGS}" \
+            -DCMAKE_CXX_FLAGS_INIT="${CXXFLAGS}" \
+            -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
