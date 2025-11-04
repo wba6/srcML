@@ -61,13 +61,26 @@ jobs:
         run: |
           cmake --preset ci-macos -B build
 
+      - name: Install vcpkg and libxml2 on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          # clone vcpkg
+          git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+          & C:\vcpkg\bootstrap-vcpkg.bat
+          # install libraries required by the project for x64 Windows
+          & C:\vcpkg\vcpkg.exe install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
+          # expose VCPKG_ROOT for subsequent steps
+          echo "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
+
       - name: Build on Windows
         shell: bash
         if: ${{ matrix.os == 'windows-latest' }}
         working-directory: build
         run: |
           # export UseMultiToolTask=true
-          cmake ../ --preset ci-msvc
+          # Use the vcpkg toolchain so CMake can find libxml2 and other deps installed via vcpkg.
+          cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
           cmake --build . --config Release --target install
 
       - name: Build and Install on Ubuntu/macOS
