@@ -32,13 +32,12 @@ jobs:
                            libarchive-dev libssl-dev libcurl4-openssl-dev \
                            cpio man file dpkg-dev
 
-
       - name: Setup macOS
         shell: bash
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install ninja antlr
-
+          xcode-select --install
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -54,13 +53,13 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           cmake --preset ci-ubuntu -B build
-#
-#      - name: Configure on macOS
-#        shell: bash
-#        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-#        run: |
-#          cmake --preset ci-macos -B build
-#
+
+      - name: Configure on macOS
+        shell: bash
+        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+        run: |
+          cmake --preset ci-macos -B build
+
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -91,11 +90,11 @@ jobs:
             & 'C:\vcpkg\vcpkg.exe' install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
           }
 
-      - name: Configure on macOS
-        shell: bash
-        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-        run: |
-          export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH= && cmake --preset ci-macos -B build -DCMAKE_OSX_SYSROOT="$(xcrun --sdk macosx --show-sdk-path)" -DCMAKE_CXX_FLAGS="-stdlib=libc++"
+#      - name: Configure on macOS
+#        shell: bash
+#        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+#        run: |
+#          export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH= && cmake --preset ci-macos -B build -DCMAKE_OSX_SYSROOT="$(xcrun --sdk macosx --show-sdk-path)" -DCMAKE_CXX_FLAGS="-stdlib=libc++"
 
       - name: Build on Windows
         shell: bash
