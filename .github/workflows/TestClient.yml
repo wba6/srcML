@@ -57,7 +57,15 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          cmake --preset ci-macos -B build
+          # Clear inherited include env vars that can force wrong include ordering
+          export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH=
+          SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
+          # Force use of the Xcode SDK sysroot and libc++ and ensure Homebrew includes
+          # are treated as system includes so they don't shadow libc++ headers.
+          cmake --preset ci-macos -B build \
+            -DCMAKE_OSX_SYSROOT="${SDK_PATH}" \
+            -DCMAKE_C_FLAGS="-isysroot ${SDK_PATH} -isystem /opt/homebrew/include" \
+            -DCMAKE_CXX_FLAGS="-isysroot ${SDK_PATH} -isystem /opt/homebrew/include -stdlib=libc++"
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
