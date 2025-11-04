@@ -59,17 +59,32 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH=
+
+          # Use Apple’s Xcode toolchain explicitly (avoid Homebrew LLVM)
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+
+          # Pin the Xcode SDK
           XCODE_DEVELOPER_DIR="$(xcode-select -p)"
           SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
+          echo "DEVELOPER_DIR=${XCODE_DEVELOPER_DIR}"
+          echo "SDKROOT=${SDK_PATH}"
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
           export DEVELOPER_DIR="${XCODE_DEVELOPER_DIR}"
           export SDKROOT="${SDK_PATH}"
+
+          # Minimal flags: use SDK + libc++
           export CFLAGS="-isysroot ${SDKROOT}"
           export CXXFLAGS="-isysroot ${SDKROOT} -stdlib=libc++"
 
+          # Configure arm64 only
           cmake --preset ci-macos -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
             -DCMAKE_C_FLAGS_INIT="${CFLAGS}" \
             -DCMAKE_CXX_FLAGS_INIT="${CXXFLAGS}" \
             -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON
