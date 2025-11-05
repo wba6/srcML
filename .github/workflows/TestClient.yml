@@ -16,12 +16,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Cache Build
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: build
-          key: ${{ runner.os }}-client1
+      # - name: Cache Build
+      #   id: cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: build
+      #     key: ${{ runner.os }}-client1
 
       - name: Setup Ubuntu
         shell: bash
@@ -37,12 +37,12 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-path
           brew update
           brew reinstall ninja
-          brew install antlr       
-          # point to the selected Xcode symlink instead of a versioned app name
-          sudo xcode-select -s /Applications/Xcode.app
-          xcodebuild -version
+          brew install libxml2 libxslt antlr
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -63,37 +63,12 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          # Clean environment that might inject wrong headers
           unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
-
-          # Point to the exact Xcode you want
-          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
-
-          # Discover SDK from that Xcode
-          export DEVELOPER_DIR="$(xcode-select -p)"
-          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
-          echo "DEVELOPER_DIR=$DEVELOPER_DIR"
-          echo "SDKROOT=$SDKROOT"
-
-          # Use Apple Clang from Xcode
-          export CC=/usr/bin/clang
-          export CXX=/usr/bin/clang++
-
-          # Configure (no manual -isysroot in CFLAGS/CXXFLAGS)
-          cmake -S . -B build \
-            -G Ninja \
+          cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_C_COMPILER="${CC}" \
-            -DCMAKE_CXX_COMPILER="${CXX}" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
-            -DCMAKE_SYSTEM_PREFIX_PATH="${SDKROOT}/usr" \
-            -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON \
-            -DLibXml2_INCLUDE_DIR="${SDKROOT}/usr/include/libxml2" \
-            -DLibXml2_LIBRARY="${SDKROOT}/usr/lib/libxml2.tbd" \
-            -DLIBXSLT_INCLUDE_DIR="${SDKROOT}/usr/include/libxslt" \
-            -DLIBXSLT_LIBRARIES="${SDKROOT}/usr/lib/libxslt.tbd"
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/_inst" \
+            -DCMAKE_PREFIX_PATH="/opt/homebrew/opt/libxml2;/opt/homebrew/opt/libxslt"
 
 
       - name: Install vcpkg and libxml2 on Windows
