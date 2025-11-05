@@ -37,8 +37,12 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew install ninja antlr
-          sudo xcode-select -s /Applications/Xcode_15.3.app
+          brew update
+          brew reinstall ninja
+          brew install antlr
+          # point to the selected Xcode symlink instead of a versioned app name
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
