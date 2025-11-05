@@ -39,7 +39,7 @@ jobs:
         run: |
           brew update
           brew reinstall ninja
-          brew install antlr@4 antlr4-cpp-runtime          
+          brew install antlr       
           # point to the selected Xcode symlink instead of a versioned app name
           sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
@@ -63,36 +63,38 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH=
+          # Clean environment that might inject wrong headers
+          unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
 
-          # Use Apple’s Xcode toolchain explicitly (avoid Homebrew LLVM)
+          # Point to the exact Xcode you want
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+
+          # Discover SDK from that Xcode
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+          echo "DEVELOPER_DIR=$DEVELOPER_DIR"
+          echo "SDKROOT=$SDKROOT"
+
+          # Use Apple Clang from Xcode
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
 
-          # Pin the Xcode SDK
-          XCODE_DEVELOPER_DIR="$(xcode-select -p)"
-          SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
-          echo "DEVELOPER_DIR=${XCODE_DEVELOPER_DIR}"
-          echo "SDKROOT=${SDK_PATH}"
-          echo "CC=${CC}"
-          echo "CXX=${CXX}"
-          export DEVELOPER_DIR="${XCODE_DEVELOPER_DIR}"
-          export SDKROOT="${SDK_PATH}"
-
-          # Minimal flags: use SDK + libc++
-          export CFLAGS="-isysroot ${SDKROOT}"
-          export CXXFLAGS="-isysroot ${SDKROOT} -stdlib=libc++"
-
-          # Configure arm64 only
-          cmake --preset ci-macos -B build \
+          # Configure (no manual -isysroot in CFLAGS/CXXFLAGS)
+          cmake -S . -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_C_COMPILER="${CC}" \
             -DCMAKE_CXX_COMPILER="${CXX}" \
-            -DCMAKE_C_FLAGS_INIT="${CFLAGS}" \
-            -DCMAKE_CXX_FLAGS_INIT="${CXXFLAGS}" \
-            -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DCMAKE_SYSTEM_PREFIX_PATH="${SDKROOT}/usr" \
+            -DCMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE=ON \
+            -DLibXml2_INCLUDE_DIR="${SDKROOT}/usr/include/libxml2" \
+            -DLibXml2_LIBRARY="${SDKROOT}/usr/lib/libxml2.tbd" \
+            -DLIBXSLT_INCLUDE_DIR="${SDKROOT}/usr/include/libxslt" \
+            -DLIBXSLT_LIBRARIES="${SDKROOT}/usr/lib/libxslt.tbd"
+
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
