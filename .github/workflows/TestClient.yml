@@ -39,7 +39,7 @@ jobs:
         run: |
           brew update
           brew reinstall ninja
-          brew install antlr
+          brew install antlr@4 antlr4-cpp-runtime          
           # point to the selected Xcode symlink instead of a versioned app name
           sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
