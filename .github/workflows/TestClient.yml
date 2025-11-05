@@ -7,8 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-#        os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -100,12 +99,6 @@ jobs:
             Write-Host "No vcpkg.json found — installing specific ports."
             & 'C:\vcpkg\vcpkg.exe' install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
           }
-
-#      - name: Configure on macOS
-#        shell: bash
-#        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-#        run: |
-#          export CPATH= C_INCLUDE_PATH= CPLUS_INCLUDE_PATH= && cmake --preset ci-macos -B build -DCMAKE_OSX_SYSROOT="$(xcrun --sdk macosx --show-sdk-path)" -DCMAKE_CXX_FLAGS="-stdlib=libc++"
 
       - name: Build on Windows
         shell: bash
