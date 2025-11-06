@@ -63,10 +63,32 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
-          cmake -S . -B build -G Ninja \
+
+          # Discover paths
+          export HOMEBREW_PREFIX="$(brew --prefix)"
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+
+          # Use Apple Clang from Xcode
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+
+          # Configure CMake to use Homebrew libs (matches your local box)
+          cmake -S . -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_PREFIX_PATH="/opt/homebrew/opt/libxml2;/opt/homebrew/opt/libxslt"
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_PREFIX_PATH="${HOMEBREW_PREFIX}" \
+            -DLibXml2_INCLUDE_DIR="${HOMEBREW_PREFIX}/include/libxml2" \
+            -DLibXml2_LIBRARY="${HOMEBREW_PREFIX}/lib/libxml2.dylib" \
+            -DLIBXSLT_INCLUDE_DIR="${HOMEBREW_PREFIX}/include/libxslt" \
+            -DLIBXSLT_LIBRARIES="${HOMEBREW_PREFIX}/lib/libxslt.dylib" \
+            -DLIBARCHIVE_INCLUDE_DIR="${HOMEBREW_PREFIX}/include" \
+            -DLIBARCHIVE_LIBRARY="${HOMEBREW_PREFIX}/lib/libarchive.dylib"
 #          cmake --preset ci-macos -B build
 
       - name: Install vcpkg and libxml2 on Windows
