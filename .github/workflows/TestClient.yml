@@ -62,7 +62,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          cmake -S . -B build -G Ninja \
+          cmake --preset ci-macos -B build
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
