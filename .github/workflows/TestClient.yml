@@ -41,7 +41,7 @@ jobs:
           xcrun --sdk macosx --show-sdk-path
           brew update
           brew reinstall ninja
-          brew install libxml2 libxslt antlr
+          brew install libxml2 libxslt antlr libarchive
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -63,24 +63,17 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
-          # clean env that could inject wrong headers
-          unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
+          # Homebrew keg-only hints (per brew caveats) so CMake/pkg-config see xml/xslt
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/libxml2/lib/pkgconfig:/opt/homebrew/opt/libxslt/lib/pkgconfig"
+          export CMAKE_PREFIX_PATH="/opt/homebrew/opt/libxml2;/opt/homebrew/opt/libxslt;/opt/homebrew"
 
-          export DEVELOPER_DIR="$(xcode-select -p)"
-          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
-          export HOMEBREW_PREFIX="$(brew --prefix)"
-
-          # Optional but helps Find*.cmake prefer Homebrew over SDK
-          export CMAKE_PREFIX_PATH="${HOMEBREW_PREFIX}/opt/libxslt;${HOMEBREW_PREFIX}/opt/libxml2;${HOMEBREW_PREFIX}"
-
-          cmake -S . -B build \
-            -G Ninja \
+          # Install into a writable local prefix so tests can point to it
+          cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
 #          cmake --preset ci-macos -B build
+#
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
@@ -165,6 +158,7 @@ jobs:
         shell: bash
         working-directory: build
         run: |
+          export PATH="$SRCML_HOME:$PATH"
           ctest -VV
       - uses: actions/upload-artifact@v4
         with:
