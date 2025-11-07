@@ -120,7 +120,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          sudo cmake --build build --verbose --config Release --target install
+          cmake --build build --verbose --config Release --target install
 
       - name: Finish install for Ubuntu
         shell: bash
