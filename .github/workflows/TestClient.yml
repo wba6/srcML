@@ -41,7 +41,7 @@ jobs:
           xcrun --sdk macosx --show-sdk-path
           brew update
           brew reinstall ninja
-          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz
+          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz bzip2
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -163,7 +163,7 @@ jobs:
         run: |
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
-          sudo ctest -VV
+          ctest -VV
       - uses: actions/upload-artifact@v4
         with:
           name: ClientLastTest.${{ runner.os }}.log
