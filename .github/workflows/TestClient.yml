@@ -41,7 +41,7 @@ jobs:
           xcrun --sdk macosx --show-sdk-path
           brew update
           brew reinstall ninja
-          brew install libxml2 libxslt antlr libarchive
+          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -63,15 +63,18 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
-          # Homebrew keg-only hints (per brew caveats) so CMake/pkg-config see xml/xslt
+
+          # Homebrew keg-only hints (per brew caveats)
           export PKG_CONFIG_PATH="/opt/homebrew/opt/libxml2/lib/pkgconfig:/opt/homebrew/opt/libxslt/lib/pkgconfig"
           export CMAKE_PREFIX_PATH="/opt/homebrew/opt/libxml2;/opt/homebrew/opt/libxslt;/opt/homebrew"
 
-          # Install into a writable local prefix so tests can point to it
+          # Configure with explicit LibXslt paths to avoid /opt/homebrew/include/libxslt
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+            -DLIBXSLT_INCLUDE_DIR="/opt/homebrew/opt/libxslt/include" \
+            -DLIBXSLT_LIBRARIES="/opt/homebrew/opt/libxslt/lib/libxslt.dylib"
 #          cmake --preset ci-macos -B build
 #
 
