@@ -71,7 +71,6 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/_inst" \
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
 #          cmake --preset ci-macos -B build
 #
@@ -120,7 +119,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          cmake --build build --verbose --config Release --target install
+          sudo cmake --build build --verbose --config Release --target install
 
       - name: Finish install for Ubuntu
         shell: bash
@@ -159,9 +158,9 @@ jobs:
         shell: bash
         working-directory: build
         run: |
-          export SRCML_HOME="${GITHUB_WORKSPACE}/_inst/bin"
+          export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
-          ctest -VV
+          sudo ctest -VV
       - uses: actions/upload-artifact@v4
         with:
           name: ClientLastTest.${{ runner.os }}.log
