@@ -64,15 +64,18 @@ jobs:
         run: |
           unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
 
-          # Force the C and C++ compilers to find the correct Homebrew headers first
-          export CPLUS_INCLUDE_PATH="$(brew --prefix libxml2)/include/libxml2:$(brew --prefix libxslt)/include:$(brew --prefix libarchive)/include:$(brew --prefix curl)/include"
-          export C_INCLUDE_PATH="$(brew --prefix libxml2)/include/libxml2:$(brew --prefix libxslt)/include:$(brew --prefix libarchive)/include:$(brew --prefix curl)/include"
+          # Force C/C++ headers for libarchive and curl ONLY
+          export CPLUS_INCLUDE_PATH="$(brew --prefix libarchive)/include:$(brew --prefix curl)/include"
+          export C_INCLUDE_PATH="$(brew --prefix libarchive)/include:$(brew --prefix curl)/include"
 
-          # Set these for CMake's find_package logic as a fallback
-          export PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig:$(brew --prefix libarchive)/lib/pkgconfig:$(brew --prefix curl)/lib/pkgconfig"
-          export CMAKE_PREFIX_PATH="$(brew --prefix libxml2);$(brew --prefix libxslt);$(brew --prefix libarchive);$(brew --prefix curl);/opt/homebrew"
+          # Set pkg-config paths for libarchive and curl ONLY
+          export PKG_CONFIG_PATH="$(brew --prefix libarchive)/lib/pkgconfig:$(brew --prefix curl)/lib/pkgconfig"
+          
+          # Set CMake paths for libarchive and curl ONLY
+          export CMAKE_PREFIX_PATH="$(brew --prefix libarchive);$(brew --prefix curl);/opt/homebrew"
 
-          # Manually force all keg-only library paths AND the version for libarchive
+          # Manually force keg-only paths for libarchive and curl ONLY
+          # Let CMake find the system libxml2 and libxslt
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
@@ -81,12 +84,6 @@ jobs:
             -DLibArchive_VERSION="3.8.2" \
             -DLibArchive_INCLUDE_DIR="$(brew --prefix libarchive)/include" \
             -DLibArchive_LIBRARIES="$(brew --prefix libarchive)/lib/libarchive.dylib" \
-            \
-            -DLIBXML2_INCLUDE_DIR="$(brew --prefix libxml2)/include/libxml2" \
-            -DLIBXML2_LIBRARIES="$(brew --prefix libxml2)/lib/libxml2.dylib" \
-            \
-            -DLIBXSLT_INCLUDE_DIR="$(brew --prefix libxslt)/include" \
-            -DLIBXSLT_LIBRARIES="$(brew --prefix libxslt)/lib/libxslt.dylib" \
             \
             -DCURL_INCLUDE_DIR="$(brew --prefix curl)/include" \
             -DCURL_LIBRARIES="$(brew --prefix curl)/lib/libcurl.dylib"
