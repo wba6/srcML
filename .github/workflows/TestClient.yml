@@ -31,13 +31,17 @@ jobs:
                            libxml2-dev libxml2-utils libxslt1-dev \
                            libarchive-dev libssl-dev libcurl4-openssl-dev \
                            cpio man file dpkg-dev
-
+                           
       - name: Setup macOS
         shell: bash
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-path
           brew update
-          brew install antlr
+          brew reinstall ninja
+          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz bzip2 curl
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
@@ -58,7 +62,25 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          cmake --preset ci-macos -B build
+          unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH SDKROOT DEVELOPER_DIR PKG_CONFIG_PATH
+
+          # Set CMAKE_PREFIX_PATH as a fallback
+          export CMAKE_PREFIX_PATH="$(brew --prefix libxml2);$(brew --prefix libxslt);$(brew --prefix libarchive);$(brew --prefix curl);/opt/homebrew"
+
+          # Manually force all keg-only library paths for CMake
+          # This is the most robust way to override the system versions.
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+            -DLIBXML2_INCLUDE_DIR="$(brew --prefix libxml2)/include/libxml2" \
+            -DLIBXML2_LIBRARIES="$(brew --prefix libxml2)/lib/libxml2.dylib" \
+            -DLIBXSLT_INCLUDE_DIR="$(brew --prefix libxslt)/include" \
+            -DLIBXSLT_LIBRARIES="$(brew --prefix libxslt)/lib/libxslt.dylib" \
+            -DLibArchive_INCLUDE_DIR="$(brew --prefix libarchive)/include" \
+            -DLibArchive_LIBRARIES="$(brew --prefix libarchive)/lib/libarchive.dylib" \
+            -DCURL_INCLUDE_DIR="$(brew --prefix curl)/include" \
+            -DCURL_LIBRARIES="$(brew --prefix curl)/lib/libcurl.dylib"
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
