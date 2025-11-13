@@ -172,7 +172,7 @@ jobs:
         run: |
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
-          ctest -VV
+          ctest -VV --rerun-failed --output-on-failure
       - uses: actions/upload-artifact@v4
         with:
           name: ClientLastTest.${{ runner.os }}.log
