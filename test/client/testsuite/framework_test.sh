@@ -62,13 +62,17 @@ else
 	        SRCML='/usr/local/bin/srcml'
 	    fi
 
-	    # Fallback to using which command or just 'srcml' from PATH
+	    # Fallback to searching for srcml in standard PATH locations
 	    if [ -z "$SRCML" ]; then
+	        # Temporarily remove . from PATH to avoid finding wrong srcml
+	        local OLDPATH="$PATH"
+	        export PATH="${PATH#.:}"
 	        if command -v srcml &> /dev/null; then
 	            SRCML=$(command -v srcml)
 	        else
 	            SRCML='srcml'
 	        fi
+	        export PATH="$OLDPATH"
 	    fi
 
 	fi
