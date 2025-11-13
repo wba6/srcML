@@ -36,54 +36,12 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          set -euxo pipefail
           sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
           xcodebuild -version
           xcrun --sdk macosx --show-sdk-path
           brew update
           brew reinstall ninja
-          brew install libxml2 libxslt antlr zip cpio p7zip xz bzip2 curl
-
-      - name: Install pinned libarchive (macOS)
-        shell: bash
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          set -euxo pipefail
-          # Create or reuse a versions tap for historical formula extraction
-          brew tap wba6/versions || true
-          # Extract the specific version if not already present (idempotent)
-          brew extract --version="${REQUIRED_LIBARCHIVE}" libarchive wba6/versions || true
-          # Install versioned libarchive
-          brew install wba6/versions/libarchive@${REQUIRED_LIBARCHIVE}
-          # Unlink any existing unversioned libarchive and force link the pinned one
-          brew unlink libarchive || true
-            # Overwrite just in case older symlinks linger
-          brew link --overwrite --force libarchive@${REQUIRED_LIBARCHIVE}
-          # Pin to prevent accidental upgrades
-          brew pin libarchive@${REQUIRED_LIBARCHIVE}
-          echo "LIBARCHIVE_PREFIX=$(brew --prefix libarchive@${REQUIRED_LIBARCHIVE})"
-
-      - name: Verify pinned libarchive (macOS)
-        shell: bash
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          set -euo pipefail
-          HEADER="$LIBARCHIVE_PREFIX/include/archive.h"
-          if [ ! -f "$HEADER" ]; then
-            echo "archive.h not found at $HEADER"
-            ls -l "$LIBARCHIVE_PREFIX/include" || true
-            exit 1
-          fi
-          ACTUAL=$(grep LIBARCHIVE_VERSION "$HEADER" | sed -E 's/[^0-9.]//g' | head -n1)
-          echo "Found libarchive version: $ACTUAL"
-          if [ "$ACTUAL" != "$REQUIRED_LIBARCHIVE" ]; then
-            echo "Libarchive version mismatch: need $REQUIRED_LIBARCHIVE, have $ACTUAL"
-            exit 1
-          fi
-          # Constrain search paths strictly to pinned version + other brew deps
-          echo "CMAKE_PREFIX_PATH=$LIBARCHIVE_PREFIX;$(brew --prefix libxml2);$(brew --prefix libxslt);$(brew --prefix curl);/opt/homebrew" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=$LIBARCHIVE_PREFIX/lib/pkgconfig:$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig:$(brew --prefix curl)/lib/pkgconfig" >> "$GITHUB_ENV"
-          echo "PATH=$LIBARCHIVE_PREFIX/bin:$PATH" >> "$GITHUB_ENV"
+          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz bzip2 curl
 
       - name: Setup Windows
         uses: microsoft/setup-msbuild@v1
