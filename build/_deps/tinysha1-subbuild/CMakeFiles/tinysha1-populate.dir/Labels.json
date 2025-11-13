@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/CMakeFiles/tinysha1-populate"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/CMakeFiles/tinysha1-populate.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/CMakeFiles/tinysha1-populate-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-test.rule"
+		},
+		{
+			"file" : "/home/runner/work/srcML/srcML/build/_deps/tinysha1-subbuild/tinysha1-populate-prefix/src/tinysha1-populate-stamp/tinysha1-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"tinysha1-populate"
+		],
+		"name" : "tinysha1-populate"
+	}
+}

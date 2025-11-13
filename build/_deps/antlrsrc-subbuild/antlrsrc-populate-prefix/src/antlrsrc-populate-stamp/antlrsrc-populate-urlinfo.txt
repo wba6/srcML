@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/download-antlrsrc-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/verify-antlrsrc-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/srcML/srcML/build/_deps/antlrsrc-subbuild/antlrsrc-populate-prefix/src/antlrsrc-populate-stamp/extract-antlrsrc-populate.cmake
+source_dir=/home/runner/work/srcML/srcML/build/_deps/antlrsrc-src
+work_dir=/home/runner/work/srcML/srcML/build/_deps
+url(s)=https://www.antlr2.org/download/antlr-2.7.7.tar.gz
+hash=MD5=01cc9a2a454dd33dcd8c856ec89af090
+      no_extract=
+
