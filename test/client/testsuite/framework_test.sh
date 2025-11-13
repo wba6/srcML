@@ -62,6 +62,15 @@ else
 	        SRCML='/usr/local/bin/srcml'
 	    fi
 
+	    # Fallback to using which command or just 'srcml' from PATH
+	    if [ -z "$SRCML" ]; then
+	        if command -v srcml &> /dev/null; then
+	            SRCML=$(command -v srcml)
+	        else
+	            SRCML='srcml'
+	        fi
+	    fi
+
 	fi
 fi
 
