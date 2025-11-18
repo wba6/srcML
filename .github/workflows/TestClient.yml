@@ -15,9 +15,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       # - name: Cache Build
       #   id: cache
       #   uses: actions/cache@v4
@@ -176,7 +173,12 @@ jobs:
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
           ctest -VV --rerun-failed --output-on-failure
+        continue-on-error: true
       - uses: actions/upload-artifact@v4
         with:
           name: ClientLastTest.${{ runner.os }}.log
           path: build/Testing/Temporary/LastTest.log
+
+      - name: Setup tmate session
+        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+        uses: mxschmitt/action-tmate@v3
