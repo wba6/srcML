@@ -173,11 +173,22 @@ jobs:
           # --- Set up the environment variables ---
           export TEST_PATH="$PATH"
           export TEST_CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH"
-          
+          export TEST_DYLD_PATH="$DYLD_LIBRARY_PATH"
+
           if [[ "${{ runner.os }}" == "macOS" ]]; then
-            # Prepend all brew and system paths
+            # Add executable paths
             export TEST_PATH="/opt/homebrew/opt/gnu-tar/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$TEST_PATH"
+            
+            # Add CMake prefix paths
             export TEST_CMAKE_PREFIX_PATH="/opt/homebrew/opt/gnu-tar:$TEST_CMAKE_PREFIX_PATH"
+            
+            # Add all brew dynamic library paths for runtime
+            export TEST_DYLD_PATH="/opt/homebrew/lib:$TEST_DYLD_PATH"
+            export TEST_DYLD_PATH="$(brew --prefix libxml2)/lib:$TEST_DYLD_PATH"
+            export TEST_DYLD_PATH="$(brew --prefix libxslt)/lib:$TEST_DYLD_PATH"
+            export TEST_DYLD_PATH="$(brew --prefix libarchive)/lib:$TEST_DYLD_PATH"
+            export TEST_DYLD_PATH="$(brew --prefix curl)/lib:$TEST_DYLD_PATH"
+
           else
             # For Ubuntu, just add the install path
             export TEST_PATH="/usr/local/bin:$TEST_PATH"
@@ -185,20 +196,13 @@ jobs:
           
           # --- DEBUGGING ---
           echo "Using PATH: $TEST_PATH"
-          echo "---"
-          echo "Which gzip: $(PATH=$TEST_PATH which gzip)"
-          echo "Which bzip2: $(PATH=$TEST_PATH which bzip2)"
-          echo "Which cpio: $(PATH=$TEST_PATH which cpio)"
-          echo "Which tar: $(PATH=$TEST_PATH which tar)"
-          echo "Which gtar: $(PATH=$TEST_PATH which gtar)"
-          echo "Which srcml: $(PATH=$TEST_PATH which srcml)"
-          echo "---"
+          echo "Using DYLD_LIBRARY_PATH: $TEST_DYLD_PATH"
           # --- END DEBUGGING ---
           
           # Run ctest with the fully constructed environment
-          # This is the key change: passing the vars on the same line
           PATH=$TEST_PATH \
           CMAKE_PREFIX_PATH=$TEST_CMAKE_PREFIX_PATH \
+          DYLD_LIBRARY_PATH=$TEST_DYLD_PATH \
           ctest -VV --rerun-failed --output-on-failure
       - uses: actions/upload-artifact@v4
         with:
