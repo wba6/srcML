@@ -180,6 +180,17 @@ jobs:
           fi
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
+
+          # --- DEBUGGING ---
+          echo "Using PATH: $PATH"
+          echo "---"
+          echo "Which gzip: $(which gzip)"
+          echo "Which bzip2: $(which bzip2)"
+          echo "Which cpio: $(which cpio)"
+          echo "Which srcml: $(which srcml)"
+          echo "---"
+          # --- END DEBUGGING ---
+          
           ctest -VV --rerun-failed --output-on-failure
         continue-on-error: true
       - uses: actions/upload-artifact@v4
