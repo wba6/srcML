@@ -170,6 +170,10 @@ jobs:
         shell: bash
         working-directory: build
         run: |
+          # Add brew executables to PATH for macOS
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+          fi
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
           ctest -VV --rerun-failed --output-on-failure
