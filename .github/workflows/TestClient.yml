@@ -172,21 +172,24 @@ jobs:
         run: |
           # Set a comprehensive PATH for the test environment
           if [[ "${{ runner.os }}" == "macOS" ]]; then
-            # Add brew, local/install, and system binary paths
+            # Add brew's gnu-tar (gtar) and its libraries, plus other key paths
+            export PATH="/opt/homebrew/opt/gnu-tar/bin:$PATH"
             export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+            export CMAKE_PREFIX_PATH="/opt/homebrew/opt/gnu-tar:$CMAKE_PREFIX_PATH"
+
           else
             # For Ubuntu, just add the install path
             export PATH="/usr/local/bin:$PATH"
           fi
-          export SRCML_HOME="/usr/local/bin"
-          export PATH="$SRCML_HOME:$PATH"
-
+          
           # --- DEBUGGING ---
           echo "Using PATH: $PATH"
           echo "---"
           echo "Which gzip: $(which gzip)"
           echo "Which bzip2: $(which bzip2)"
           echo "Which cpio: $(which cpio)"
+          echo "Which tar: $(which tar)"
+          echo "Which gtar: $(which gtar)"
           echo "Which srcml: $(which srcml)"
           echo "---"
           # --- END DEBUGGING ---
