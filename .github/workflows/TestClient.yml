@@ -170,9 +170,13 @@ jobs:
         shell: bash
         working-directory: build
         run: |
-          # Add brew executables to PATH for macOS
+          # Set a comprehensive PATH for the test environment
           if [[ "${{ runner.os }}" == "macOS" ]]; then
-            export PATH="/opt/homebrew/bin:$PATH"
+            # Add brew, local/install, and system binary paths
+            export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+          else
+            # For Ubuntu, just add the install path
+            export PATH="/usr/local/bin:$PATH"
           fi
           export SRCML_HOME="/usr/local/bin"
           export PATH="$SRCML_HOME:$PATH"
