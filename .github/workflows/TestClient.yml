@@ -170,30 +170,35 @@ jobs:
         shell: bash
         working-directory: build
         run: |
-          # Set a comprehensive PATH for the test environment
+          # --- Set up the environment variables ---
+          export TEST_PATH="$PATH"
+          export TEST_CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH"
+          
           if [[ "${{ runner.os }}" == "macOS" ]]; then
-            # Add brew's gnu-tar (gtar) and its libraries, plus other key paths
-            export PATH="/opt/homebrew/opt/gnu-tar/bin:$PATH"
-            export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
-            export CMAKE_PREFIX_PATH="/opt/homebrew/opt/gnu-tar:$CMAKE_PREFIX_PATH"
-
+            # Prepend all brew and system paths
+            export TEST_PATH="/opt/homebrew/opt/gnu-tar/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$TEST_PATH"
+            export TEST_CMAKE_PREFIX_PATH="/opt/homebrew/opt/gnu-tar:$TEST_CMAKE_PREFIX_PATH"
           else
             # For Ubuntu, just add the install path
-            export PATH="/usr/local/bin:$PATH"
+            export TEST_PATH="/usr/local/bin:$TEST_PATH"
           fi
           
           # --- DEBUGGING ---
-          echo "Using PATH: $PATH"
+          echo "Using PATH: $TEST_PATH"
           echo "---"
-          echo "Which gzip: $(which gzip)"
-          echo "Which bzip2: $(which bzip2)"
-          echo "Which cpio: $(which cpio)"
-          echo "Which tar: $(which tar)"
-          echo "Which gtar: $(which gtar)"
-          echo "Which srcml: $(which srcml)"
+          echo "Which gzip: $(PATH=$TEST_PATH which gzip)"
+          echo "Which bzip2: $(PATH=$TEST_PATH which bzip2)"
+          echo "Which cpio: $(PATH=$TEST_PATH which cpio)"
+          echo "Which tar: $(PATH=$TEST_PATH which tar)"
+          echo "Which gtar: $(PATH=$TEST_PATH which gtar)"
+          echo "Which srcml: $(PATH=$TEST_PATH which srcml)"
           echo "---"
           # --- END DEBUGGING ---
           
+          # Run ctest with the fully constructed environment
+          # This is the key change: passing the vars on the same line
+          PATH=$TEST_PATH \
+          CMAKE_PREFIX_PATH=$TEST_CMAKE_PREFIX_PATH \
           ctest -VV --rerun-failed --output-on-failure
         continue-on-error: true
       - uses: actions/upload-artifact@v4
