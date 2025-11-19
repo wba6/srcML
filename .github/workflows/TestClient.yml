@@ -37,8 +37,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew update
-          brew reinstall ninja
-          brew install libxml2 libxslt antlr libarchive zip cpio p7zip xz bzip2 curl
+          brew install antlr
 
       - name: Use the Command Line Tools
         if: ${{ matrix.os == 'macos-latest' }}
@@ -64,7 +63,7 @@ jobs:
         shell: bash
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
-          cmake -S . -B build -G Ninja
+          cmake --preset ci-macos -B build
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
@@ -150,7 +149,7 @@ jobs:
         working-directory: build
         run: |
           ctest -VV --rerun-failed --output-on-failure
-          
+
       - uses: actions/upload-artifact@v4
         with:
           name: ClientLastTest.${{ runner.os }}.log
@@ -165,6 +164,6 @@ jobs:
             build/Testing/
             build/test/
 
-      - name: Setup tmate session
-        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+      #   uses: mxschmitt/action-tmate@v3
