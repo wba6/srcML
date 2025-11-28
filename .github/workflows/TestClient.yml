@@ -103,7 +103,7 @@ jobs:
           # export UseMultiToolTask=true
           # Use the vcpkg toolchain so CMake can find libxml2 and other deps installed via vcpkg.
           cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          cmake --build build --config Release --target install --verbose
+          cmake --build . --config Release --target install --verbose
 
       - name: Build and Install on Ubuntu/macOS
         shell: bash
