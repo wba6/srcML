@@ -100,20 +100,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         working-directory: build
         run: |
-          # 1. Create a compatibility header to define ssize_t as a type (safe for preprocessor)
-            echo '#include <BaseTsd.h>' > win32_compat.h
-            echo 'typedef SSIZE_T ssize_t;' >> win32_compat.h
-            
-            # 2. Get the absolute path to the header using mixed slashes (safe for CMake/MSVC)
-            COMPAT_PATH=$(cygpath -m "$PWD/win32_compat.h")
-
-            # 3. Configure with /FI (Force Include) to inject the header
-            cmake ../ --preset ci-msvc \
-              -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-              -DCMAKE_CXX_FLAGS="/FI\"$COMPAT_PATH\""
-
-            # 4. Build
-            cmake --build . --config Release --target install --verbose
+          cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build . --config Release --target install --verbose
             
       - name: Build and Install on Ubuntu/macOS
         shell: bash
