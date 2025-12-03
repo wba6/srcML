@@ -143,8 +143,8 @@ archive* libarchive_input_file(const srcml_input_src& input_file) {
         if (!input_curl(uninput)) {
             return 0;
         }
-
-#if (defined(_WIN32) || WIN32)
+        
+#if (defined(_WIN32) || defined(WIN32))
         // In Windows, the archive_read_open_fd() does not seem to work. The input is read as an empty archive,
         // or cut short. 
         // So for Windwos, convert to a FILE*. Note sure when to close the FILE*
