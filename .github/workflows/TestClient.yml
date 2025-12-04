@@ -65,6 +65,13 @@ jobs:
         run: |
           cmake --preset ci-macos -B build
 
+      - name: Install Test Dependencies on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          # Install test tools into the system PATH so Git Bash can find them
+          choco install libxml2 zip cpio -y --no-progress
+
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -128,14 +135,15 @@ jobs:
             util-linux
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
-        shell: msys2 {0}
+        shell: bash
         working-directory: build
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # Add the srcML binary directory to the PATH
+          # Add srcML bin directory to the PATH so the test scripts can find 'srcml.exe'
           export PATH="/c/Program Files/srcML/bin":$PATH
-          # Run the tests using the native Windows ctest
+          
+          # Run the tests
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
