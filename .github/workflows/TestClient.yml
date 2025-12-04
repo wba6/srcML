@@ -64,14 +64,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           cmake --preset ci-macos -B build
-
-      - name: Install Test Dependencies on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: |
-          # Install test tools into the system PATH so Git Bash can find them
-          choco install libxml2 zip cpio -y --no-progress
-
+          
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -135,15 +128,19 @@ jobs:
             util-linux
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
-        shell: bash
-        working-directory: build
+        shell: msys2 {0}
+        working-directory: build  
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # Add srcML bin directory to the PATH so the test scripts can find 'srcml.exe'
+          # 1. Install libxml2 (provides xmllint) using the native package manager
+          pacman -S --noconfirm libxml2
+
+          # 2. Add srcML binary directory to the PATH
+          #    Note: Using the 64-bit path "/c/Program Files/..."
           export PATH="/c/Program Files/srcML/bin":$PATH
-          
-          # Run the tests
+
+          # 3. Run the tests using the native Windows ctest
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
