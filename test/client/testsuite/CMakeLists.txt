@@ -18,6 +18,7 @@ if (WIN32)
         "C:/Program Files/Git/usr"
         "C:/Program Files (x86)/Git/usr"
         "C:/Program Files (x86)/Git"
+        NO_DEFAULT_PATH)
 
     if (GIT_BASH)
         set(BASH ${GIT_BASH} --hide)
