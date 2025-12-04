@@ -133,8 +133,6 @@ jobs:
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # Install test dependencies
-          choco install libxml2 cpio zip -y --no-progress
           # Add the srcML binary directory to the PATH
           export PATH="/c/Program Files/srcML/bin":$PATH
           # Run the tests using the native Windows ctest
