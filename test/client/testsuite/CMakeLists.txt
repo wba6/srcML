@@ -20,7 +20,7 @@ if (WIN32)
         "C:/Program Files (x86)/Git"
     NO_DEFAULT_PATH)
     if (GIT_BASH)
-        set(BASH ${GIT_BASH} --hide)
+        set(BASH ${GIT_BASH} --hide --noediting)
     endif()
 endif()
 
