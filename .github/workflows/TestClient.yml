@@ -100,7 +100,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         working-directory: build
         run: |
-          cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_INSTALL_PREFIX="C:/srcML"
           cmake --build . --config Release --target install --verbose
             
       - name: Build and Install on Ubuntu/macOS
@@ -126,21 +126,21 @@ jobs:
             diffutils
             cmake
             util-linux
+            
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
         shell: msys2 {0}
-        working-directory: build  
+        working-directory: build
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # 1. Install libxml2 (provides xmllint) using the native package manager
+          # Install libxml2 (provides xmllint)
           pacman -S --noconfirm libxml2
 
-          # 2. Add srcML binary directory to the PATH
-          #    Note: Using the 64-bit path "/c/Program Files/..."
-          export PATH="/c/Program Files/srcML/bin":$PATH
+          # Add the simple C:/srcML path (no spaces) to PATH
+          export PATH="/c/srcML/bin":$PATH
 
-          # 3. Run the tests using the native Windows ctest
+          # Run tests
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
