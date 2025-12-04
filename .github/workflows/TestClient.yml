@@ -64,6 +64,16 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
         run: |
           cmake --preset ci-macos -B build
+
+      - name: Cache vcpkg and installed libraries
+        if: ${{ matrix.os == 'windows-latest' }}
+        id: cache-vcpkg
+        uses: actions/cache@v4
+        with:
+          path: C:\vcpkg
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
           
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' }}
