@@ -137,10 +137,14 @@ jobs:
           # Install libxml2 (provides xmllint)
           pacman -S --noconfirm libxml2
 
-          # Add the simple C:/srcML path (no spaces) to PATH
-          export PATH="/c/srcML/bin":$PATH
+          # Set SRCML_HOME (Required by test suite logic)
+          #    The error "/srcml.exe not found" happens when this var is empty.
+          export SRCML_HOME="/c/srcML/bin"
 
-          # Run tests
+          # Update PATH so direct calls to 'srcml' work
+          export PATH="$SRCML_HOME":$PATH
+
+          # Run the tests using native Windows ctest
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
