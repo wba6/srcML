@@ -144,17 +144,25 @@ jobs:
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # Install libxml2 (provides xmllint)
+          # Install test dependencies (xmllint)
           pacman -S --noconfirm libxml2
 
-          # Set SRCML_HOME (Required by test suite logic)
-          #    The error "/srcml.exe not found" happens when this var is empty.
-          export SRCML_HOME="/c/srcML/bin"
+          # Locate critical directories
+          #    VCPKG_BIN: Contains libxml2.dll, libarchive.dll required by srcml.exe
+          VCPKG_BIN="/c/vcpkg/installed/x64-windows/bin"
+          
+          #  MSYS_BIN: Contains xmllint.exe, cpio.exe required by test scripts
+          MSYS_BIN=$(dirname "$(which xmllint)")
 
-          # Update PATH so direct calls to 'srcml' work
-          export PATH="$SRCML_HOME":$PATH
+          # Set Environment Variables
+          #    SRCML_HOME must point to ROOT (C:/srcML), NOT bin.
+          export SRCML_HOME="/c/srcML"
+          
+          # Update PATH to include srcml, its DLLs, and test tools
+          export PATH="$SRCML_HOME/bin:$VCPKG_BIN:$MSYS_BIN:$PATH"
 
-          # Run the tests using native Windows ctest
+          # Run Tests
+          echo "Running tests with SRCML_HOME=$SRCML_HOME"
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
