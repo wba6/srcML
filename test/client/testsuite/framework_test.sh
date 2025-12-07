@@ -43,17 +43,24 @@ cd $TEMPDIR
 # make sure to find the srcml executable
 export PATH=.:$PATH
 
-if [[ "$OSTYPE" == 'msys' ]]; then
+if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     EOL="\r\n"
     export PATH=$PATH:"/c/Program Files/srcML/bin/"
-    SRCML="$SRCML_HOME/srcml.exe"
+    # Prefer an explicitly provided SRCML, otherwise fall back to an install
+    # location on Windows.
+    if [ -z "$SRCML" ]; then
+        if [ -n "$SRCML_HOME" ]; then
+            SRCML="$SRCML_HOME/srcml.exe"
+        else
+            SRCML="srcml.exe"
+        fi
+    fi
     export MSYS2_ARG_CONV_EXCL="*"
 	diff='diff -Z '
 else
     EOL="\n"
 	diff='diff '
-	if [ -z "$SRCML"]; then
-
+	if [ -z "$SRCML" ]; then
 	    if [ -e "/usr/bin/srcml" ]; then
 	        SRCML='/usr/bin/srcml'
 	    fi
@@ -65,8 +72,25 @@ else
 	fi
 fi
 
+# Default to relying on PATH if nothing was discovered above.
+if [ -z "$SRCML" ]; then
+    if command -v srcml >/dev/null 2>&1; then
+        SRCML="$(command -v srcml)"
+    else
+        SRCML=srcml
+    fi
+fi
+
+# If the provided SRCML path is not executable, fall back to whatever is on PATH.
+if [ ! -x "$SRCML" ]; then
+    if command -v srcml >/dev/null 2>&1; then
+        SRCML="$(command -v srcml)"
+    fi
+fi
+
 function srcml () {
-    "$SRCML" "$@"
+    # use command to bypass this function when SRCML is just "srcml"
+    command "$SRCML" "$@"
 }
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
@@ -98,7 +122,9 @@ defineXML() {
 
     define $1
 
-    echo "${!1}" | xmllint --noout /dev/stdin
+    if command -v xmllint >/dev/null 2>&1; then
+        echo "${!1}" | xmllint --noout /dev/stdin
+    fi
 }
 
 # file with name $1 is created from the contents of string variable $2
