@@ -115,11 +115,22 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          # Copy all DLLs from vcpkg bin to the directory where srcml.exe lives
-          Copy-Item "$env:VCPKG_ROOT\installed\x64-windows\bin\*.dll" -Destination "build\bin\Release" -Force
+          # In Manifest Mode, vcpkg installs libraries to the local workspace
+          $VcpkgBin = "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin"
+          $Dest = "build\bin\Release"
           
-          # Verify the copy (optional, for debugging)
-          Get-ChildItem "build\bin\Release\*.dll" | Select-Object Name
+          Write-Host "Copying DLLs from: $VcpkgBin"
+          
+          # Check if the source directory exists
+          if (Test-Path $VcpkgBin) {
+            Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
+            Write-Host "DLLs copied successfully."
+          } else {
+            Write-Error "Could not find vcpkg bin directory at: $VcpkgBin"
+          }
+
+          # List files to verify they arrived
+          Get-ChildItem "$Dest\*.dll" | Select-Object Name
             
       - name: Build and Install on Ubuntu/macOS
         shell: bash
