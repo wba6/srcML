@@ -74,34 +74,31 @@ jobs:
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
-          
-      - name: Install vcpkg and libxml2 on Windows
+
+      - name: Setup vcpkg Environment
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          # Clone vcpkg only if it doesn't already exist
-          if (-not (Test-Path 'C:\vcpkg')) {
-            git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
-          } else {
-            Write-Host "C:\vcpkg already exists, skipping git clone."
-          }
-
-          # Bootstrap vcpkg (download vcpkg.exe if necessary).
-          if (-not (Test-Path 'C:\vcpkg\vcpkg.exe')) {
-            & 'C:\vcpkg\bootstrap-vcpkg.bat'
-          } else {
-            Write-Host "vcpkg.exe present, skipping bootstrap."
-          }
-
-          # Expose VCPKG_ROOT for later steps
           "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
-
-          # Add vcpkg bin directory to PATH so CMake captures it for tests
           "C:\vcpkg\installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding ASCII -Append
 
-          # Do not pass individual package names in manifest mode.
+      - name: Install vcpkg and libxml2 on Windows
+        if: ${{ matrix.os == 'windows-latest' && steps.cache-vcpkg.outputs.cache-hit != 'true' }}
+        shell: pwsh
+        run: |
+          # Clone vcpkg if it wasn't restored from cache
+          if (-not (Test-Path 'C:\vcpkg')) {
+            git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+          }
+
+          # Bootstrap if executable is missing
+          if (-not (Test-Path 'C:\vcpkg\vcpkg.exe')) {
+            & 'C:\vcpkg\bootstrap-vcpkg.bat'
+          }
+
+          # Install dependencies based on vcpkg.json
           if (Test-Path "$PWD\vcpkg.json") {
-            Write-Host "vcpkg.json detected in repo — using manifest mode. Installing triplet..."
+            Write-Host "vcpkg.json detected — installing dependencies..."
             & 'C:\vcpkg\vcpkg.exe' install --triplet x64-windows
           } else {
             Write-Host "No vcpkg.json found — installing specific ports."
@@ -109,7 +106,7 @@ jobs:
           }
 
       - name: Build on Windows
-        shell: bash
+        shell: pwsh
         if: ${{ matrix.os == 'windows-latest' }}
         working-directory: build
         run: |
