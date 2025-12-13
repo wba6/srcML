@@ -106,11 +106,12 @@ jobs:
           }
 
       - name: Build on Windows
-        shell: pwsh
         if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
         working-directory: build
         run: |
-          cmake ../ --preset ci-msvc -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_INSTALL_PREFIX="C:/srcML"
+          # Use $env:VCPKG_ROOT for PowerShell
+          cmake ../ --preset ci-msvc "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_INSTALL_PREFIX="C:/srcML"
           cmake --build . --config Release --target install --verbose
             
       - name: Build and Install on Ubuntu/macOS
