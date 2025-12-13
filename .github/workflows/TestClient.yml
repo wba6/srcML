@@ -115,21 +115,27 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          # In Manifest Mode, vcpkg installs libraries to the local workspace
+          # Define the source path for Manifest Mode (local to workspace)
           $VcpkgBin = "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin"
           $Dest = "build\bin\Release"
           
-          Write-Host "Copying DLLs from: $VcpkgBin"
-          
-          # Check if the source directory exists
+          # Check if the directory exists to avoid the "Cannot find path" error
           if (Test-Path $VcpkgBin) {
-            Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
-            Write-Host "DLLs copied successfully."
+              Write-Host "Found vcpkg binaries at: $VcpkgBin"
+              Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
+              Write-Host "Successfully copied DLLs to $Dest"
           } else {
-            Write-Error "Could not find vcpkg bin directory at: $VcpkgBin"
+              # Fallback: Try the global path just in case, but warn
+              Write-Warning "Local vcpkg bin not found. Checking global path..."
+              if (Test-Path "C:\vcpkg\installed\x64-windows\bin") {
+                  Copy-Item "C:\vcpkg\installed\x64-windows\bin\*.dll" -Destination "$Dest" -Force
+              } else {
+                  Write-Error "Could not find vcpkg binaries in local or global locations."
+                  exit 1
+              }
           }
-
-          # List files to verify they arrived
+          
+          # 3. Verify the files are there
           Get-ChildItem "$Dest\*.dll" | Select-Object Name
             
       - name: Build and Install on Ubuntu/macOS
