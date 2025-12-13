@@ -70,7 +70,10 @@ jobs:
         id: cache-vcpkg
         uses: actions/cache@v4
         with:
-          path: C:\vcpkg
+          # Cache both the vcpkg tool AND the local library installation
+          path: |
+            C:\vcpkg
+            ${{ github.workspace }}\vcpkg_installed
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
@@ -80,29 +83,23 @@ jobs:
         shell: pwsh
         run: |
           "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
-          "C:\vcpkg\installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding ASCII -Append
+          # Add the LOCAL manifest bin directory to PATH
+          "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding ASCII -Append
 
       - name: Install vcpkg and libxml2 on Windows
         if: ${{ matrix.os == 'windows-latest' && steps.cache-vcpkg.outputs.cache-hit != 'true' }}
         shell: pwsh
         run: |
-          # Clone vcpkg if it wasn't restored from cache
           if (-not (Test-Path 'C:\vcpkg')) {
             git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
           }
-
-          # Bootstrap if executable is missing
           if (-not (Test-Path 'C:\vcpkg\vcpkg.exe')) {
             & 'C:\vcpkg\bootstrap-vcpkg.bat'
           }
-
-          # Install dependencies based on vcpkg.json
-          if (Test-Path "$PWD\vcpkg.json") {
-            Write-Host "vcpkg.json detected — installing dependencies..."
+          # Install using the manifest (vcpkg.json)
+          if (Test-Path "vcpkg.json") {
+            Write-Host "Manifest mode detected. Installing..."
             & 'C:\vcpkg\vcpkg.exe' install --triplet x64-windows
-          } else {
-            Write-Host "No vcpkg.json found — installing specific ports."
-            & 'C:\vcpkg\vcpkg.exe' install libxml2:x64-windows libarchive:x64-windows openssl:x64-windows zlib:x64-windows
           }
 
       - name: Build on Windows
