@@ -161,7 +161,12 @@ jobs:
             diffutils
             cmake
             util-linux
+            libxml2
 
+      - name: Add vcpkg bin to PATH
+        run: echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
+        shell: bash
+            
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
         shell: msys2 {0}
@@ -169,12 +174,26 @@ jobs:
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          export SRCML_HOME="/c/Program Files (x86)/srcML/bin"
-          ctest -C Release -VV
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ClientLastTest.${{ runner.os }}.log
-          path: build/Testing/Temporary/LastTest.log
+          # Install test dependencies (xmllint)
+          pacman -S --noconfirm libxml2
+
+          # Locate critical directories
+          #    VCPKG_BIN: Contains libxml2.dll, libarchive.dll required by srcml.exe
+          VCPKG_BIN="/c/vcpkg/installed/x64-windows/bin"
+          
+          #  MSYS_BIN: Contains xmllint.exe, cpio.exe required by test scripts
+          MSYS_BIN=$(dirname "$(which xmllint)")
+
+          # Set Environment Variables
+          #    SRCML_HOME must point to ROOT (C:/srcML), NOT bin.
+          export SRCML_HOME="/c/srcML"
+          
+          # Update PATH to include srcml, its DLLs, and test tools
+          export PATH="$SRCML_HOME/bin:$VCPKG_BIN:$MSYS_BIN:$PATH"
+
+          # Run Tests
+          echo "Running tests with SRCML_HOME=$SRCML_HOME"
+          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
         with:
