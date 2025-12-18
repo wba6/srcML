@@ -171,8 +171,7 @@ jobs:
         run: |
           export SRCML_HOME="/c/Program Files (x86)/srcML/bin"
           ctest -C Release -VV
-          
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v2
         with:
           name: ClientLastTest.${{ runner.os }}.log
           path: build/Testing/Temporary/LastTest.log
