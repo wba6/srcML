@@ -162,6 +162,10 @@ jobs:
             cmake
             util-linux
             libxml2
+
+      - name: Add vcpkg bin to PATH
+        run: echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
+        shell: bash
             
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
