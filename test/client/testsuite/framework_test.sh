@@ -33,6 +33,7 @@
 export REVISION=1.0.0
 
 # construct a temporary directory name based on the test name (without the .sh)
+ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
 
 # remove old TEMPDIR, and create new fresh one
@@ -52,7 +53,7 @@ if [[ "$OSTYPE" == 'msys' ]]; then
 else
     EOL="\n"
 	diff='diff '
-	if [ -z "$SRCML"]; then
+	if [ -z "$SRCML" ]; then
 
 	    if [ -e "/usr/bin/srcml" ]; then
 	        SRCML='/usr/bin/srcml'
@@ -60,6 +61,14 @@ else
 
 	    if [ -e "/usr/local/bin/srcml" ]; then
 	        SRCML='/usr/local/bin/srcml'
+	    fi
+
+	    if [ -z "$SRCML" ]; then
+	        if command -v srcml >/dev/null 2>&1; then
+	            SRCML=$(command -v srcml)
+	        elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
+	            SRCML="$ORIG_PWD/../../.."/bin/srcml
+	        fi
 	    fi
 
 	fi
