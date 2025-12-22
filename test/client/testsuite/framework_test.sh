@@ -49,10 +49,10 @@ if [[ "$OSTYPE" == 'msys' ]]; then
     export PATH=$PATH:"/c/Program Files/srcML/bin/"
     SRCML="$SRCML_HOME/srcml.exe"
     export MSYS2_ARG_CONV_EXCL="*"
-	diff='diff -Z '
+	diff='diff -Z --strip-trailing-cr'
 else
     EOL="\n"
-	diff='diff '
+	diff='diff --strip-trailing-cr'
 	if [ -z "$SRCML" ]; then
 
 	    if [ -e "/usr/bin/srcml" ]; then
