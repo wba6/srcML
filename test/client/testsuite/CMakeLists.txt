@@ -30,6 +30,8 @@ foreach(CLIENT_TEST IN ITEMS ${CLIENT_TESTS})
     add_test(NAME srcml.${TEST_NAME} COMMAND ${BASH} ${CLIENT_TEST})
     # Command line --timeout does NOT override this value
     #set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
-
-    set_tests_properties(srcml.${TEST_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(srcml.${TEST_NAME} PROPERTIES 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        ENVIRONMENT "SRCML_EXE=$<TARGET_FILE:srcml>"
+    )
 endforeach()
