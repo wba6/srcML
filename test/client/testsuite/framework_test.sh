@@ -49,18 +49,18 @@ if [[ "$OSTYPE" == 'msys' ]]; then
     export MSYS2_ARG_CONV_EXCL="*"
     diff='diff -Z --strip-trailing-cr '
 
-    # Check system PATH
-    if command -v srcml >/dev/null 2>&1; then
+    # PREFERRED: Use the exact path provided by CMake
+    if [ -n "$SRCML_EXE" ]; then
+        SRCML="$SRCML_EXE"
+        echo "DEBUG: Using cmake provided srcml: '$SRCML'" >&2
+    # Fallback: Check system PATH
+    elif command -v srcml >/dev/null 2>&1; then
         SRCML=$(command -v srcml)
         echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
-    # Check Build Directory (Relative to test execution dir)
-    elif [ -f "$ORIG_PWD/../../bin/Release/srcml.exe" ]; then
-         SRCML="$ORIG_PWD/../../bin/Release/srcml.exe"
-         echo "DEBUG: Found srcml in Build/Release dir: '$SRCML'" >&2
-    # Fallback to SRCML_HOME (e.g. C:/srcML)
+    # Last Resort: Hardcoded home
     else
         SRCML="$SRCML_HOME/srcml.exe"
-        echo "DEBUG: srcml not in PATH or Build dir, attempting fallback: '$SRCML'" >&2
+        echo "DEBUG: Fallback to SRCML_HOME: '$SRCML'" >&2
     fi
 else
     echo "DEBUG: Configuring for Unix/Linux" >&2
