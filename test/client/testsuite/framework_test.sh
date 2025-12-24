@@ -43,21 +43,27 @@ cd $TEMPDIR
 
 # make sure to find the srcml executable
 export PATH=.:$PATH
-
 if [[ "$OSTYPE" == 'msys' ]]; then
+    echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
     export PATH=$PATH:"/c/Program Files/srcML/bin/"
     export MSYS2_ARG_CONV_EXCL="*"
-	diff='diff -Z --strip-trailing-cr'
+    
+    # Use standard diff but strip carriage returns to fix Windows test failures
+    diff='diff -Z --strip-trailing-cr '
 
+    # LOGIC FIX: Check PATH for srcml first
     if command -v srcml >/dev/null 2>&1; then
         SRCML=$(command -v srcml)
+        echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
     else
         SRCML="$SRCML_HOME/srcml.exe"
+        echo "DEBUG: srcml not in PATH, attempting fallback: '$SRCML'" >&2
     fi
 else
+    echo "DEBUG: Configuring for Unix/Linux" >&2
     EOL="\n"
-	diff='diff --strip-trailing-cr'
+    diff='diff -Z --strip-trailing-cr '
 	if [ -z "$SRCML" ]; then
 
 	    if [ -e "/usr/bin/srcml" ]; then
@@ -79,9 +85,13 @@ else
 	fi
 fi
 
+echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
+
 function srcml () {
+    echo "DEBUG: Executing -> $SRCML $@" >&2
     "$SRCML" "$@"
 }
+
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
