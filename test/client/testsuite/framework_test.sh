@@ -63,7 +63,7 @@ if [[ "$OSTYPE" == 'msys' ]]; then
 else
     echo "DEBUG: Configuring for Unix/Linux" >&2
     EOL="\n"
-    diff='diff -Z --strip-trailing-cr '
+    diff='diff --strip-trailing-cr '
 	if [ -z "$SRCML" ]; then
 
 	    if [ -e "/usr/bin/srcml" ]; then
