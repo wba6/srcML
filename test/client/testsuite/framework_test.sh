@@ -41,24 +41,26 @@ rm -fR $TEMPDIR
 mkdir -p $TEMPDIR
 cd $TEMPDIR
 
-# make sure to find the srcml executable
+# make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
 export PATH=.:$PATH
 if [[ "$OSTYPE" == 'msys' ]]; then
     echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
-    export PATH=$PATH:"/c/Program Files/srcML/bin/"
     export MSYS2_ARG_CONV_EXCL="*"
-    
-    # Use standard diff but strip carriage returns to fix Windows test failures
     diff='diff -Z --strip-trailing-cr '
 
-    # LOGIC FIX: Check PATH for srcml first
+    # Check system PATH
     if command -v srcml >/dev/null 2>&1; then
         SRCML=$(command -v srcml)
         echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
+    # Check Build Directory (Relative to test execution dir)
+    elif [ -f "$ORIG_PWD/../../bin/Release/srcml.exe" ]; then
+         SRCML="$ORIG_PWD/../../bin/Release/srcml.exe"
+         echo "DEBUG: Found srcml in Build/Release dir: '$SRCML'" >&2
+    # Fallback to SRCML_HOME (e.g. C:/srcML)
     else
         SRCML="$SRCML_HOME/srcml.exe"
-        echo "DEBUG: srcml not in PATH, attempting fallback: '$SRCML'" >&2
+        echo "DEBUG: srcml not in PATH or Build dir, attempting fallback: '$SRCML'" >&2
     fi
 else
     echo "DEBUG: Configuring for Unix/Linux" >&2
