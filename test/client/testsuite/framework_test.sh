@@ -29,13 +29,6 @@
 # * Multiple tests of cli command followed by call to function check
 #   can be made
 
-# DEBUG: Print initial environment
-echo "DEBUG: --- framework_test.sh start ---" >&2
-echo "DEBUG: OSTYPE='$OSTYPE'" >&2
-echo "DEBUG: PWD='$PWD'" >&2
-echo "DEBUG: PATH='$PATH'" >&2
-echo "DEBUG: SRCML_HOME='$SRCML_HOME'" >&2
-
 # current revision number, replaced in expected output strings
 export REVISION=1.0.0
 
@@ -43,74 +36,63 @@ export REVISION=1.0.0
 ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
 
-# DEBUG: Trace temp dir creation
-echo "DEBUG: ORIG_PWD='$ORIG_PWD'" >&2
-echo "DEBUG: TEMPDIR='$TEMPDIR'" >&2
-
 # remove old TEMPDIR, and create new fresh one
 rm -fR $TEMPDIR
 mkdir -p $TEMPDIR
 cd $TEMPDIR
 
-# DEBUG: Verify where we are and what files we see
-echo "DEBUG: Changed directory to: '$PWD'" >&2
-echo "DEBUG: Directory contents (ls -F):" >&2
-ls -F >&2
-
-# make sure to find the srcml executable
+# make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
 export PATH=.:$PATH
-
 if [[ "$OSTYPE" == 'msys' ]]; then
-    echo "DEBUG: Configuration -> MSYS detected" >&2
+    echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
-    export PATH=$PATH:"/c/Program Files/srcML/bin/"
-    
-    # Original logic preserved
-    SRCML="$SRCML_HOME/srcml.exe"
-    
-    echo "DEBUG: Set SRCML='$SRCML' based on SRCML_HOME" >&2
-    
     export MSYS2_ARG_CONV_EXCL="*"
-    diff='diff -Z '
-else
-    echo "DEBUG: Configuration -> Unix/Linux detected" >&2
-    EOL="\n"
-    diff='diff '
-    if [ -z "$SRCML" ]; then
+    diff='diff -Z --strip-trailing-cr '
 
-        if [ -e "/usr/bin/srcml" ]; then
-            SRCML='/usr/bin/srcml'
-        fi
-
-        if [ -e "/usr/local/bin/srcml" ]; then
-            SRCML='/usr/local/bin/srcml'
-        fi
-
-        if [ -z "$SRCML" ]; then
-            if command -v srcml >/dev/null 2>&1; then
-                SRCML=$(command -v srcml)
-            elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
-                SRCML="$ORIG_PWD/../../.."/bin/srcml
-            fi
-        fi
-
+    # PREFERRED: Use the exact path provided by CMake
+    if [ -n "$SRCML_EXE" ]; then
+        SRCML="$SRCML_EXE"
+        echo "DEBUG: Using cmake provided srcml: '$SRCML'" >&2
+    # Fallback: Check system PATH
+    elif command -v srcml >/dev/null 2>&1; then
+        SRCML=$(command -v srcml)
+        echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
+    # Last Resort: Hardcoded home
+    else
+        SRCML="$SRCML_HOME/srcml.exe"
+        echo "DEBUG: Fallback to SRCML_HOME: '$SRCML'" >&2
     fi
-    echo "DEBUG: Resolved SRCML='$SRCML'" >&2
+else
+    echo "DEBUG: Configuring for Unix/Linux" >&2
+    EOL="\n"
+    diff='diff --strip-trailing-cr '
+	if [ -z "$SRCML" ]; then
+
+	    if [ -e "/usr/bin/srcml" ]; then
+	        SRCML='/usr/bin/srcml'
+	    fi
+
+	    if [ -e "/usr/local/bin/srcml" ]; then
+	        SRCML='/usr/local/bin/srcml'
+	    fi
+
+	    if [ -z "$SRCML" ]; then
+	        if command -v srcml >/dev/null 2>&1; then
+	            SRCML=$(command -v srcml)
+	        elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
+	            SRCML="$ORIG_PWD/../../.."/bin/srcml
+	        fi
+	    fi
+
+	fi
 fi
 
-# DEBUG: Verify executable existence
-if [ -f "$SRCML" ]; then
-    echo "DEBUG: Verified '$SRCML' exists." >&2
-elif command -v "$SRCML" >/dev/null 2>&1; then
-    echo "DEBUG: Verified '$SRCML' exists in PATH." >&2
-else
-    echo "DEBUG: WARNING: '$SRCML' does not appear to exist." >&2
-fi
+echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
 
 function srcml () {
-    echo "DEBUG: Executing command -> $SRCML $@" >&2
     "$SRCML" "$@"
 }
+
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
@@ -128,14 +110,9 @@ CAPTURE_STDERR=true
 
 # variable $1 is set to the contents of stdin
 define() {
-    echo "DEBUG: define() called for variable '$1'" >&2
-    
+
     # read stdin into variable $1
     IFS= read -r -d '' $1 || true
-    
-    # DEBUG: Check if we actually read anything
-    eval local content=\$$1
-    echo "DEBUG: define() read ${#content} characters." >&2
 
     # replace any mention of REVISION with the revision number,
     eval $1=\${$1//REVISION/${REVISION}}
