@@ -90,7 +90,6 @@ fi
 echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
 
 function srcml () {
-    echo "DEBUG: Executing -> $SRCML $@" >&2
     "$SRCML" "$@"
 }
 
