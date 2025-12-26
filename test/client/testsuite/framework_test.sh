@@ -36,6 +36,9 @@ export REVISION=1.0.0
 ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
 
+# print all errors
+trap 'if [ $? -ne 0 ] && [ -f "$STDERR" ]; then echo "!!! SCRIPT CRASHED. STDERR:"; cat "$STDERR"; fi' EXIT
+
 # remove old TEMPDIR, and create new fresh one
 rm -fR $TEMPDIR
 mkdir -p $TEMPDIR
@@ -89,9 +92,7 @@ fi
 
 echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
 
-# ---------------------------------------------------------
-# NEW: Health Check Function
-# ---------------------------------------------------------
+# Health Check Function
 check_srcml_health() {
     # Only run this check once
     if [ -n "$SRCML_HEALTH_CHECKED" ]; then
@@ -140,12 +141,26 @@ check_srcml_health() {
     echo "=================================" >&2
 }
 
-# Run the health check now that SRCML path is set
+# Run the health check once SRCML path is set
 check_srcml_health
-# ---------------------------------------------------------
 
 function srcml () {
-    "$SRCML" "$@"
+    # On Windows/MSYS, convert arguments that look like paths to Windows format
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        local args=()
+        for arg in "$@"; do
+            # Check if argument is a file or directory that exists
+            if [ -e "$arg" ]; then
+                # Convert to Windows path (e.g., C:\Path\To\File)
+                args+=("$(cygpath -w "$arg")")
+            else
+                args+=("$arg")
+            fi
+        done
+        "$SRCML" "${args[@]}"
+    else
+        "$SRCML" "$@"
+    fi
 }
 
 # turn history on so we can output the command issued
