@@ -46,7 +46,7 @@ cd $TEMPDIR
 
 # make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
 export PATH=.:$PATH
-if [[ "$OSTYPE" == 'msys' ]]; then
+if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
     echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
     export MSYS2_ARG_CONV_EXCL="*"
@@ -92,6 +92,25 @@ fi
 
 echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
 
+is_msys_windows() {
+    [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]
+}
+
+normalize_file_windows() {
+    # Normalizes a file in-place for Windows/MSYS test stability:
+    # convert backslashes to forward slashes (paths inside XML attributes)
+    # drop carriage returns (CR) that can break some parsers/tests
+    local f="$1"
+    [ -z "$f" ] && return 0
+    [ ! -f "$f" ] && return 0
+
+    # Convert \ -> /
+    sed -i 's|\\|/|g' "$f" 2>/dev/null || true
+
+    # Remove ALL \r characters
+    sed -i 's/\r//g' "$f" 2>/dev/null || true
+}
+
 # Health Check Function
 check_srcml_health() {
     # Only run this check once
@@ -110,7 +129,7 @@ check_srcml_health() {
     fi
 
     # Check for missing DLLs on Windows (using ldd)
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    if is_msys_windows; then
         if command -v ldd > /dev/null; then
             # Filter output for "not found"
             ldd "$SRCML" | grep "not found" && echo "❌ MISSING DLL DETECTED via ldd" >&2
@@ -129,7 +148,7 @@ check_srcml_health() {
         cat health_check.err >&2
         
         # On failure, dump full dependencies
-        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        if is_msys_windows; then
              command -v ldd >/dev/null && ldd "$SRCML" >&2
         fi
         rm -f health_check.err
@@ -146,7 +165,7 @@ check_srcml_health
 
 function srcml () {
     # On Windows/MSYS, convert arguments that look like paths to Windows format
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    if is_msys_windows; then
         local args=()
         for arg in "$@"; do
             # Check if argument is a file or directory that exists
@@ -186,6 +205,12 @@ define() {
 
     # replace any mention of REVISION with the revision number,
     eval $1=\${$1//REVISION/${REVISION}}
+
+    # On Windows checkouts (CRLF), heredocs can embed \r.
+    # that can break srcml parsing for some inputs (e.g., preprocessor tests).
+    if is_msys_windows; then
+        eval $1=\${$1//$'\r'/}
+    fi
 }
 
 # variable $1 is set to the contents of stdin
@@ -266,9 +291,12 @@ check() {
     firsthistoryentry
 
     # This fixes the diff errors where output is "sub\a.cpp" but expected is "sub/a.cpp"
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        if [ -s "$STDOUT" ]; then
-             sed -i 's|\\|/|g' "$STDOUT"
+    if is_msys_windows; then
+        normalize_file_windows "$STDOUT"
+        normalize_file_windows "$STDERR"
+
+        if [ $# -ge 1 ] && [ -n "$1" ] && [ -e "$1" ]; then
+            normalize_file_windows "$1"
         fi
     fi
 
@@ -361,11 +389,9 @@ check_file() {
 
     set -e
 
-    # ADDED: Normalization for check_file
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        if [ -s "$1" ]; then
-             sed -i 's|\\|/|g' "$1"
-        fi
+    if is_msys_windows; then
+        normalize_file_windows "$1"
+        normalize_file_windows "$2"
     fi
 
     $diff $2 $1
@@ -414,12 +440,11 @@ check_exit() {
     line=$(caller | cut -d' ' -f1)
     TEMPFILE=$PWD'/.test.'$line
 
-    # ADDED: Normalization for check_exit
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        if [ -s "$STDOUT" ]; then
-             sed -i 's|\\|/|g' "$STDOUT"
-        fi
+    if is_msys_windows; then
+        normalize_file_windows "$STDOUT"
+        normalize_file_windows "$STDERR"
     fi
+
 
     if [ $# -eq 2 ]; then
         tmpfile2=$TEMPFILE.2
