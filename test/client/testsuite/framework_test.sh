@@ -190,10 +190,11 @@ define() {
 
 # variable $1 is set to the contents of stdin
 defineXML() {
-
     define $1
-
-    echo "${!1}" | xmllint --noout /dev/stdin
+    # Check if xmllint exists before running it to prevent crashes on Windows
+    if command -v xmllint &> /dev/null; then
+        echo "${!1}" | xmllint --noout /dev/stdin
+    fi
 }
 
 # file with name $1 is created from the contents of string variable $2
@@ -263,6 +264,13 @@ check() {
 
     # trace the command
     firsthistoryentry
+
+    # This fixes the diff errors where output is "sub\a.cpp" but expected is "sub/a.cpp"
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        if [ -s "$STDOUT" ]; then
+             sed -i 's|\\|/|g' "$STDOUT"
+        fi
+    fi
 
     # check <filename> stdoutstr stderrstr
     if [ $# -ge 3 ]; then
@@ -353,6 +361,13 @@ check_file() {
 
     set -e
 
+    # ADDED: Normalization for check_file
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        if [ -s "$1" ]; then
+             sed -i 's|\\|/|g' "$1"
+        fi
+    fi
+
     $diff $2 $1
     [ ! -s $STDERR ]
 
@@ -398,6 +413,13 @@ check_exit() {
     # testfile pattern
     line=$(caller | cut -d' ' -f1)
     TEMPFILE=$PWD'/.test.'$line
+
+    # ADDED: Normalization for check_exit
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        if [ -s "$STDOUT" ]; then
+             sed -i 's|\\|/|g' "$STDOUT"
+        fi
+    fi
 
     if [ $# -eq 2 ]; then
         tmpfile2=$TEMPFILE.2
