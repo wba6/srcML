@@ -304,11 +304,11 @@ check() {
     if [ $# -ge 3 ]; then
 
         tmpfile2=$TEMPFILE.2
-        echo -en "$2" > $tmpfile2
+        printf "%s" "$2" > $tmpfile2
         $diff $tmpfile2 $1
 
         tmpfile3=$TEMPFILE.3
-        echo -en "$3" > $tmpfile3
+        printf "%s" "$3" > $tmpfile3
         $diff $tmpfile3 $STDERR
 
     # check <filename> stdoutstr
@@ -316,7 +316,7 @@ check() {
     elif [ $# -ge 2 ] && [ "$1" != "" ] && [ -e "$1" ]; then
 
         tmpfile2=$TEMPFILE.2
-        echo -en "$2" > $tmpfile2
+        printf "%s" "$2" > $tmpfile2
         $diff $tmpfile2 $1
 
         [ ! -s $STDERR ]
@@ -325,11 +325,11 @@ check() {
     elif [ $# -ge 2 ]; then
 
         tmpfile1=$TEMPFILE.1
-        echo -en "$1" > $tmpfile1
+        printf "%s" "$1" > $tmpfile1
         $diff $tmpfile1 $STDOUT
 
         tmpfile2=$TEMPFILE.2
-        echo -en "$2" > $tmpfile2
+        printf "%s" "$2" > $tmpfile2
         $diff $tmpfile2 $STDERR
 
     # check <filename>
@@ -343,7 +343,7 @@ check() {
     elif [ $# -ge 1 ]; then
 
         tmpfile1=$TEMPFILE.1
-        echo -en "$1" > $tmpfile1
+        printf "%s" "$1" > $tmpfile1
         $diff $tmpfile1 $STDOUT
 
         [ ! -s $STDERR ]
@@ -448,7 +448,7 @@ check_exit() {
 
     if [ $# -eq 2 ]; then
         tmpfile2=$TEMPFILE.2
-        echo -en "$2" > $tmpfile2
+        printf "%s" "$2" > $tmpfile2
         $diff $tmpfile2 $STDERR
 
         [ ! -s $STDOUT ]
@@ -456,11 +456,11 @@ check_exit() {
 
     if [ $# -eq 3 ]; then
         tmpfile2=$TEMPFILE.2
-        echo -en "$2" > $tmpfile2
+        printf "%s" "$2" > $tmpfile2
         $diff $tmpfile2 $STDOUT
 
         tmpfile3=$TEMPFILE.3
-        echo -en "$3" > $tmpfile3
+        printf "%s" "$3" > $tmpfile3
         $diff $tmpfile3 $STDERR
     fi
 
