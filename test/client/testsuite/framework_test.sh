@@ -1,4 +1,4 @@
-#!/bin/bash
+##
 # framework_test.sh
 #
 # Test framework for cli testing
@@ -33,155 +33,41 @@
 export REVISION=1.0.0
 
 # construct a temporary directory name based on the test name (without the .sh)
-ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
-
-# print all errors
-trap 'if [ $? -ne 0 ] && [ -f "$STDERR" ]; then echo "!!! SCRIPT CRASHED. STDERR:"; cat "$STDERR"; fi' EXIT
 
 # remove old TEMPDIR, and create new fresh one
 rm -fR $TEMPDIR
 mkdir -p $TEMPDIR
 cd $TEMPDIR
 
-# make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
+# make sure to find the srcml executable
 export PATH=.:$PATH
-if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
-    echo "DEBUG: Configuring for MSYS/Windows" >&2
+
+if [[ "$OSTYPE" == 'msys' ]]; then
     EOL="\r\n"
+    export PATH=$PATH:"/c/Program Files/srcML/bin/"
+    SRCML="$SRCML_HOME/srcml.exe"
     export MSYS2_ARG_CONV_EXCL="*"
-    diff='diff -Z --strip-trailing-cr '
-
-    # PREFERRED: Use the exact path provided by CMake
-    if [ -n "$SRCML_EXE" ]; then
-        SRCML="$SRCML_EXE"
-        echo "DEBUG: Using cmake provided srcml: '$SRCML'" >&2
-    # Fallback: Check system PATH
-    elif command -v srcml >/dev/null 2>&1; then
-        SRCML=$(command -v srcml)
-        echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
-    # Last Resort: Hardcoded home
-    else
-        SRCML="$SRCML_HOME/srcml.exe"
-        echo "DEBUG: Fallback to SRCML_HOME: '$SRCML'" >&2
-    fi
+	diff='diff -Z '
 else
-    echo "DEBUG: Configuring for Unix/Linux" >&2
     EOL="\n"
-    diff='diff --strip-trailing-cr '
-    if [ -z "$SRCML" ]; then
+	diff='diff '
+	if [ -z "$SRCML"]; then
 
-        if [ -e "/usr/bin/srcml" ]; then
-            SRCML='/usr/bin/srcml'
-        fi
+	    if [ -e "/usr/bin/srcml" ]; then
+	        SRCML='/usr/bin/srcml'
+	    fi
 
-        if [ -e "/usr/local/bin/srcml" ]; then
-            SRCML='/usr/local/bin/srcml'
-        fi
+	    if [ -e "/usr/local/bin/srcml" ]; then
+	        SRCML='/usr/local/bin/srcml'
+	    fi
 
-        if [ -z "$SRCML" ]; then
-            if command -v srcml >/dev/null 2>&1; then
-                SRCML=$(command -v srcml)
-            elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
-                SRCML="$ORIG_PWD/../../.."/bin/srcml
-            fi
-        fi
-
-    fi
+	fi
 fi
 
-echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
-
-is_msys_windows() {
-    [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]
-}
-
-normalize_file_windows() {
-    # Normalizes a file in-place for Windows/MSYS test stability:
-    # convert backslashes to forward slashes (paths inside XML attributes)
-    # drop carriage returns (CR) that can break some parsers/tests
-    local f="$1"
-    [ -z "$f" ] && return 0
-    [ ! -f "$f" ] && return 0
-
-    # Convert \ -> /
-    sed -i 's|\\|/|g' "$f" 2>/dev/null || true
-
-    # Remove ALL \r characters
-    sed -i 's/\r//g' "$f" 2>/dev/null || true
-}
-
-# Health Check Function
-check_srcml_health() {
-    # Only run this check once
-    if [ -n "$SRCML_HEALTH_CHECKED" ]; then
-        return
-    fi
-    export SRCML_HEALTH_CHECKED=1
-
-    echo "=== DEBUG: srcML Health Check ===" >&2
-    echo "Executable path: $SRCML" >&2
-
-    if [ ! -f "$SRCML" ]; then
-        echo "❌ CRITICAL ERROR: srcML executable not found at '$SRCML'" >&2
-        ls -l "$(dirname "$SRCML")" >&2
-        exit 1
-    fi
-
-    # Check for missing DLLs on Windows (using ldd)
-    if is_msys_windows; then
-        if command -v ldd > /dev/null; then
-            # Filter output for "not found"
-            ldd "$SRCML" | grep "not found" && echo "❌ MISSING DLL DETECTED via ldd" >&2
-        fi
-    fi
-
-    # Dry Run - catches immediate crashes
-    echo "Attempting to run: $SRCML --version" >&2
-    "$SRCML" --version > /dev/null 2> health_check.err
-    local exit_code=$?
-
-    if [ $exit_code -ne 0 ]; then
-        echo "❌ CRITICAL ERROR: srcML crashed immediately! Exit code: $exit_code" >&2
-        echo "Possible causes: Missing DLLs (libarchive, libxml2) or architecture mismatch." >&2
-        echo "Stderr from health check:" >&2
-        cat health_check.err >&2
-        
-        # On failure, dump full dependencies
-        if is_msys_windows; then
-             command -v ldd >/dev/null && ldd "$SRCML" >&2
-        fi
-        rm -f health_check.err
-        exit 1
-    else
-        echo "✅ srcML started successfully." >&2
-        rm -f health_check.err
-    fi
-    echo "=================================" >&2
-}
-
-# Run the health check once SRCML path is set
-check_srcml_health
-
 function srcml () {
-    # On Windows/MSYS, convert arguments that look like paths to Windows format
-    if is_msys_windows; then
-        local args=()
-        for arg in "$@"; do
-            # Check if argument is a file or directory that exists
-            if [ -e "$arg" ]; then
-                # Convert to Windows path (e.g., C:\Path\To\File)
-                args+=("$(cygpath -w "$arg")")
-            else
-                args+=("$arg")
-            fi
-        done
-        "$SRCML" "${args[@]}"
-    else
-        "$SRCML" "$@"
-    fi
+    "$SRCML" "$@"
 }
-
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
@@ -205,21 +91,14 @@ define() {
 
     # replace any mention of REVISION with the revision number,
     eval $1=\${$1//REVISION/${REVISION}}
-
-    # On Windows checkouts (CRLF), heredocs can embed \r.
-    # that can break srcml parsing for some inputs (e.g., preprocessor tests).
-    if is_msys_windows; then
-        eval $1=\${$1//$'\r'/}
-    fi
 }
 
 # variable $1 is set to the contents of stdin
 defineXML() {
+
     define $1
-    # Check if xmllint exists before running it to prevent crashes on Windows
-    if command -v xmllint &> /dev/null; then
-        echo "${!1}" | xmllint --noout /dev/stdin
-    fi
+
+    echo "${!1}" | xmllint --noout /dev/stdin
 }
 
 # file with name $1 is created from the contents of string variable $2
@@ -290,16 +169,6 @@ check() {
     # trace the command
     firsthistoryentry
 
-    # This fixes the diff errors where output is "sub\a.cpp" but expected is "sub/a.cpp"
-    if is_msys_windows; then
-        normalize_file_windows "$STDOUT"
-        normalize_file_windows "$STDERR"
-
-        if [ $# -ge 1 ] && [ -n "$1" ] && [ -e "$1" ]; then
-            normalize_file_windows "$1"
-        fi
-    fi
-
     # check <filename> stdoutstr stderrstr
     if [ $# -ge 3 ]; then
 
@@ -357,12 +226,6 @@ check() {
     set +e
 
     if [ $exit_status -ne 0 ]; then
-        echo "❌ Command failed with exit status $exit_status" >&2
-        if [ -s $STDERR ]; then
-             echo "--- STDERR Output (failure cause) ---" >&2
-             cat $STDERR >&2
-             echo "-------------------------------------" >&2
-        fi
         exit 1
     fi
 
@@ -389,17 +252,10 @@ check_file() {
 
     set -e
 
-    if is_msys_windows; then
-        normalize_file_windows "$1"
-        normalize_file_windows "$2"
-    fi
-
     $diff $2 $1
     [ ! -s $STDERR ]
 
     if [ $exit_status -ne 0 ]; then
-        echo "❌ Command failed with exit status $exit_status" >&2
-        cat $STDERR >&2
         exit 1
     fi
 
@@ -427,10 +283,6 @@ check_exit() {
     # verify expected stderr to the captured stdout
     if [ $exit_status -ne $1 ]; then
         echo "error: exit was $exit_status instead of $1"
-        if [ -s $STDERR ]; then
-             echo "--- STDERR Output ---" >&2
-             cat $STDERR >&2
-        fi
         exit 8
     fi
 
@@ -439,12 +291,6 @@ check_exit() {
     # testfile pattern
     line=$(caller | cut -d' ' -f1)
     TEMPFILE=$PWD'/.test.'$line
-
-    if is_msys_windows; then
-        normalize_file_windows "$STDOUT"
-        normalize_file_windows "$STDERR"
-    fi
-
 
     if [ $# -eq 2 ]; then
         tmpfile2=$TEMPFILE.2
