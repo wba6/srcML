@@ -180,7 +180,7 @@ jobs:
             
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
-        shell: C:\Program Files\Git\bin\bash.exe --noprofile --norc -eo pipefail {0}        
+        shell: msys2 {0}        
         env:
           MSYS2_ARG_CONV_EXCL: "*"
         working-directory: build
