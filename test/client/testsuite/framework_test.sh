@@ -82,7 +82,6 @@ function srcml () {
     else
         "$SRCML" "$@"
     fi
-    "$SRCML" "$@"
 }
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
