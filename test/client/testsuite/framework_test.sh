@@ -66,6 +66,22 @@ else
 fi
 
 function srcml () {
+ # On Windows/MSYS, convert arguments that look like paths to Windows format
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        local args=()
+        for arg in "$@"; do
+            # Check if argument is a file or directory that exists
+            if [ -e "$arg" ]; then
+                # Convert to Windows path (e.g., C:\Path\To\File)
+                args+=("$(cygpath -w "$arg")")
+            else
+                args+=("$arg")
+            fi
+        done
+        "$SRCML" "${args[@]}"
+    else
+        "$SRCML" "$@"
+    fi
     "$SRCML" "$@"
 }
 # turn history on so we can output the command issued
