@@ -196,6 +196,7 @@ jobs:
           
           #  MSYS_BIN: Contains xmllint.exe, cpio.exe required by test scripts
           MSYS_BIN=$(cygpath -m "$(dirname "$(which xmllint)")")
+          MINGW_BIN=$(cygpath -m /mingw64/bin)
           
           # Set Environment Variables
           #    SRCML_HOME must point to ROOT (C:/srcML), NOT bin.
