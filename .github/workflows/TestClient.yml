@@ -188,7 +188,7 @@ jobs:
         continue-on-error: true
         run: |
           # Install test dependencies (xmllint)
-          pacman -S --noconfirm libxml2
+          pacman -S --noconfirm mingw-w64-x86_64-libxml2
 
           # Locate critical directories
           #    VCPKG_BIN: Contains libxml2.dll, libarchive.dll required by srcml.exe
@@ -204,6 +204,9 @@ jobs:
           
           # Update PATH to include srcml, its DLLs, and test tools
           export PATH="$SRCML_HOME/bin:$VCPKG_BIN:$MSYS_BIN:$PATH"
+
+          # Replace /dev/stdin with - for native xmllint compatibility
+          sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
 
           # Run Tests
           echo "Running tests with SRCML_HOME=$SRCML_HOME"
