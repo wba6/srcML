@@ -36,6 +36,7 @@ int srcml_input_srcml(ParseQueue& queue,
 
     int open_status = SRCML_STATUS_OK;
     if (revision)
+        // VALUE_NEVER_USED
         open_status = srcml_archive_set_srcdiff_revision(srcml_input_archive.get(), *revision);
     open_status = srcml_archive_read_open(srcml_input_archive.get(), srcml_input);
 
