@@ -209,6 +209,9 @@ jobs:
 
           echo "xmllint path: $(which xmllint)"
           xmllint --version | head -n 1
+          XMLLINT_DIR_WIN="$(cygpath -w "$(dirname "$(which xmllint)")")"  # D:\a\_temp\msys64\mingw64\bin
+          export PATH="$XMLLINT_DIR_WIN:$PATH"
+          echo "PATH before ctest: $PATH" | head -c 400; echo
 
           # Run Tests
           echo "Running tests with SRCML_HOME=$SRCML_HOME"
