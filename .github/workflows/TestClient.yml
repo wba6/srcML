@@ -209,9 +209,11 @@ jobs:
 
           echo "xmllint path: $(which xmllint)"
           xmllint --version | head -n 1
-          XMLLINT_DIR_POSIX="$(cygpath -u "$(cygpath -w /mingw64/bin)")"   # e.g. /d/a/_temp/msys64/mingw64/bin
+          XMLLINT_DIR_POSIX="$(cygpath -au "$(dirname "$(which xmllint)")")"
           export PATH="$XMLLINT_DIR_POSIX:$PATH"
           echo "PATH before ctest: $PATH" | head -c 400; echo
+          echo "XMLLINT_DIR_POSIX=$XMLLINT_DIR_POSIX"
+          echo "xmllint path now: $(which xmllint)"
 
           # Run Tests
           echo "Running tests with SRCML_HOME=$SRCML_HOME"
