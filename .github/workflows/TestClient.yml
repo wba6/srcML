@@ -188,7 +188,7 @@ jobs:
         continue-on-error: true
         run: |
           # Install test dependencies (xmllint)
-          pacman -S --noconfirm mingw-w64-x86_64-libxml2
+          /c/msys64/usr/bin/pacman -Sy --noconfirm mingw-w64-x86_64-libxml2
 
           # Locate critical directories
           #    VCPKG_BIN: Contains libxml2.dll, libarchive.dll required by srcml.exe 
