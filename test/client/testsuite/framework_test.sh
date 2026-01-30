@@ -163,6 +163,17 @@ function srcml () {
     fi
 }
 
+
+# Function to normalize paths in XML output specifically for Windows
+normalize_output() {
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        # Convert backslashes to forward slashes in filename attributes
+        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
+        # General backslash conversion for path-like strings in XML attributes
+        #sed -i 's|\\|/|g' "$1" 2>/dev/null || true
+    fi
+}
+
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
@@ -260,6 +271,8 @@ check() {
 
     # return stdout and stderr to standard streams
     uncapture_output
+
+    normalize_output "$STDOUT"
 
     # trace the command
     firsthistoryentry
