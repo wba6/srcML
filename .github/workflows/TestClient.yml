@@ -192,6 +192,9 @@ jobs:
           # Ensure vcpkg binaries (DLLs) are found if not already in PATH
           export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"
 
+          # Replace /dev/stdin with - for native xmllint compatibility
+          sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
+          
           # Run Tests (Using the same ctest command as other systems)
           # We use the full path to ctest to ensure we use the CMake version, not an msys version
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
