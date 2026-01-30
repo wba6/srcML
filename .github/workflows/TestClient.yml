@@ -180,32 +180,20 @@ jobs:
             
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
-        shell: msys2 {0}        
-        env:
-          MSYS2_ARG_CONV_EXCL: "*"
+        shell: bash
         working-directory: build
-        timeout-minutes: 5
-        continue-on-error: true
         run: |
-          # Use the MSYS2 package manager to ensure xmllint is in the MINGW path
-          pacman -S --noconfirm mingw-w64-x86_64-libxml2
-
-          # Add the MINGW64 bin directory explicitly to the PATH 
-          # This is where mingw-w64-x86_64-libxml2 installs xmllint.exe
-          export PATH="/mingw64/bin:$PATH"
+          # Verification (Mirroring the Ubuntu style)
+          echo "Verifying dependencies..."
+          xmllint --version | head -n 1
           
-          # Use standard POSIX paths for your other dependencies
-          export SRCML_HOME="/c/srcML"
-          export VCPKG_BIN="/c/vcpkg/installed/x64-windows/bin"
-          export PATH="$SRCML_HOME/bin:$VCPKG_BIN:$PATH"
+          # Environment Setup (Standardized variables)
+          export SRCML_HOME="C:/srcML"
+          # Ensure vcpkg binaries (DLLs) are found if not already in PATH
+          export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"
 
-          # Verify xmllint is found before running tests
-          if ! command -v xmllint &> /dev/null; then
-            echo "ERROR: xmllint not found in PATH: $PATH"
-            exit 1
-          fi
-
-          # Run Tests
+          # Run Tests (Using the same ctest command as other systems)
+          # We use the full path to ctest to ensure we use the CMake version, not an msys version
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
