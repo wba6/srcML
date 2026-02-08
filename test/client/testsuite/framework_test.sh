@@ -166,12 +166,12 @@ function srcml () {
 
 # Function to normalize paths in XML output specifically for Windows
 normalize_output() {
-   # if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    if [[ "$OSTYPE" == "fakeos" || "$OSTYPE" == "fakeos" ]]; then
         # Convert backslashes to forward slashes in filename attributes
-#        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
+        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
         # General backslash conversion for path-like strings in XML attributes
         #sed -i 's|\\|/|g' "$1" 2>/dev/null || true
-#    fi
+    fi
 }
 
 # turn history on so we can output the command issued
