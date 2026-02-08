@@ -146,32 +146,32 @@ check_srcml_health
 
 function srcml () {
     # On Windows/MSYS, convert arguments that look like paths to Windows format
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        local args=()
-        for arg in "$@"; do
-            # Check if argument is a file or directory that exists
-            if [ -e "$arg" ]; then
+ #   if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+#        local args=()
+#        for arg in "$@"; do
+#            # Check if argument is a file or directory that exists
+#            if [ -e "$arg" ]; then
                 # Convert to Windows path (e.g., C:\Path\To\File)
-                args+=("$(cygpath -w "$arg")")
-            else
-                args+=("$arg")
-            fi
-        done
-        "$SRCML" "${args[@]}"
-    else
+#                args+=("$(cygpath -w "$arg")")
+#            else
+#                args+=("$arg")
+#            fi
+#        done
+#        "$SRCML" "${args[@]}"
+#    else
         "$SRCML" "$@"
-    fi
+#    fi
 }
 
 
 # Function to normalize paths in XML output specifically for Windows
 normalize_output() {
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+   # if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
         # Convert backslashes to forward slashes in filename attributes
-        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
+#        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
         # General backslash conversion for path-like strings in XML attributes
         #sed -i 's|\\|/|g' "$1" 2>/dev/null || true
-    fi
+#    fi
 }
 
 # turn history on so we can output the command issued
