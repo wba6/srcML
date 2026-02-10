@@ -1,4 +1,4 @@
-#!/bin/bash
+##
 # framework_test.sh
 #
 # Test framework for cli testing
@@ -33,147 +33,41 @@
 export REVISION=1.0.0
 
 # construct a temporary directory name based on the test name (without the .sh)
-ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
-
-# print all errors
-trap 'if [ $? -ne 0 ] && [ -f "$STDERR" ]; then echo "!!! SCRIPT CRASHED. STDERR:"; cat "$STDERR"; fi' EXIT
 
 # remove old TEMPDIR, and create new fresh one
 rm -fR $TEMPDIR
 mkdir -p $TEMPDIR
 cd $TEMPDIR
 
-# make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
+# make sure to find the srcml executable
 export PATH=.:$PATH
+
 if [[ "$OSTYPE" == 'msys' ]]; then
-    echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
+    export PATH=$PATH:"/c/Program Files/srcML/bin/"
+    SRCML="$SRCML_HOME/srcml.exe"
     export MSYS2_ARG_CONV_EXCL="*"
-    diff='diff -Z --strip-trailing-cr '
-
-    # PREFERRED: Use the exact path provided by CMake
-    if [ -n "$SRCML_EXE" ]; then
-        SRCML="$SRCML_EXE"
-        echo "DEBUG: Using cmake provided srcml: '$SRCML'" >&2
-    # Fallback: Check system PATH
-    elif command -v srcml >/dev/null 2>&1; then
-        SRCML=$(command -v srcml)
-        echo "DEBUG: Found srcml in PATH at '$SRCML'" >&2
-    # Last Resort: Hardcoded home
-    else
-        SRCML="$SRCML_HOME/srcml.exe"
-        echo "DEBUG: Fallback to SRCML_HOME: '$SRCML'" >&2
-    fi
+	diff='diff -Z '
 else
-    echo "DEBUG: Configuring for Unix/Linux" >&2
     EOL="\n"
-    diff='diff --strip-trailing-cr '
-    if [ -z "$SRCML" ]; then
+	diff='diff '
+	if [ -z "$SRCML"]; then
 
-        if [ -e "/usr/bin/srcml" ]; then
-            SRCML='/usr/bin/srcml'
-        fi
+	    if [ -e "/usr/bin/srcml" ]; then
+	        SRCML='/usr/bin/srcml'
+	    fi
 
-        if [ -e "/usr/local/bin/srcml" ]; then
-            SRCML='/usr/local/bin/srcml'
-        fi
+	    if [ -e "/usr/local/bin/srcml" ]; then
+	        SRCML='/usr/local/bin/srcml'
+	    fi
 
-        if [ -z "$SRCML" ]; then
-            if command -v srcml >/dev/null 2>&1; then
-                SRCML=$(command -v srcml)
-            elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
-                SRCML="$ORIG_PWD/../../.."/bin/srcml
-            fi
-        fi
-
-    fi
+	fi
 fi
 
-echo "DEBUG: Final SRCML command set to: '$SRCML'" >&2
-
-# Health Check Function
-check_srcml_health() {
-    # Only run this check once
-    if [ -n "$SRCML_HEALTH_CHECKED" ]; then
-        return
-    fi
-    export SRCML_HEALTH_CHECKED=1
-
-    echo "=== DEBUG: srcML Health Check ===" >&2
-    echo "Executable path: $SRCML" >&2
-
-    if [ ! -f "$SRCML" ]; then
-        echo "❌ CRITICAL ERROR: srcML executable not found at '$SRCML'" >&2
-        ls -l "$(dirname "$SRCML")" >&2
-        exit 1
-    fi
-
-    # Check for missing DLLs on Windows (using ldd)
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        if command -v ldd > /dev/null; then
-            # Filter output for "not found"
-            ldd "$SRCML" | grep "not found" && echo "❌ MISSING DLL DETECTED via ldd" >&2
-        fi
-    fi
-
-    # Dry Run - catches immediate crashes
-    echo "Attempting to run: $SRCML --version" >&2
-    "$SRCML" --version > /dev/null 2> health_check.err
-    local exit_code=$?
-
-    if [ $exit_code -ne 0 ]; then
-        echo "❌ CRITICAL ERROR: srcML crashed immediately! Exit code: $exit_code" >&2
-        echo "Possible causes: Missing DLLs (libarchive, libxml2) or architecture mismatch." >&2
-        echo "Stderr from health check:" >&2
-        cat health_check.err >&2
-        
-        # On failure, dump full dependencies
-        if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-             command -v ldd >/dev/null && ldd "$SRCML" >&2
-        fi
-        rm -f health_check.err
-        exit 1
-    else
-        echo "✅ srcML started successfully." >&2
-        rm -f health_check.err
-    fi
-    echo "=================================" >&2
-}
-
-# Run the health check once SRCML path is set
-check_srcml_health
-
 function srcml () {
-    # On Windows/MSYS, convert arguments that look like paths to Windows format
- #   if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-#        local args=()
-#        for arg in "$@"; do
-#            # Check if argument is a file or directory that exists
-#            if [ -e "$arg" ]; then
-                # Convert to Windows path (e.g., C:\Path\To\File)
-#                args+=("$(cygpath -w "$arg")")
-#            else
-#                args+=("$arg")
-#            fi
-#        done
-#        "$SRCML" "${args[@]}"
-#    else
-        "$SRCML" "$@"
-#    fi
+    "$SRCML" "$@"
 }
-
-
-# Function to normalize paths in XML output specifically for Windows
-normalize_output() {
-    if [[ "$OSTYPE" == "fakeos" || "$OSTYPE" == "fakeos" ]]; then
-        # Convert backslashes to forward slashes in filename attributes
-        sed -i 's|filename="\(.*\)\\"|filename="\1/"|g' "$1" 2>/dev/null || true
-        # General backslash conversion for path-like strings in XML attributes
-        #sed -i 's|\\|/|g' "$1" 2>/dev/null || true
-    fi
-}
-
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
@@ -272,8 +166,6 @@ check() {
     # return stdout and stderr to standard streams
     uncapture_output
 
-    normalize_output "$STDOUT"
-
     # trace the command
     firsthistoryentry
 
@@ -334,12 +226,6 @@ check() {
     set +e
 
     if [ $exit_status -ne 0 ]; then
-        echo "❌ Command failed with exit status $exit_status" >&2
-        if [ -s $STDERR ]; then
-             echo "--- STDERR Output (failure cause) ---" >&2
-             cat $STDERR >&2
-             echo "-------------------------------------" >&2
-        fi
         exit 1
     fi
 
@@ -370,8 +256,6 @@ check_file() {
     [ ! -s $STDERR ]
 
     if [ $exit_status -ne 0 ]; then
-        echo "❌ Command failed with exit status $exit_status" >&2
-        cat $STDERR >&2
         exit 1
     fi
 
@@ -399,10 +283,6 @@ check_exit() {
     # verify expected stderr to the captured stdout
     if [ $exit_status -ne $1 ]; then
         echo "error: exit was $exit_status instead of $1"
-        if [ -s $STDERR ]; then
-             echo "--- STDERR Output ---" >&2
-             cat $STDERR >&2
-        fi
         exit 8
     fi
 
