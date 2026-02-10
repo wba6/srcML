@@ -182,25 +182,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          # Append a redefined compare function to the end of framework_test.sh
-          # This overrides the original function since it is sourced last.
-          cat <<'EOF' >> test/client/testsuite/framework_test.sh
-          
-          compare() {
-              # Windows Fix: Normalize backslashes to forward slashes in both files before diffing
-              if [ -f "$1" ]; then sed -i 's|\\|/|g' "$1"; fi
-              if [ -f "$2" ]; then sed -i 's|\\|/|g' "$2"; fi
-          
-              # Original compare logic
-              command diff "$1" "$2" > /dev/null 2>&1
-              if [ $? -ne 0 ]; then
-                  echo "	 diff $1 $2"
-                  command diff "$1" "$2" | head -n 20
-                  return 1
-              fi
-              return 0
-          }
-          EOF
+         sed -i '/^compare() {/a \    [ -f "$1" ] && sed -i "s|\\\\|/|g" "$1"; [ -f "$2" ] && sed -i "s|\\\\|/|g" "$2"' test/client/testsuite/framework_test.sh
             
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
