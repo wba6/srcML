@@ -188,7 +188,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: bash
         env:
-          MSYS: disable_pcon winsymlinks:nativestrict
+          MSYS: winsymlinks:nativestrict
+          MSYS2_ARG_CONV_EXCL: "*"
         working-directory: build
         continue-on-error: true
         run: |
