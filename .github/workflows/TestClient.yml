@@ -187,6 +187,8 @@ jobs:
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
         shell: bash
+        env:
+          MSYS: disable_pcon winsymlinks:nativestrict
         working-directory: build
         continue-on-error: true
         run: |
