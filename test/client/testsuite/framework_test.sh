@@ -158,11 +158,7 @@ function srcml () {
 #            fi
 #        done
 #        "$SRCML" "${args[@]}"
-        if [[ ! -t 0 ]]; then
-            cat | "$SRCML" "$@" 2>$STDERR >$STDOUT
-        else
-            "$SRCML" "$@"
-        fi
+        cat | "$SRCML" "$@" 2>$STDERR >$STDOUT
     else
         "$SRCML" "$@"
     fi
