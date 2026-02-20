@@ -146,7 +146,7 @@ check_srcml_health
 
 function srcml () {
     # On Windows/MSYS, convert arguments that look like paths to Windows format
- #   if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
 #        local args=()
 #        for arg in "$@"; do
 #            # Check if argument is a file or directory that exists
@@ -158,9 +158,14 @@ function srcml () {
 #            fi
 #        done
 #        "$SRCML" "${args[@]}"
-#    else
+        if [[ ! -t 0 ]]; then
+            cat | "$SRCML" "$@" 2>$STDERR >$STDOUT
+        else
+            "$SRCML" "$@"
+        fi
+    else
         "$SRCML" "$@"
-#    fi
+    fi
 }
 
 
