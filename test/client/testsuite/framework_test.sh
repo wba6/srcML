@@ -145,20 +145,16 @@ check_srcml_health() {
 check_srcml_health
 
 function srcml () {
-    # On Windows/MSYS, convert arguments that look like paths to Windows format
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-#        local args=()
-#        for arg in "$@"; do
-#            # Check if argument is a file or directory that exists
-#            if [ -e "$arg" ]; then
-                # Convert to Windows path (e.g., C:\Path\To\File)
-#                args+=("$(cygpath -w "$arg")")
-#            else
-#                args+=("$arg")
-#            fi
-#        done
-#        "$SRCML" "${args[@]}"
-        cat | "$SRCML" "$@" 2>$STDERR >$STDOUT
+        # Capture stdin to a temporary file if it's not a terminal
+        if [ ! -t 0 ]; then
+            local temp_input=$(mktemp)
+            cat > "$temp_input"
+            "$SRCML" "$@" < "$temp_input"
+            rm -f "$temp_input"
+        else
+            "$SRCML" "$@"
+        fi
     else
         "$SRCML" "$@"
     fi
