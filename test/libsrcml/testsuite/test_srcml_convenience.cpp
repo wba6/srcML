@@ -147,7 +147,7 @@ int main(int, char* argv[]) {
     }
 
     {
-        dassert(srcml("", "foo.xml"), SRCML_STATUS_IO_ERROR);
+        dassert(srcml("", "foo.xml"), SRCML_STATUS_INVALID_INPUT);
     }
 
     {
