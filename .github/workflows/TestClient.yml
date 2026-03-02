@@ -204,6 +204,12 @@ jobs:
 
           # Replace /dev/stdin with - for native xmllint compatibility
           sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
+
+          # Force MSYS2 bash to output Windows style paths to match the srcml native binary output
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "pwd() { builtin pwd -W; }" > bash_env.sh
+            export BASH_ENV="$(pwd)/bash_env.sh"
+          fi
           
           # Run Tests (Using the same ctest command as other systems)
           # We use the full path to ctest to ensure we use the CMake version, not an msys version
