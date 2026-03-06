@@ -182,6 +182,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: echo "${{ github.workspace }}/build/bin/Release" >> $GITHUB_PATH
+
+      - name: Add Git tools to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "C:\Program Files\Git\usr\bin" >> $env:GITHUB_PATH
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
