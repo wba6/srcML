@@ -189,7 +189,7 @@ jobs:
 
       - name: Install zip and cpio (Windows)
         if: runner.os == 'Windows'
-        run: choco install zip 7zip -y
+        run: choco install zip 7zip GnuWin32 -y
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
