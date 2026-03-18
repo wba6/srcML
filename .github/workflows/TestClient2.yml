@@ -1,4 +1,4 @@
-name: Test Client
+name: Test Client 2
 
 on:
   workflow_dispatch:
