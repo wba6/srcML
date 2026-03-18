@@ -210,6 +210,7 @@ jobs:
           # Verification (Mirroring the Ubuntu style)
           echo "Verifying dependencies..."
           xmllint --version | head -n 1
+          cpio --version | head -n 1
           
           # Environment Setup (Standardized variables)
           export SRCML_HOME="C:/srcML"
@@ -227,7 +228,8 @@ jobs:
           
           # Run Tests (Using the same ctest command as other systems)
           # We use the full path to ctest to ensure we use the CMake version, not an msys version
-          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
+          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV \
+          --test-env "PATH=C:/msys64/usr/bin;C:/msys64/mingw64/bin;$(cygpath -w "$PATH")"
           
       - uses: actions/upload-artifact@v4
         with:
