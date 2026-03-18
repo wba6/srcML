@@ -260,6 +260,6 @@ jobs:
             build/Testing/
             build/test/
 
-      - name: Setup tmate session
-        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
+      #   uses: mxschmitt/action-tmate@v3
