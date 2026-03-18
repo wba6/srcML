@@ -17,6 +17,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <SRCMLStatus.hpp>
+#include <filesystem>
 
 int src_input_filelist(ParseQueue& queue,
                         srcml_archive* srcml_arch,
@@ -66,8 +67,6 @@ int src_input_filelist(ParseQueue& queue,
            vbuffer.insert(vbuffer.end(), buffer, buffer + size);
     }
 
-    struct stat listFile;
-    stat(input_file.data(), &listFile);
 
     char* line = &vbuffer[0];
     while (line < &vbuffer[vbuffer.size() - 1]) {
@@ -97,10 +96,9 @@ int src_input_filelist(ParseQueue& queue,
 
         srcml_input_src input(sline);
 
-        // verify that the filee ntry is not the same as the file list
-        struct stat fileEntry;
-        stat(input.resource.data(), &fileEntry);
-        if ((listFile.st_ino == fileEntry.st_ino) && (listFile.st_dev == fileEntry.st_dev)) {
+        // verify that the file entry is not the same as the file list
+        std::error_code ec;
+        if (std::filesystem::equivalent(input.resource, input_file, ec)) {
             std::string s = "srcml: WARNING Filelist entry duplicate of filelist: ";
             s += input_file;
             SRCMLstatus(WARNING_MSG, s);
