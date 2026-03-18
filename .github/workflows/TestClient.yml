@@ -209,6 +209,7 @@ jobs:
         run: |
           # Verification (Mirroring the Ubuntu style)
           echo "Verifying dependencies..."
+          export PATH="/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
           xmllint --version | head -n 1
           cpio --version | head -n 1
           
