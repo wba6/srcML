@@ -1,5 +1,5 @@
 ---
-name: Test Client 2
+name: Test Client
 
 on: workflow_dispatch
 
@@ -187,9 +187,9 @@ jobs:
         if: runner.os == 'Windows'
         run: echo "C:\Program Files\Git\usr\bin" >> $env:GITHUB_PATH
 
-      - name: Install zip and cpio (Windows)
-        if: runner.os == 'Windows'
-        run: choco install zip 7zip -y
+      # - name: Install zip and cpio (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: choco install zip 7zip -y
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
@@ -201,7 +201,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: bash
         env:
-          PATH: "/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
+          #PATH: "/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
           MSYS: winsymlinks:nativestrict
           MSYS2_ARG_CONV_EXCL: "*"
         working-directory: build
