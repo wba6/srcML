@@ -210,6 +210,10 @@ jobs:
           # Verification (Mirroring the Ubuntu style)
           echo "Verifying dependencies..."
           export PATH="/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
+          echo "Looking for cpio..."
+          find /c/msys64 -name "cpio.exe" 2>/dev/null
+          find /c -name "cpio.exe" 2>/dev/null
+          echo "Current PATH: $PATH"
           xmllint --version | head -n 1
           cpio --version | head -n 1
           
