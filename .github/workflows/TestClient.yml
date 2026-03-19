@@ -162,6 +162,7 @@ jobs:
             cmake
             util-linux
             libxml2
+            
 
       - name: Setup Windows Environment
         if: runner.os == 'Windows'
@@ -190,6 +191,14 @@ jobs:
       # - name: Install zip and cpio (Windows)
       #   if: runner.os == 'Windows'
       #   run: choco install zip 7zip -y
+      
+      - name: Install cpio via msys2
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
+        run: |
+          pacman -S --noconfirm cpio
+          which cpio
+          cpio --version
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
