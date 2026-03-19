@@ -196,9 +196,11 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
         run: |
-          pacman -S --noconfirm cpio
+          pacman -S --noconfirm cpio zip
           which cpio
+          which zip
           cpio --version
+          zip --version
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
