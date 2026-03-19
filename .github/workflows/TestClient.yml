@@ -242,8 +242,7 @@ jobs:
           
           # Run Tests (Using the same ctest command as other systems)
           # We use the full path to ctest to ensure we use the CMake version, not an msys version
-          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV \
-          --test-env "PATH=C:/msys64/usr/bin;C:/msys64/mingw64/bin;$(cygpath -w "$PATH")"
+          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - uses: actions/upload-artifact@v4
         with:
@@ -257,9 +256,9 @@ jobs:
         run: |
           ctest -VV --rerun-failed --output-on-failure
           
-      - name: Setup tmate session
-        if: ${{ matrix.os == 'windows-latest' }}
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   if: ${{ matrix.os == 'windows-latest' }}
+      #   uses: mxschmitt/action-tmate@v3
 
       - uses: actions/upload-artifact@v4
         with:
