@@ -27,7 +27,7 @@ int src_input_filelist(ParseQueue& queue,
 
     std::unique_ptr<archive> arch(libarchive_input_file(srcml_input_src(input_file)));
     if (!arch)
-        exit(1);
+        return -1;
 
     archive_entry *entry = 0;
     int status = archive_read_next_header(arch.get(), &entry);
@@ -39,12 +39,12 @@ int src_input_filelist(ParseQueue& queue,
     // filelist cannot be a source archive, must only be compressed
     if (archive_format(arch.get()) != ARCHIVE_FORMAT_RAW && archive_format(arch.get()) != ARCHIVE_FORMAT_EMPTY) {
         SRCMLstatus(INFO_MSG, "srcml: filelist requires a non-archived file format");
-        exit(1);
+        return -1;
     }
 
     if (status != ARCHIVE_OK) {
         SRCMLstatus(ERROR_MSG, "srcml: Invalid filelist " + std::string(input_file));
-        exit(1);
+        return -1;
     }
 
     // ARE THE LAST TWO NECESSARY?
