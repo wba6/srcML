@@ -355,7 +355,7 @@ void create_srcml(const srcml_request_t& srcml_request,
         ParserTest::report(srcml_arch.get());
     }
 
-    if (status != -1) {
+    if (status != -1 || always_archive) {
         srcml_archive_close(srcml_arch.get());
     }
 
