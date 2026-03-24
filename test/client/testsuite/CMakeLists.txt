@@ -16,6 +16,8 @@ list(FILTER LOCAL_CLIENT_TESTS EXCLUDE REGEX "/remote_|framework_test.sh")
 # use Git Bash to run tests on Windows
 if (WIN32)
     find_program(GIT_BASH "bash" PATHS
+        "C:/msys64/usr/bin"
+        "C:/msys64/bin"
         "C:/Program Files/Git/bin"
         "C:/Program Files/Git/usr/bin"
         "C:/Program Files (x86)/Git/bin"

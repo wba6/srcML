@@ -46,7 +46,7 @@ cd $TEMPDIR
 
 # make sure to find the srcml executable, if majority of tests are failing, this is probably the problem
 export PATH=.:$PATH
-if [[ "$OSTYPE" == 'msys' ]]; then
+if [[ "$OSTYPE" == 'msys' || "$OSTYPE" == 'cygwin' ]]; then
     echo "DEBUG: Configuring for MSYS/Windows" >&2
     EOL="\r\n"
     export MSYS2_ARG_CONV_EXCL="*"
@@ -151,7 +151,9 @@ function srcml () {
             local temp_input=$(mktemp)
             cat > "$temp_input"
             "$SRCML" "$@" < "$temp_input"
+            local srcml_status=$?
             rm -f "$temp_input"
+            return $srcml_status
         else
             "$SRCML" "$@"
         fi
@@ -201,7 +203,7 @@ defineXML() {
 
     define $1
 
-    echo "${!1}" | xmllint --noout /dev/stdin
+    echo "${!1}" | xmllint --noout -
 }
 
 # file with name $1 is created from the contents of string variable $2
@@ -469,7 +471,7 @@ xmlcheck() {
     if command -v xmllint &> /dev/null; then
 
         if [ "${1:0:1}" != "<" ]; then
-            xmllint --noout ${1}
+            echo "${!1}" | xmllint --noout -
         else
             echo "${1}" | xmllint --noout /dev/stdin
         fi;
