@@ -64,19 +64,6 @@ jobs:
         run: |
           cmake --preset ci-macos -B build
 
-      - name: Cache vcpkg and installed libraries
-        if: ${{ matrix.os == 'windows-latest' }}
-        id: cache-vcpkg
-        uses: actions/cache@v4
-        with:
-          # Cache both the vcpkg tool AND the local library installation
-          path: |
-            C:\vcpkg
-            ${{ github.workspace }}\vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-
-
       - name: Setup vcpkg Environment
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
@@ -85,30 +72,15 @@ jobs:
           # Add the LOCAL manifest bin directory to PATH
           "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding ASCII -Append
 
-      - name: Install vcpkg and libxml2 on Windows
-        if: ${{ matrix.os == 'windows-latest' && steps.cache-vcpkg.outputs.cache-hit != 'true' }}
-        shell: pwsh
-        run: |
-          if (-not (Test-Path 'C:\vcpkg')) {
-            git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
-          }
-          if (-not (Test-Path 'C:\vcpkg\vcpkg.exe')) {
-            & 'C:\vcpkg\bootstrap-vcpkg.bat'
-          }
-          # Install using the manifest (vcpkg.json)
-          if (Test-Path "vcpkg.json") {
-            Write-Host "Manifest mode detected. Installing..."
-            & 'C:\vcpkg\vcpkg.exe' install --triplet x64-windows
-          }
+      - name: Setup vcpkg
+        uses: ./.github/actions/vcpkg
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        working-directory: build
-        run: |
-          # Use $env:VCPKG_ROOT for PowerShell
-          cmake ../ --preset ci-msvc "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_INSTALL_PREFIX="C:/srcML"
-          cmake --build . --config Release --target install --verbose
+      - name: Run CMake with vcpkg.json manifest
+        uses: lukka/run-cmake@v10
+        with:
+          workflowPreset: ci-msvc
           
       - name: Copy DLLs to Release Directory
         if: ${{ matrix.os == 'windows-latest' }}
