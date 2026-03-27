@@ -84,32 +84,32 @@ jobs:
         with:
           workflowPreset: ci-msvc
           
-      - name: Copy DLLs to Release Directory
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: |
-          # Define the source path for Manifest Mode (local to workspace)
-          $VcpkgBin = "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin"
-          $Dest = "build\bin\Release"
+      # - name: Copy DLLs to Release Directory
+      #   if: ${{ matrix.os == 'windows-latest' }}
+      #   shell: pwsh
+      #   run: |
+      #     # Define the source path for Manifest Mode (local to workspace)
+      #     $VcpkgBin = "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin"
+      #     $Dest = "build\bin\Release"
           
-          # Check if the directory exists to avoid the "Cannot find path" error
-          if (Test-Path $VcpkgBin) {
-              Write-Host "Found vcpkg binaries at: $VcpkgBin"
-              Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
-              Write-Host "Successfully copied DLLs to $Dest"
-          } else {
-              # Fallback: Try the global path just in case, but warn
-              Write-Warning "Local vcpkg bin not found. Checking global path..."
-              if (Test-Path "C:\vcpkg\installed\x64-windows\bin") {
-                  Copy-Item "C:\vcpkg\installed\x64-windows\bin\*.dll" -Destination "$Dest" -Force
-              } else {
-                  Write-Error "Could not find vcpkg binaries in local or global locations."
-                  exit 1
-              }
-          }
+      #     # Check if the directory exists to avoid the "Cannot find path" error
+      #     if (Test-Path $VcpkgBin) {
+      #         Write-Host "Found vcpkg binaries at: $VcpkgBin"
+      #         Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
+      #         Write-Host "Successfully copied DLLs to $Dest"
+      #     } else {
+      #         # Fallback: Try the global path just in case, but warn
+      #         Write-Warning "Local vcpkg bin not found. Checking global path..."
+      #         if (Test-Path "C:\vcpkg\installed\x64-windows\bin") {
+      #             Copy-Item "C:\vcpkg\installed\x64-windows\bin\*.dll" -Destination "$Dest" -Force
+      #         } else {
+      #             Write-Error "Could not find vcpkg binaries in local or global locations."
+      #             exit 1
+      #         }
+      #     }
           
-          # 3. Verify the files are there
-          Get-ChildItem "$Dest\*.dll" | Select-Object Name
+      #     # 3. Verify the files are there
+      #     Get-ChildItem "$Dest\*.dll" | Select-Object Name
             
       - name: Build and Install on Ubuntu/macOS
         shell: bash
