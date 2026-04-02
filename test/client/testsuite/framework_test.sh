@@ -473,7 +473,7 @@ xmlcheck() {
         if [ "${1:0:1}" != "<" ]; then
             echo "${!1}" | xmllint --noout -
         else
-            echo "${1}" | xmllint --noout /dev/stdin
+            echo "${1}" | xmllint --noout -
         fi;
     fi;
 
