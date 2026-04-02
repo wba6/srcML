@@ -171,15 +171,11 @@ archive* libarchive_input_file(const srcml_input_src& input_file) {
             return 0;
         }
         
-#if (defined(_WIN32) || defined(WIN32))
-        // In Windows, the archive_read_open_fd() does not seem to work. The input is read as an empty archive,
-        // or cut short. 
-        // So for Windwos, convert to a FILE*. Note sure when to close the FILE*
-        FILE* f = fdopen(*(uninput.fd), "r");
-        status = archive_read_open_FILE(arch.get(), f);
-#else
+        if (contains<FILE*>(uninput)) {
+            status = archive_read_open_FILE(arch.get(), uninput);
+        } else {
         status = archive_read_open_fd(arch.get(), *(uninput.fd), buffer_size);
-#endif
+        }
 
     } else {
 
@@ -365,7 +361,11 @@ int src_input_libarchive(ParseQueue& queue,
             }
 
             // fill up the parse request buffer
-            if (svBuffer || (!status && !prequest->status)) {
+            const bool hasReadableEntryData =
+                status == ARCHIVE_OK ||
+                (status == ARCHIVE_EOF && count == 0 && archive_format(arch.get()) == ARCHIVE_FORMAT_RAW);
+
+            if (svBuffer || (hasReadableEntryData && !prequest->status)) {
 
                 // when there are saved buffer contents
                 if (svBuffer) {
