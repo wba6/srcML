@@ -33,7 +33,6 @@
 export REVISION=1.0.0
 
 # construct a temporary directory name based on the test name (without the .sh)
-ORIG_PWD=$PWD
 TEMPDIR=./tmp/$(basename $0 .sh)
 
 # remove old TEMPDIR, and create new fresh one
@@ -43,49 +42,30 @@ cd $TEMPDIR
 
 # make sure to find the srcml executable
 export PATH=.:$PATH
-if [[ "$OSTYPE" == 'msys' || "$OSTYPE" == 'cygwin' ]]; then
+
+if [[ "$OSTYPE" == 'msys' ]]; then
     EOL="\r\n"
+    export PATH=$PATH:"/c/Program Files/srcML/bin/"
+    SRCML="$SRCML_HOME/srcml.exe"
     export MSYS2_ARG_CONV_EXCL="*"
-    diff='diff -Z --strip-trailing-cr '
-    if [ -n "$SRCML_EXE" ]; then
-        SRCML="$SRCML_EXE"
-    elif command -v srcml >/dev/null 2>&1; then
-        SRCML=$(command -v srcml)
-    else
-        SRCML="$SRCML_HOME/srcml.exe"
-    fi
+    diff='diff -Z '
 else
     EOL="\n"
-    diff='diff --strip-trailing-cr '
+    diff='diff '
     if [ -z "$SRCML" ]; then
-        if [ -n "$SRCML_EXE" ]; then
-            SRCML="$SRCML_EXE"
-        elif command -v srcml >/dev/null 2>&1; then
-            SRCML=$(command -v srcml)
-        elif [ -x "$ORIG_PWD/../../.."/bin/srcml ]; then
-            SRCML="$ORIG_PWD/../../.."/bin/srcml
-        elif [ -x "/usr/bin/srcml" ]; then
+
+        if [ -e "/usr/bin/srcml" ]; then
             SRCML='/usr/bin/srcml'
-        elif [ -x "/usr/local/bin/srcml" ]; then
+        elif [ -e "/usr/local/bin/srcml" ]; then
             SRCML='/usr/local/bin/srcml'
         fi
+
     fi
 fi
 
 function srcml () {
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        if [ ! -t 0 ]; then
-            local temp_input=$(mktemp)
-            cat > "$temp_input"
-            "$SRCML" "$@" < "$temp_input"
-            local srcml_status=$?
-            rm -f "$temp_input"
-            return $srcml_status
-        fi
-    fi
     "$SRCML" "$@"
 }
-
 # turn history on so we can output the command issued
 # note that the fc command accesses the history
 set -o history
