@@ -1,256 +1,114 @@
----
 name: Test Client
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
-  build:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # - name: Cache Build
-      #   id: cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: build
-      #     key: ${{ runner.os }}-client1
-
       - name: Setup Ubuntu
-        shell: bash
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install curl zip g++ make ninja-build antlr libantlr-dev \
-                           libxml2-dev libxml2-utils libxslt1-dev \
-                           libarchive-dev libssl-dev libcurl4-openssl-dev \
-                           cpio man file dpkg-dev
-                           
+          sudo apt install -y curl zip g++ make ninja-build antlr libantlr-dev \
+                              libxml2-dev libxml2-utils libxslt1-dev \
+                              libarchive-dev libssl-dev libcurl4-openssl-dev \
+                              cpio man file dpkg-dev
+
       - name: Setup macOS
-        shell: bash
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: matrix.os == 'macos-latest'
         run: |
           brew update
           brew install antlr
-
-      - name: Use the Command Line Tools
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
           sudo xcode-select -s /Library/Developer/CommandLineTools
 
-      - name: Setup Windows
-        uses: microsoft/setup-msbuild@v1
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Setup Windows (msys2)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          install: zip cpio diffutils cmake util-linux libxml2
 
-      - name: Create build directory
-        shell: bash
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: mkdir build
-
-      - name: Configure on Ubuntu
-        shell: bash
-        if: ${{ matrix.os == 'ubuntu-latest' && !steps.cache.outputs.cache-hit }}
-        run: |
-          cmake --preset ci-ubuntu -B build
-          
-      - name: Configure on macOS
-        shell: bash
-        if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-        run: |
-          cmake --preset ci-macos -B build
-
-      - name: Setup vcpkg Environment
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: |
-          "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
-          # Add the LOCAL manifest bin directory to PATH
-          "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding ASCII -Append
-
-      - name: Setup vcpkg
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Setup Windows (vcpkg)
+        if: matrix.os == 'windows-latest'
         uses: ./.github/actions/vcpkg
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run CMake with vcpkg.json manifest
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Build and Install (Ubuntu/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cmake --preset ci-${{ matrix.os == 'ubuntu-latest' && 'ubuntu' || 'macos' }} -B build
+          sudo cmake --build build --config Release --target install
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then sudo ldconfig; fi
+
+      - name: Build and Install (Windows)
+        if: matrix.os == 'windows-latest'
         uses: lukka/run-cmake@v10
         with:
           workflowPreset: ci-msvc
-          
-      # - name: Copy DLLs to Release Directory
-      #   if: ${{ matrix.os == 'windows-latest' }}
-      #   shell: pwsh
-      #   run: |
-      #     # Define the source path for Manifest Mode (local to workspace)
-      #     $VcpkgBin = "$env:GITHUB_WORKSPACE\vcpkg_installed\x64-windows\bin"
-      #     $Dest = "build\bin\Release"
-          
-      #     # Check if the directory exists to avoid the "Cannot find path" error
-      #     if (Test-Path $VcpkgBin) {
-      #         Write-Host "Found vcpkg binaries at: $VcpkgBin"
-      #         Copy-Item "$VcpkgBin\*.dll" -Destination "$Dest" -Force
-      #         Write-Host "Successfully copied DLLs to $Dest"
-      #     } else {
-      #         # Fallback: Try the global path just in case, but warn
-      #         Write-Warning "Local vcpkg bin not found. Checking global path..."
-      #         if (Test-Path "C:\vcpkg\installed\x64-windows\bin") {
-      #             Copy-Item "C:\vcpkg\installed\x64-windows\bin\*.dll" -Destination "$Dest" -Force
-      #         } else {
-      #             Write-Error "Could not find vcpkg binaries in local or global locations."
-      #             exit 1
-      #         }
-      #     }
-          
-      #     # 3. Verify the files are there
-      #     Get-ChildItem "$Dest\*.dll" | Select-Object Name
-            
-      - name: Build and Install on Ubuntu/macOS
-        shell: bash
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: |
-          sudo cmake --build build --verbose --config Release --target install
 
-      - name: Finish install for Ubuntu
-        shell: bash
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        working-directory: build
-        run: |
-          sudo ldconfig
-          
-      - name: Setup msys2 with additional client-test packages for Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        uses: msys2/setup-msys2@v2
-        with:
-          path-type: inherit
-          install: >-
-            zip
-            cpio
-            diffutils
-            cmake
-            util-linux
-            libxml2
-            
-
-      - name: Setup Windows Environment
-        if: runner.os == 'Windows'
-        run: echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-            
-      - name: Add vcpkg bin to PATH
-        run: echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
-        shell: bash
-
-      - name: Add MSYS2 MinGW binaries to PATH
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: bash
-        run: |
-          # Add msys2 usr/bin to PATH so standard Git Bash can find xmllint, zip, etc.
-          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
-
-      - name: Add srcml executable to PATH
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo "${{ github.workspace }}/build/bin/Release" >> $GITHUB_PATH
-
-      - name: Add Git tools to PATH (Windows)
-        if: runner.os == 'Windows'
-        run: echo "C:\Program Files\Git\usr\bin" >> $env:GITHUB_PATH
-
-      # - name: Install zip and cpio (Windows)
-      #   if: runner.os == 'Windows'
-      #   run: choco install zip 7zip -y
-      
-      - name: Install cpio via msys2
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
-        run: |
-          pacman -S --noconfirm cpio zip
-          which cpio
-          which zip
-          cpio --version
-          zip --version
-        
-      - name: Patch Test Framework for Windows
+      - name: Prepare Tests (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-         sed -i '/^compare() {/a \    [ -f "$1" ] && sed -i "s|\\\\|/|g" "$1"; [ -f "$2" ] && sed -i "s|\\\\|/|g" "$2"' test/client/testsuite/framework_test.sh
-            
-      - name: Windows Client Tests on Installed srcml
-        if: ${{ matrix.os == 'windows-latest' }}
+          # Patch Test Framework for Windows
+          sed -i '/^compare() {/a \    [ -f "$1" ] && sed -i "s|\\\\|/|g" "$1"; [ -f "$2" ] && sed -i "s|\\\\|/|g" "$2"' test/client/testsuite/framework_test.sh
+          # Replace /dev/stdin with - for native xmllint compatibility
+          sed -i 's|/dev/stdin|-|g' test/client/testsuite/*.sh
+          
+          # Add necessary paths to GITHUB_PATH
+          echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
+          echo "${{ github.workspace }}/build/bin/Release" >> $GITHUB_PATH
+          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
+
+      - name: Run Tests (Ubuntu/macOS)
+        if: matrix.os != 'windows-latest'
+        working-directory: build
+        run: ctest -VV --rerun-failed --output-on-failure
+
+      - name: Run Tests (Windows)
+        if: matrix.os == 'windows-latest'
         shell: bash
         env:
-          #PATH: "/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
           MSYS: winsymlinks:nativestrict
           MSYS2_ARG_CONV_EXCL: "*"
         working-directory: build
-        continue-on-error: true
         run: |
-          # Verification (Mirroring the Ubuntu style)
-          echo "Verifying dependencies..."
-          export PATH="/c/msys64/usr/bin:/c/msys64/mingw64/bin:$PATH"
-          echo "Looking for cpio..."
-          find /c/msys64 -name "cpio.exe" 2>/dev/null
-          find /c -name "cpio.exe" 2>/dev/null
-          echo "Current PATH: $PATH"
-          xmllint --version | head -n 1
-          cpio --version | head -n 1
-          
-          # Environment Setup (Standardized variables)
           export SRCML_HOME="C:/srcML"
-          # Ensure vcpkg binaries (DLLs) are found if not already in PATH
-          export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"
-
-          # Replace /dev/stdin with - for native xmllint compatibility
-          sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
-
+          
           # Force MSYS2 bash to output Windows style paths to match the srcml native binary output
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "pwd() { builtin pwd -W; }" > bash_env.sh
-            export BASH_ENV="$(pwd)/bash_env.sh"
-          fi
+          echo "pwd() { builtin pwd -W; }" > bash_env.sh
+          export BASH_ENV="$(pwd)/bash_env.sh"
           
-          # Run Tests (Using the same ctest command as other systems)
-          # We use the full path to ctest to ensure we use the CMake version, not an msys version
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
-          
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ClientLastTest.${{ runner.os }}.log
-          path: build/Testing/Temporary/LastTest.log
 
-      - name: Ubuntu/macOS Client Tests on Installed srcml
-        if: ${{ matrix.os != 'windows-latest' }}
-        shell: bash
-        working-directory: build
-        run: |
-          ctest -VV --rerun-failed --output-on-failure
-          
-      - name: Setup tmate session
-        if: ${{ matrix.os == 'windows-latest' }}
-        uses: mxschmitt/action-tmate@v3
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ClientLastTest.${{ runner.os }}.log
-          path: build/Testing/Temporary/LastTest.log
-
-      - name: Archive test logs and output on failure
-        if: ${{ failure() }} # Only run this step if the ctest step failed
+      - name: Upload Test Logs
+        if: always()
         uses: actions/upload-artifact@v4
-        continue-on-error: true
         with:
-          name: TestOutputs-${{ runner.os }}
+          name: TestLogs-${{ matrix.os }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/**/*.xml
+          if-no-files-found: ignore
+
+      - name: Upload Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FailureArtifacts-${{ matrix.os }}
           path: |
             build/Testing/
             build/test/
-
-      # - name: Setup tmate session
-      #   if: ${{ matrix.os == 'macos-latest' && !steps.cache.outputs.cache-hit }}
-      #   uses: mxschmitt/action-tmate@v3
+          if-no-files-found: ignore
