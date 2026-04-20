@@ -98,7 +98,6 @@ jobs:
         working-directory: build
         continue-on-error: true
         run: |
-          export SRCML_HOME="C:/srcML"
 
           # Replace /dev/stdin with - for native xmllint compatibility
           sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
@@ -110,7 +109,6 @@ jobs:
           fi
           
           # Run Tests
-          # We use the full path to ctest to ensure we use the CMake version, not an msys version
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
           
       - name: Ubuntu/macOS Client Tests on Installed srcml
