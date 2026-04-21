@@ -91,18 +91,12 @@ jobs:
         run: |
           sudo ldconfig
             
-      - name: Configure Windows PATH
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          echo "C:/msys64/usr/bin" >> "$GITHUB_PATH"
-          echo "${{ github.workspace }}/build/bin/Release" >> "$GITHUB_PATH"
-          echo "C:/Program Files/Git/usr/bin" >> "$GITHUB_PATH"
-
-      - name: Install MSYS2 dependencies
+      - name: Setup Windows Environment
         if: runner.os == 'Windows'
         shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
         run: |
+          # Use bash syntax to append to the GitHub PATH
+          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
           pacman -S --noconfirm cpio zip
           which cpio
           which zip
