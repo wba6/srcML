@@ -93,7 +93,15 @@ jobs:
             
       - name: Setup Windows Environment
         if: runner.os == 'Windows'
-        run: echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
+        run: |
+          echo "C:\msys64\usr\bin"
+          Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          pacman -S --noconfirm cpio zip
+          which cpio
+          which zip
+          cpio --version
+          zip --version
             
       - name: Add vcpkg bin to PATH
         run: echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
@@ -114,16 +122,6 @@ jobs:
       - name: Add Git tools to PATH (Windows)
         if: runner.os == 'Windows'
         run: echo "C:\Program Files\Git\usr\bin" >> $env:GITHUB_PATH
-        
-      - name: Install cpio via msys2
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
-        run: |
-          pacman -S --noconfirm cpio zip
-          which cpio
-          which zip
-          cpio --version
-          zip --version
         
       - name: Patch Test Framework for Windows
         if: matrix.os == 'windows-latest'
