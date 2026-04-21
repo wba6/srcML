@@ -69,16 +69,6 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           workflowPreset: ci-msvc
-
-      - name: Install cpio via msys2
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
-        run: |
-          pacman -S --noconfirm cpio zip
-          which cpio
-          which zip
-          cpio --version
-          zip --version
             
       - name: Build and Install on Ubuntu/macOS
         shell: bash
