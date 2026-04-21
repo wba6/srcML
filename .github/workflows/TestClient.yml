@@ -38,10 +38,7 @@ jobs:
       - name: Setup Windows (msys2)
         if: matrix.os == 'windows-latest'
         uses: msys2/setup-msys2@v2
-        with:
-          path-type: inherit
-          install: zip cpio diffutils cmake util-linux libxml2
-
+        
       - name: Create build directory
         shell: bash
         run: mkdir build
@@ -90,7 +87,8 @@ jobs:
         working-directory: build
         run: |
           sudo ldconfig
-            
+
+      #Breaks if removed      
       - name: Setup Windows Environment
         if: runner.os == 'Windows'
         shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
