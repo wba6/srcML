@@ -95,8 +95,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
         run: |
-          echo "C:\msys64\usr\bin"
-          Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Use bash syntax to append to the GitHub PATH
+          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
           pacman -S --noconfirm cpio zip
           which cpio
           which zip
