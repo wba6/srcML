@@ -114,6 +114,11 @@ jobs:
           # Add msys2 usr/bin to PATH so standard Git Bash can find xmllint, zip, etc.
           echo "C:/msys64/usr/bin" >> $GITHUB_PATH
 
+      - name: Add srcml executable to PATH
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "${{ github.workspace }}/build/bin/Release" >> $GITHUB_PATH
+
       - name: Add Git tools to PATH (Windows)
         if: runner.os == 'Windows'
         run: echo "C:\Program Files\Git\usr\bin" >> $env:GITHUB_PATH
