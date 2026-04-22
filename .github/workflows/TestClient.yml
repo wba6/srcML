@@ -132,9 +132,6 @@ jobs:
           # Environment Setup (Standardized variables)
           export SRCML_HOME="C:/srcML"
 
-          # Replace /dev/stdin with - for native xmllint compatibility
-          sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
-
           # Force MSYS2 bash to output Windows style paths to match the srcml native binary output
           if [ "$RUNNER_OS" == "Windows" ]; then
             echo "pwd() { builtin pwd -W; }" > bash_env.sh
