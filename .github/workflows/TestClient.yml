@@ -115,9 +115,8 @@ jobs:
           MSYS2_ARG_CONV_EXCL: "*"
         working-directory: build
         run: |
-          
           # Run Tests
-          "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
+          ctest -C Release -VV
 
       - name: Ubuntu/macOS Client Tests on Installed srcml
         if: ${{ matrix.os != 'windows-latest' }}
