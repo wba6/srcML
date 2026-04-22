@@ -110,13 +110,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: echo "${{ github.workspace }}/build/bin/Release" >> $GITHUB_PATH
-        
-      - name: Patch Test Framework for Windows
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-         sed -i '/^compare() {/a \    [ -f "$1" ] && sed -i "s|\\\\|/|g" "$1"; [ -f "$2" ] && sed -i "s|\\\\|/|g" "$2"' test/client/testsuite/framework_test.sh
-            
+
       - name: Windows Client Tests on Installed srcml
         if: ${{ matrix.os == 'windows-latest' }}
         shell: bash
