@@ -128,12 +128,6 @@ jobs:
           echo "Current PATH: $PATH"
           xmllint --version | head -n 1
           cpio --version | head -n 1
-
-          # Force MSYS2 bash to output Windows style paths to match the srcml native binary output
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "pwd() { builtin pwd -W; }" > bash_env.sh
-            export BASH_ENV="$(pwd)/bash_env.sh"
-          fi
           
           # Run Tests
           "/c/Program Files/CMake/bin/ctest.exe" -C Release -VV
