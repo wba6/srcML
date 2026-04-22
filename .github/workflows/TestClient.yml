@@ -128,9 +128,6 @@ jobs:
           echo "Current PATH: $PATH"
           xmllint --version | head -n 1
           cpio --version | head -n 1
-          
-          # Environment Setup (Standardized variables)
-          export SRCML_HOME="C:/srcML"
 
           # Force MSYS2 bash to output Windows style paths to match the srcml native binary output
           if [ "$RUNNER_OS" == "Windows" ]; then
