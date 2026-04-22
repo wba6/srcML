@@ -131,8 +131,6 @@ jobs:
           
           # Environment Setup (Standardized variables)
           export SRCML_HOME="C:/srcML"
-          # Ensure vcpkg binaries (DLLs) are found if not already in PATH
-          export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"
 
           # Replace /dev/stdin with - for native xmllint compatibility
           sed -i 's|/dev/stdin|-|g' ../test/client/testsuite/*.sh
