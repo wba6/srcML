@@ -93,7 +93,13 @@ jobs:
         if: runner.os == 'Windows'
         shell: C:\msys64\usr\bin\bash.exe --login -eo pipefail {0}
         run: |
+          # Use bash syntax to append to the GitHub PATH
+          echo "C:/msys64/usr/bin" >> $GITHUB_PATH
           pacman -S --noconfirm cpio zip
+          which cpio
+          which zip
+          cpio --version
+          zip --version
             
       - name: Add vcpkg bin to PATH
         run: echo "${{ github.workspace }}/build/vcpkg_installed/x64-windows/bin" >> $GITHUB_PATH
